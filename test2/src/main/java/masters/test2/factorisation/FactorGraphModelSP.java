@@ -1,4 +1,4 @@
-package masters.test2.crf;
+package masters.test2.factorisation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,29 +12,34 @@ import java.util.Set;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.train.WeightVector;
 
 public class FactorGraphModelSP {
 	public static int NUMBER_OF_STATES = 2;
-	public static double CONVERGENCE_TOLERANCE = 10e-3;
+	public static double CONVERGENCE_TOLERANCE = 10e-2;
 	
 	private ImageDTO image;
 	private List<SuperPixelDTO> superPixels;
 	private List<OutputNode> factorisedSuperPixels;
-	private OutputNode[][] factorisedImage;
-	Set<Factor> createdFactors;
+	//private OutputNode[][] factorisedImage;
+	private Set<Factor> createdFactors;
 	
 	private List<List<Double>> pixelFeatureWeights;
 	private List<Double> pixelSimilarityWeights;
 	
 	private Map<FactorEdgeKey, Edge> factorVariableToEdgeMap = new HashMap<FactorEdgeKey, Edge>();
 	
-	public FactorGraphModelSP(ImageDTO image, List<SuperPixelDTO> superPixels) {
+	public FactorGraphModelSP(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector) {
 		this.image = image;
 		this.superPixels = superPixels;
 		this.factorisedSuperPixels = new ArrayList<OutputNode>();
 		
 		createdFactors = new HashSet<Factor>();
-		initFixedModelGreenTest();
+		if (weightVector == null) {
+			initFixedModelGreenTest();
+		} else {
+			initModel(weightVector);
+		}
 		//create factors and edges
 		for (SuperPixelDTO superPixel : superPixels) {
 			FeatureNode featureNode = new FeatureNode(superPixel, pixelFeatureWeights);
@@ -83,6 +88,11 @@ public class FactorGraphModelSP {
 		System.out.println("nr of factors: " + createdFactors.size() );
 
 		System.out.println("nr of edges: " + factorVariableToEdgeMap.keySet().size());
+	}
+	
+	private void initModel(WeightVector weights) {
+		pixelFeatureWeights = weights.getPixelFeatureWeights();
+		pixelSimilarityWeights = weights.getPixelSimilarityWeights();
 	}
 	
 	private void initFixedModelGreenTest() {
@@ -251,7 +261,7 @@ public class FactorGraphModelSP {
 		}
 	}
 	private int getMaximumIndexOfAList(List<Double> list){
-		int maxIndex = 0;
+		int maxIndex = -1;
 		double maxValue = Double.NEGATIVE_INFINITY;
 		//System.out.print("# ");
 		for (int i = 0; i < list.size(); i++ ){
@@ -265,79 +275,7 @@ public class FactorGraphModelSP {
 		return maxIndex;
 	}
 	
-	private List<Double> calculateFactorBeliefs(Factor factor) {
-		if (factor.isFeatureFactor) {
-			// Energy E1 - local model
-			// factor domain 0 1
-			OutputNode currentNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
-			FeatureNode featureNode =  currentNode.getFeatureNode();
-			
-			FactorEdgeKey factorToNodeKey = new FactorEdgeKey(factor, currentNode);
-			Edge factorToNodeEdge = factorVariableToEdgeMap.get(factorToNodeKey);
-			
-			List<Double> newFactorBeliefs = new ArrayList<Double>();
-			
-			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				double energy = featureNode.getEnergy(label, label);
-				double variableToFactorMsg = factorToNodeEdge.getVariableToFactorMsg().get(label);
-				
-				newFactorBeliefs.add(variableToFactorMsg - energy);
-			}
-			
-			//normalisation
-			
-			double normalisationFactor = 0;
-			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				normalisationFactor += Math.exp(newFactorBeliefs.get(label));
-			}
-			normalisationFactor = Math.log(normalisationFactor);
-			
-			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				double normalisedBelief = Math.exp(newFactorBeliefs.get(label) - normalisationFactor);
-				newFactorBeliefs.set(label, normalisedBelief);
-			}
-			return newFactorBeliefs;
-		} else {
-			// Energy E2 - pairwise model
-			// factor domain 00 01 10 11
-			OutputNode leftNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
-			OutputNode rightNode = factorisedSuperPixels.get(factor.getRightSuperPixelIndex());
-			
-			FactorEdgeKey factorToLeftNodeKey = new FactorEdgeKey(factor, leftNode);
-			Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
-			List<Double> leftMsgs = factorToLeftNodeEdge.getVariableToFactorMsg();
-			
-			FactorEdgeKey factorToRightNodeKey = new FactorEdgeKey(factor, rightNode);
-			Edge factorToRightNodeEdge = factorVariableToEdgeMap.get(factorToRightNodeKey);
-			List<Double> rightMsgs = factorToRightNodeEdge.getVariableToFactorMsg();
-			
-			List<Double> newFactorBeliefs = new ArrayList<Double>();
-			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
-				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
-					double energy = leftNode.getEnergy(label1, label2);
-					double variableToFactorMsg = leftMsgs.get(label1) + rightMsgs.get(label2);
-					newFactorBeliefs.add(variableToFactorMsg - energy);
-				}
-			}
-			
-			//normalisation
-			
-			double normalisationFactor = 0;
-			int iterator = 0;
-			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
-				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
-					normalisationFactor += Math.exp(newFactorBeliefs.get(iterator));
-					iterator++;
-				}
-			}
-			
-			for (int i = 0; i < newFactorBeliefs.size(); i++) {
-				double normalisedBelief = Math.exp(newFactorBeliefs.get(i) - normalisationFactor);
-				newFactorBeliefs.set(i, normalisedBelief);
-			}
-			return newFactorBeliefs;
-		}
-	}
+	
 	public void updatePixelData() {
 		for (OutputNode currentNode : factorisedSuperPixels) {
 			List<Double> maxBeliefs = currentNode.getMaxBeliefs();
@@ -362,7 +300,7 @@ public class FactorGraphModelSP {
 		
 		for (Factor factor : createdFactors) {
 			List<Double> previousMaxBeliefs = factor.getMaxBeliefs();
-			List<Double> newMaxBeliefs = calculateFactorBeliefs(factor);
+			List<Double> newMaxBeliefs = computeFactorBeliefs(factor);
 			// check maxBeliefChange
 			for (int i = 0; i < previousMaxBeliefs.size(); i++) {
 				Double beliefChange = Math.abs(newMaxBeliefs.get(i) - previousMaxBeliefs.get(i));
@@ -392,8 +330,92 @@ public class FactorGraphModelSP {
 		}
 		return maxFactorBefiefChange <= CONVERGENCE_TOLERANCE && maxVariableBefiefChange <= CONVERGENCE_TOLERANCE; 
 	}
+	private List<Double> computeFactorBeliefs(Factor factor) {
+		if (factor.isFeatureFactor) {
+			// Energy E1 - local model
+			// factor domain 0 1
+			OutputNode currentNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
+			FeatureNode featureNode =  currentNode.getFeatureNode();
+			
+			FactorEdgeKey factorToNodeKey = new FactorEdgeKey(factor, currentNode);
+			Edge factorToNodeEdge = factorVariableToEdgeMap.get(factorToNodeKey);
+			
+			List<Double> newFactorBeliefs = new ArrayList<Double>();
+			
+			double maxFactorBeliefValue = 0;
+			for (int label = 0; label < NUMBER_OF_STATES; label++) {
+				double energy = featureNode.getEnergy(label, label);
+				double variableToFactorMsg = factorToNodeEdge.getVariableToFactorMsg().get(label);
+				
+				double newFactorBelief = variableToFactorMsg - energy;
+				if (newFactorBelief > maxFactorBeliefValue) maxFactorBeliefValue = newFactorBelief;
+				newFactorBeliefs.add(newFactorBelief);
+			}
+			
+			//normalisation
+			
+			double normalisationFactor = 0;
+			for (int label = 0; label < NUMBER_OF_STATES; label++) {
+				normalisationFactor += Math.exp(newFactorBeliefs.get(label) - maxFactorBeliefValue);
+			}
+			normalisationFactor = Math.log(normalisationFactor) + maxFactorBeliefValue;
+			
+			for (int label = 0; label < NUMBER_OF_STATES; label++) {
+				double normalisedBelief = Math.exp(newFactorBeliefs.get(label) - normalisationFactor);
+				//System.out.println(newFactorBeliefs.get(label) + "->" + normalisedBelief);
+				newFactorBeliefs.set(label, normalisedBelief);
+			}
+			return newFactorBeliefs;
+		} else {
+			// Energy E2 - pairwise model
+			// factor domain 00 01 10 11
+			OutputNode leftNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
+			OutputNode rightNode = factorisedSuperPixels.get(factor.getRightSuperPixelIndex());
+			
+			FactorEdgeKey factorToLeftNodeKey = new FactorEdgeKey(factor, leftNode);
+			Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
+			List<Double> leftMsgs = factorToLeftNodeEdge.getVariableToFactorMsg();
+			
+			FactorEdgeKey factorToRightNodeKey = new FactorEdgeKey(factor, rightNode);
+			Edge factorToRightNodeEdge = factorVariableToEdgeMap.get(factorToRightNodeKey);
+			List<Double> rightMsgs = factorToRightNodeEdge.getVariableToFactorMsg();
+			
+			List<Double> newFactorBeliefs = new ArrayList<Double>();
+			double maxFactorBelief = 0;
+			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
+				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
+					double energy = leftNode.getEnergy(label1, label2);
+					double variableToFactorMsg = leftMsgs.get(label1) + rightMsgs.get(label2);
+					double newFactorBelief = variableToFactorMsg - energy;
+					if (newFactorBelief > maxFactorBelief) maxFactorBelief = newFactorBelief;
+					newFactorBeliefs.add(newFactorBelief);
+				}
+			}
+			
+			//normalisation
+			
+			double normalisationFactor = 0;
+			int iterator = 0;
+			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
+				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
+					normalisationFactor += Math.exp(newFactorBeliefs.get(iterator) - maxFactorBelief);
+					iterator++;
+				}
+			}
+			normalisationFactor = Math.log(normalisationFactor) + maxFactorBelief;
+			
+			for (int i = 0; i < newFactorBeliefs.size(); i++) {
+				double normalisedBelief = Math.exp(newFactorBeliefs.get(i) - normalisationFactor);
+				//System.out.println("#" + newFactorBeliefs.get(i) + "->" + normalisedBelief);
+				newFactorBeliefs.set(i, normalisedBelief);
+			}
+			return newFactorBeliefs;
+		}
+	}
 	private List<Double> computeVariableBeliefs(OutputNode currentNode) {
 		List<Double> variableBeliefs = new ArrayList<Double>();
+		double maxBeliefValue = 0;
+		double minBeliefValue = 0;
 		for (int label = 0; label < NUMBER_OF_STATES; label++) {
 			double belief = 0;
 			List<Factor> adjacentFactors = currentNode.getAdjacentFactors();
@@ -404,19 +426,22 @@ public class FactorGraphModelSP {
 				Edge factorToNodeEdge = factorVariableToEdgeMap.get(factorToNodeKey);
 				
 				belief += factorToNodeEdge.getFactorToVariableMsg().get(label);
+				if (belief > maxBeliefValue) maxBeliefValue = belief;
 			}
 			variableBeliefs.add(belief);
 		}
 		// normalise beliefs
-		double normalisingFactor = 0;
+		double normalisingFactorPlus = 0;
 		for (Double belief : variableBeliefs) {
-			normalisingFactor += Math.exp(belief);
+				normalisingFactorPlus +=  Math.exp(belief - maxBeliefValue);
 		}
-		normalisingFactor = Math.log(normalisingFactor);
+		normalisingFactorPlus = Math.log(normalisingFactorPlus) + maxBeliefValue;
 		
 		List<Double> outputBeliefs = new ArrayList<Double>();
 		for (Double belief : variableBeliefs) {
-			outputBeliefs.add(Math.exp(belief - normalisingFactor));
+				double outputBelief = Math.exp(belief - normalisingFactorPlus);
+				outputBeliefs.add(outputBelief);
+				//System.out.println("$" + outputBelief);
 		}
 		
 		return outputBeliefs;
@@ -503,6 +528,11 @@ public class FactorGraphModelSP {
 	public List<OutputNode> getFactorisedSuperPixels() {
 		return factorisedSuperPixels;
 	}
+
+	public Set<Factor> getCreatedFactors() {
+		return createdFactors;
+	}
+	
 	
 	
 

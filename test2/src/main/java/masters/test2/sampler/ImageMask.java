@@ -12,6 +12,11 @@ public class ImageMask {
 		mask = new ArrayList<Integer>(maskSize);
 		
 	}
+	
+	public ImageMask(List<Integer> mask) {
+		this.mask = mask;
+	}
+	
 	public void setMask(List<Integer> mask) {
 		this.mask = mask;
 	}
@@ -26,5 +31,16 @@ public class ImageMask {
 	public List<Integer> getMask() {
 		return mask;
 	}
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("ImageMask [ ");
+		for (int i : mask) {
+			sb.append(i + " ");
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+	
 
 }

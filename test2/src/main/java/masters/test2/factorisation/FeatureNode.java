@@ -1,4 +1,4 @@
-package masters.test2.crf;
+package masters.test2.factorisation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,11 +65,11 @@ public class FeatureNode implements Node{
 			superPixel.setLabel(label);
 			return;
 		}
-		pixel.label = label;
+		pixel.setLabel(label);
 	}
 	public int getPixelLabel() {
 		if (superPixel != null) return superPixel.getLabel();
-		return pixel.label;
+		return pixel.getLabel();
 	}
 
 	public List<Double> getEnergies() {

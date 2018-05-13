@@ -1,6 +1,7 @@
 package masters.test2.superpixel;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,13 +10,22 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import masters.test2.Helper;
+import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.PixelDTO;
+import masters.test2.sampler.ImageMask;
+import masters.test2.train.FeatureVector;
 
 public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	private int meanR;
 	private int meanG;
 	private int meanB;
 	
+	private double scaledR;
+	private double scaledG;
+	private double scaledB;
+	
+	public static int NUMBER_OF_FEATURES = 3;
 	private int label;
 	
 	private int identifingColorRGB;
@@ -48,6 +58,11 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		this.meanR = (int) Math.round(RSum / numberOfPixels);
 		this.meanG = (int) Math.round(GSum / numberOfPixels);
 		this.meanB = (int) Math.round(BSum / numberOfPixels);
+		
+		//scale 
+		this.scaledR = meanR / 255.0;
+		this.scaledG = meanG / 255.0;
+		this.scaledB = meanB / 255.0;
 		
 	}
 	public void initBorderPixels() {
@@ -114,6 +129,51 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 			}
 		}
 	}
+	
+	public double getEnergyByWeights(List<Double> pixelFeatureWeights) {
+		return scaledR * pixelFeatureWeights.get(0) + 
+			scaledG * pixelFeatureWeights.get(1) +
+			scaledB * pixelFeatureWeights.get(2);
+	}
+	
+	public FeatureVector getLocalImageFi(ImageMask mask){
+		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		int featureIndex = 0;
+		int objectLabel = this.label;
+		if (mask != null) {
+			objectLabel = mask.getMask().get(this.superPixelIndex);
+		}
+		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+			if (label == objectLabel) {
+				imageFi.setFeatureValue(featureIndex++, scaledR);
+				imageFi.setFeatureValue(featureIndex++, scaledG);
+				imageFi.setFeatureValue(featureIndex++, scaledB);
+			} else {
+				imageFi.setFeatureValue(featureIndex++, 0.0);
+				imageFi.setFeatureValue(featureIndex++, 0.0);
+				imageFi.setFeatureValue(featureIndex++, 0.0);
+			}
+		}
+		return imageFi;
+	}
+	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask){
+		int label1 = this.label;
+		if (mask != null) {
+			label1 = mask.getMask().get(this.superPixelIndex);
+		}
+		int label2 = superPixel.getLabel();
+		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		int labelDiff = Math.abs(label1 - label2);
+		int featureIndex = FactorGraphModel.NUMBER_OF_STATES * 3;
+		imageFi.setFeatureValue(featureIndex++, 1 - labelDiff);
+		imageFi.setFeatureValue(featureIndex++, labelDiff);
+		return imageFi;
+	}
+	public double getPairSimilarityFeature(int label1, int label2) {
+		if (label1 == label2) return 1;
+		return 0;
+	}
+	
 	public int getMeanR() {
 		return meanR;
 	}
@@ -137,6 +197,12 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	public void updatePixelLabels() {
 		for (PixelDTO pixel : pixels) {
 			pixel.setLabel(this.label);
+		}
+	}
+	public void updatePixelLabels(List<Integer> mask) {
+		for (PixelDTO pixel : pixels) {
+			int label = mask.get(this.superPixelIndex);
+			pixel.setLabel(label);
 		}
 	}
 	public int getIdentifingColorRGB() {
@@ -164,7 +230,25 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	public List<Integer> getNeighboursIndexes() {
 		return neighboursIndexes;
 	}
-
+	public Point getSamplePixel() {
+		int x = 0;
+		int y = 0;
+		int maxX = 0;
+		int minX = Integer.MAX_VALUE;
+		int maxY = 0;
+		int minY = Integer.MAX_VALUE;
+		for (PixelDTO bp : borderPixels) {
+			if (bp.getXIndex() > maxX) maxX = bp.getXIndex();
+			if (bp.getXIndex() < minX) minX = bp.getXIndex();
+			if (bp.getYIndex() > maxY) maxY = bp.getYIndex();
+			if (bp.getYIndex() < minY) minY = bp.getYIndex();
+		}
+		y = (maxY - minY) / 2;
+		x = (maxX - minX) / 2;
+		y += minY;
+		x += minX;
+		return new Point(x,y);
+	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -197,9 +281,4 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return ("superpixel index " + superPixelIndex);
 	}
 	
-	public double getEnergyByWeights(List<Double> pixelFeatureWeights) {
-		return meanR * pixelFeatureWeights.get(0) + 
-		meanG * pixelFeatureWeights.get(1) +
-		meanB * pixelFeatureWeights.get(2);
-	}
 }

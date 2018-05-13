@@ -4,14 +4,14 @@ import java.util.List;
 
 public class PixelDTO implements Cloneable {
 
-	public int xIndex;
-	public int yIndex;
-	public int R;
-	public int G;
-	public int B;
-	public int alpha;
-	public Boolean isForeground = null;
-	public Integer label;
+	private int xIndex;
+	private int yIndex;
+	private int R;
+	private int G;
+	private int B;
+	private int alpha;
+	private Boolean isForeground = null;
+	private Integer label;
 	
 	private int superPixelIdex;
 	private boolean isBorderPixel;
@@ -76,6 +76,14 @@ public class PixelDTO implements Cloneable {
 
 	public int getB() {
 		return B;
+	}
+
+	public Boolean getIsForeground() {
+		return isForeground;
+	}
+
+	public void setIsForeground(Boolean isForeground) {
+		this.isForeground = isForeground;
 	}
 
 	public Integer getLabel() {

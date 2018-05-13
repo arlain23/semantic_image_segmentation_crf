@@ -1,4 +1,4 @@
-package masters.test2.sampler;
+package masters.test2.train;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public class WeightVector {
 		int numberOfWeights = numberOfFeatures * numberOfLabels + 2;
 		List<Double> weights = new ArrayList<Double>();
 		for (int i = 0; i < numberOfWeights; i++) {
-			double randValue = Math.random() - 0.5;
+			double randValue = Math.random();
 			weights.add(randValue);
 		}
 		this.numberOfLabels = numberOfLabels;
@@ -81,6 +81,37 @@ public class WeightVector {
 	}
 	public int getWeightSize() {
 		return weights.size();
+	}
+	
+	public List<List<Double>> getPixelFeatureWeights() {
+		return pixelFeatureWeights;
+	}
+	public List<Double> getPixelSimilarityWeights() {
+		return pixelSimilarityWeights;
+	}
+	public void scaleResults() {
+		double max = 0;
+		for (int i = 0; i < 6; i++) {
+			double a = Math.abs(weights.get(i));
+			if (a > max) max = a;
+		}
+		for (int i = 0; i < 6; i++) {
+			double value = (this.weights.get(i) / max);
+			this.weights.set(i, value);
+		}
+		this.weights.set(6, 0.0);
+		this.weights.set(7, 0.0);
+	}
+	public void normalise() {
+		double max = 0;
+		for (int i = 0; i < 6; i++) {
+			double a = Math.abs(weights.get(i));
+			if (a > max) max = a;
+		}
+		for (int i = 0; i < 6; i++) {
+			double value = (this.weights.get(i) / max);
+			this.weights.set(i, value);
+		}
 	}
 	@Override
 	public String toString() {

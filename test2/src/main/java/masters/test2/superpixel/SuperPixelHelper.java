@@ -1,8 +1,5 @@
 package masters.test2.superpixel;
 
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,11 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-
-import masters.test2.LabelHelper;
+import masters.test2.factorisation.FactorGraphModelSP;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 
@@ -97,25 +90,25 @@ public class SuperPixelHelper {
         }
 	}
 	
-	public static void updateSuperPixelLabels(List<SuperPixelDTO> superPixels, int numberOfLabels) {
+	public static void updateSuperPixelLabels(List<SuperPixelDTO> superPixels) {
 		for (SuperPixelDTO superPixel : superPixels) {
 			List<PixelDTO> pixels = superPixel.getPixels();
-			List<Integer> labelOccurences = new ArrayList<Integer>();
-			for (int i = 0; i < numberOfLabels; i++) {
-				labelOccurences.add(0);
+			List<Integer> labelOccurrences = new ArrayList<Integer>();
+			for (int i = 0; i < FactorGraphModelSP.NUMBER_OF_STATES; i++) {
+				labelOccurrences.add(0);
 			}
 			// count label occurances
 			for (PixelDTO pixel : pixels) {
 				int label = pixel.getLabel();
-				int numberOfOccurances = labelOccurences.get(label);
-				labelOccurences.set(label, ++numberOfOccurances);
+				int numberOfOccurances = labelOccurrences.get(label);
+				labelOccurrences.set(label, ++numberOfOccurances);
 			}
 			// get most common label
-			int occuraceMax = 0;
+			int occurreceMax = 0;
 			int chosenLabel = -1;
-			for (int label = 0; label < labelOccurences.size(); label++) {
-				if (labelOccurences.get(label) > occuraceMax) {
-					occuraceMax = labelOccurences.get(label);
+			for (int label = 0; label < FactorGraphModelSP.NUMBER_OF_STATES; label++) {
+				if (labelOccurrences.get(label) > occurreceMax) {
+					occurreceMax = labelOccurrences.get(label);
 					chosenLabel = label;
 				}
 			}

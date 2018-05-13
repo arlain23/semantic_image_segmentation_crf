@@ -1,4 +1,4 @@
-package masters.test2.crf;
+package masters.test2.factorisation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -459,7 +459,7 @@ public class FactorGraphModel {
 				FeatureNode featureNode = currentNode.getFeatureNode();
 				int label = getMaximumIndexOfAList(currentNode.getMaxBeliefs());
 				featureNode.setPixelLabel(label);
-				pixelData[x][y].label = label;
+				pixelData[x][y].setLabel(label);
 				if (label == 1 ) {
 					a++;
 				} else if (label == 0){

@@ -1,4 +1,4 @@
-package masters.test2.crf;
+package masters.test2.factorisation;
 
 import java.util.Objects;
 
