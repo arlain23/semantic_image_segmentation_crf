@@ -31,7 +31,7 @@ public class Factor {
 		this.rightSuperPixelIndex = rightSuperPixelIndex;
 		isSuperPixelFactor = true;
 		maxBeliefs= new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < FactorGraphModelSP.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
 		}
 	}

@@ -13,7 +13,7 @@ import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 
 public class FactorGraphModel {
-	public static int NUMBER_OF_STATES = 2;
+	public static int NUMBER_OF_STATES = FactorGraphModelSP.NUMBER_OF_STATES;
 	public static double CONVERGENCE_TOLERANCE = 10e-3;
 	
 	private ImageDTO image;

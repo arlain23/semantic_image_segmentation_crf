@@ -9,14 +9,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import masters.test2.Helper;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.WeightVector;
 
 public class FactorGraphModelSP {
-	public static int NUMBER_OF_STATES = 2;
-	public static double CONVERGENCE_TOLERANCE = 10e-2;
+	public static int NUMBER_OF_STATES = 3;
+	public static double CONVERGENCE_TOLERANCE = 0.1;
 	
 	private ImageDTO image;
 	private List<SuperPixelDTO> superPixels;
@@ -27,19 +28,17 @@ public class FactorGraphModelSP {
 	private List<List<Double>> pixelFeatureWeights;
 	private List<Double> pixelSimilarityWeights;
 	
+	private WeightVector weightVector;
+	
 	private Map<FactorEdgeKey, Edge> factorVariableToEdgeMap = new HashMap<FactorEdgeKey, Edge>();
 	
 	public FactorGraphModelSP(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector) {
 		this.image = image;
 		this.superPixels = superPixels;
 		this.factorisedSuperPixels = new ArrayList<OutputNode>();
-		
+		this.weightVector = weightVector;
 		createdFactors = new HashSet<Factor>();
-		if (weightVector == null) {
-			initFixedModelGreenTest();
-		} else {
-			initModel(weightVector);
-		}
+		initModel(weightVector);
 		//create factors and edges
 		for (SuperPixelDTO superPixel : superPixels) {
 			FeatureNode featureNode = new FeatureNode(superPixel, pixelFeatureWeights);
@@ -214,7 +213,7 @@ public class FactorGraphModelSP {
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
 					double featureEnergy = rightNode.getEnergy(label, label);
-					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, featureEnergy);
+					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, -featureEnergy);
 					if (print)
 					System.out.println("feature node: " + featureEnergy);
 				}
@@ -265,12 +264,14 @@ public class FactorGraphModelSP {
 		double maxValue = Double.NEGATIVE_INFINITY;
 		//System.out.print("# ");
 		for (int i = 0; i < list.size(); i++ ){
+			System.out.print(list.get(i) + " ");
 			if (list.get(i) > maxValue) {
 				maxValue = list.get(i);
 				maxIndex = i;
 			}
 		//	System.out.print(" " + i + " " + list.get(i));
 		}
+		System.out.println();
 		//System.out.println( "  ->" + maxIndex);
 		return maxIndex;
 	}
@@ -304,13 +305,14 @@ public class FactorGraphModelSP {
 			// check maxBeliefChange
 			for (int i = 0; i < previousMaxBeliefs.size(); i++) {
 				Double beliefChange = Math.abs(newMaxBeliefs.get(i) - previousMaxBeliefs.get(i));
+				//System.out.print((factor.isFeatureFactor ? "feature " : "output") + "  ->  ");
+				//System.out.println("belief change " + beliefChange);
 				if (beliefChange > maxFactorBefiefChange) {
 					maxFactorBefiefChange = beliefChange;
 				}
 			}
 			factor.setMaxBeliefs(newMaxBeliefs);
 		}
-			
 		//calculate belief change for variables
 		
 		double maxVariableBefiefChange = 0;
@@ -501,19 +503,24 @@ public class FactorGraphModelSP {
 	
 	
 	public void computeLabeling () {
-		int label1 = 0;
-		int label0 = 0;
+		HashMap<Integer, Integer> labelCount = new HashMap<Integer,Integer>();
+		for (int i = 0; i < FactorGraphModelSP.NUMBER_OF_STATES; i++) {
+			labelCount.put(i,0);
+		}
+		
 		for (OutputNode currentNode : factorisedSuperPixels) {
 			FeatureNode featureNode = currentNode.getFeatureNode();
 			int label = getMaximumIndexOfAList(currentNode.getMaxBeliefs());
 			featureNode.setPixelLabel(label);
-			if (label == 1 ) {
-				label1++;
-			} else if (label == 0){
-				label0++;
-			}
+			int count = labelCount.get(label);
+			labelCount.put(label, ++count);
+			
 		}
-		System.out.println("Label 1: " + label1 + " Label 0: " + label0);
+		for (int i = 0; i < FactorGraphModelSP.NUMBER_OF_STATES; i++) {
+			System.out.print("Label " + i + ": " + labelCount.get(i) + " ");
+		}
+		System.out.println();
+		System.out.println("***************");
 	}
 	
 	

@@ -10,13 +10,12 @@ public class PixelDTO implements Cloneable {
 	private int G;
 	private int B;
 	private int alpha;
-	private Boolean isForeground = null;
 	private Integer label;
 	
 	private int superPixelIdex;
 	private boolean isBorderPixel;
 	
-	public PixelDTO(int xIndex, int yIndex, int r, int g, int b, int alpha, Boolean isForeground, Integer label) {
+	public PixelDTO(int xIndex, int yIndex, int r, int g, int b, int alpha, Integer label) {
 		super();
 		this.xIndex = xIndex;
 		this.yIndex = yIndex;
@@ -24,15 +23,11 @@ public class PixelDTO implements Cloneable {
 		G = g;
 		B = b;
 		this.alpha = alpha;
-		this.isForeground = isForeground;
 		this.label = label;
 	}
 
 	public double calculateLocalScore(List<Double> featureWeights) {
 		return (featureWeights.get(0) * this.R + featureWeights.get(1) * this.G + featureWeights.get(2) * this.B);
-	}
-	public boolean hasTheSameForegroundProperty(PixelDTO otherPixel) {
-		return (isForeground == otherPixel.isForeground);
 	}
 	public boolean isNeighbour(PixelDTO otherPixel) {
 		if (this.xIndex == otherPixel.xIndex) {
@@ -78,14 +73,6 @@ public class PixelDTO implements Cloneable {
 		return B;
 	}
 
-	public Boolean getIsForeground() {
-		return isForeground;
-	}
-
-	public void setIsForeground(Boolean isForeground) {
-		this.isForeground = isForeground;
-	}
-
 	public Integer getLabel() {
 		return label;
 	}
@@ -94,14 +81,9 @@ public class PixelDTO implements Cloneable {
 		this.label = label;
 	}
 
-	@Override
-	public String toString() {
-		return (isForeground ? "o" : " ");
-	}
-	
     @Override
     protected Object clone() throws CloneNotSupportedException {
-    	PixelDTO newObject = new PixelDTO(xIndex, yIndex, R, G, B, alpha, isForeground, label);
+    	PixelDTO newObject = new PixelDTO(xIndex, yIndex, R, G, B, alpha, label);
     	return newObject;
     }
 	

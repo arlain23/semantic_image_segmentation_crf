@@ -100,6 +100,7 @@ public class SuperPixelHelper {
 			// count label occurances
 			for (PixelDTO pixel : pixels) {
 				int label = pixel.getLabel();
+				if (label >= FactorGraphModelSP.NUMBER_OF_STATES) label = 0; //asign other colours as background
 				int numberOfOccurances = labelOccurrences.get(label);
 				labelOccurrences.set(label, ++numberOfOccurances);
 			}

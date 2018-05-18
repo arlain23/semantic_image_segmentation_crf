@@ -16,8 +16,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,7 +34,16 @@ import masters.test2.superpixel.SuperPixelDTO;
 
 public class DataHelper {
 	//private static String FOREGROUND_HEX_COLOUR = "#c00080";
-	private static String FOREGROUND_HEX_COLOUR = "#ffffff";
+	private static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f"});
+	private static Map<Integer,Color> LABEL_TO_COLOUR_MAP= new HashMap<Integer,Color>();
+	static {
+        Color label0Colour =  new Color(0, 0, 0); 		// Color black
+        Color label1Colour = new Color(255, 255, 255); 	// Color white
+        Color label2Colour = new Color(127,127,127); 	// Color gray
+        LABEL_TO_COLOUR_MAP.put(0, label0Colour);
+        LABEL_TO_COLOUR_MAP.put(1, label1Colour);
+        LABEL_TO_COLOUR_MAP.put(2, label2Colour);
+	}
 	
 	private static String IMAGE_PATH = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\JPEGImages";
 	private static String SEGMENTATION_PATH = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\SegmentationClass";
@@ -96,20 +107,20 @@ public class DataHelper {
 			imageObj.pixelData = pixelData;
 			
 			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImg, true);
-			setForegroundProperty(imageObj, segmentedPixelData);
-			updateLabelByForegroundProperty(imageObj);
+			updateLabelFromSegmentedImage(imageObj,segmentedPixelData);
 			
 			imageList.add(imageObj);
 		}
 		return imageList;
 	}
 	
-	private void updateLabelByForegroundProperty(ImageDTO imageObj) {
+	private void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
 		PixelDTO[][] pixelData = imageObj.pixelData;
 		for (int i = 0; i < pixelData[0].length; i++) {
 			for (int j = 0; j < pixelData.length; j++) {
 				PixelDTO pixel = pixelData[j][i];
-				int label = pixel.getIsForeground() ? 1 : 0;
+				PixelDTO segmentedPixel = segmentedPixelData[j][i];
+				int label = segmentedPixel.getLabel();
 				pixel.setLabel(label);
 			}
 		}
@@ -132,8 +143,7 @@ public class DataHelper {
 					PixelDTO[][] pixelData = getPixelDTOs(img, false);
 					imageObj.pixelData = pixelData;
 					
-					setForegroundProperty(imageObj, segmentedPixelData);
-					updateLabelByForegroundProperty(imageObj);
+					updateLabelFromSegmentedImage(imageObj, segmentedPixelData);
 					
 					imageList.add(imageObj);
 				}
@@ -166,15 +176,21 @@ public class DataHelper {
 				  int  g = pixelData[1];
 				  int  b = pixelData[2];
 				  int alpha = pixelData[3];
-
-				  Boolean isForeground = null;
+				  
 				  PixelDTO pixel;
 				  if (isSegmented) {
+					  int label = -1;
 					  String hexColor = String.format("#%02x%02x%02x", r, g, b);  
-					  isForeground = hexColor.equals(FOREGROUND_HEX_COLOUR);
-					  pixel = new PixelDTO(x, y, r, g, b, alpha, isForeground, (isForeground) ? 1 : 0);
+					  for (int i = 0; i < SEGMENTED_HEX_COLOURS.size(); i++) {
+						  String segmentedHexColour = SEGMENTED_HEX_COLOURS.get(i);
+						  if (hexColor.equals(segmentedHexColour)) {
+							  label = i;
+							  break;
+						  }
+					  }
+					  pixel = new PixelDTO(x, y, r, g, b, alpha, label);
 				  } else {
-					  pixel = new PixelDTO(x, y, r, g, b, alpha, isForeground, null);
+					  pixel = new PixelDTO(x, y, r, g, b, alpha, null);
 				  }
 				  
 				  pixelArray[x][y] = pixel;
@@ -221,14 +237,14 @@ public class DataHelper {
 		return dataFromFile;
 	}
 	
-	public void setForegroundProperty(ImageDTO imageObj, PixelDTO[][] segmentedPixelDTOs) {
+	/*public void setForegroundProperty(ImageDTO imageObj, PixelDTO[][] segmentedPixelDTOs) {
 		PixelDTO[][] pixelData = imageObj.pixelData;
 		for (int y = 0; y < pixelData[0].length; y++) {
 			for (int x = 0; x < pixelData.length; x++) {
 				pixelData[x][y].setIsForeground(segmentedPixelDTOs[x][y].getIsForeground());
 			}
 		}
-	}
+	}*/
 	public void saveImage(ImageDTO imageObj){
 		String imagePath = imageObj.getPath();
 		String [] partPaths = imagePath.split("\\\\");
@@ -259,19 +275,11 @@ public class DataHelper {
 	        }
 	        BufferedImage theImage = new BufferedImage(width, height,
 	                BufferedImage.TYPE_INT_RGB);
-	        Color myWhite = new Color(255, 255, 255); 	// Color white
-	        int rgbWhite = myWhite.getRGB();
-	        Color myBlack =  new Color(0, 0, 0); 		// Color black
-	        int rgbBlack = myBlack.getRGB();
 	        for (int i = 0; i < width; i++) {
 	            for (int j = 0; j < height; j++) {
 	            	PixelDTO pixelDTO = imageObj.pixelData[i][j];
 	            	int value;
-	            	if (pixelDTO.getIsForeground() != null) {
-	            		value = pixelDTO.getIsForeground() ? rgbWhite : rgbBlack;
-	            	} else {
-	            		value = (pixelDTO.getLabel() != 0) ? rgbWhite : rgbBlack;
-	            	}
+	            	value = LABEL_TO_COLOUR_MAP.get(pixelDTO.getLabel()).getRGB();
 	                theImage.setRGB(i, j, value);
 	            }
 	        }
@@ -292,13 +300,9 @@ public class DataHelper {
 			int height = pixelData.length;
 	        BufferedImage theImage = new BufferedImage(width, height,
 	                BufferedImage.TYPE_INT_RGB);
-	        Color myWhite = new Color(255, 255, 255); 	// Color white
-	        int rgbWhite = myWhite.getRGB();
-	        Color myBlack =  new Color(0, 0, 0); 		// Color black
-	        int rgbBlack = myBlack.getRGB();
 	        for (int i = 0; i < width; i++) {
 	            for (int j = 0; j < height; j++) {
-	            	int value = pixelData[j][i] == 1 ? rgbWhite : rgbBlack;
+	            	int value = LABEL_TO_COLOUR_MAP.get(pixelData[j][i]).getRGB();
 	                theImage.setRGB(i, j, value);
 	            }
 	        }
@@ -331,18 +335,38 @@ public class DataHelper {
 		/* change image pixel data */
 		BufferedImage img = image.getImage();
 		
-        Color myWhite = new Color(255, 255, 255); 	// Color white
-        int rgbWhite = myWhite.getRGB();
-        Color myBlack =  new Color(0, 0, 0); 		// Color black
-        int rgbBlack = myBlack.getRGB();
         for (int x = 0; x < img.getWidth(); x++) {
             for (int y = 0; y < img.getHeight(); y++) {
-            	int value = image.pixelData[x][y].getLabel() == 1 ? rgbWhite : rgbBlack;
+            	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
             	img.setRGB(x, y, value);
             }
         }
         ImageIcon icon = new ImageIcon(img);
         JFrame frame=new JFrame();
+        frame.setLayout(new FlowLayout());
+        frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
+        JLabel lbl = new JLabel();
+        lbl.setIcon(icon);
+        frame.add(lbl);
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
+	public static void viewImageSegmented(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask) {
+		
+		/* change image pixel data */
+		BufferedImage img = image.getImage();
+		for (int superPixelIndex = 0; superPixelIndex < superPixels.size(); superPixelIndex++) {
+			SuperPixelDTO sp = superPixels.get(superPixelIndex);
+			List<PixelDTO> pixels = sp.getPixels();
+			for (PixelDTO p : pixels) {
+				int myColour = LABEL_TO_COLOUR_MAP.get(mask.get(superPixelIndex)).getRGB();
+				img.setRGB(p.getXIndex(), p.getYIndex(), myColour);
+			}
+		}
+            		
+        ImageIcon icon = new ImageIcon(img);
+        JFrame frame = new JFrame();
         frame.setLayout(new FlowLayout());
         frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
         JLabel lbl = new JLabel();
@@ -375,13 +399,9 @@ public class DataHelper {
 			/* change image pixel data */
 			BufferedImage img = image.getImage();
 			
-	        Color myWhite = new Color(255, 255, 255); 	// Color white
-	        int rgbWhite = myWhite.getRGB();
-	        Color myBlack =  new Color(0, 0, 0); 		// Color black
-	        int rgbBlack = myBlack.getRGB();
 	        for (int x = 0; x < img.getWidth(); x++) {
 	            for (int y = 0; y < img.getHeight(); y++) {
-	            	int value = image.pixelData[x][y].getLabel() == 1 ? rgbWhite : rgbBlack;
+	            	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
 	            	img.setRGB(x, y, value);
 	            }
 	        }

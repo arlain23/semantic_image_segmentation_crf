@@ -11,6 +11,15 @@ public class Helper {
 		}
 		return result;
 	}
+	
+	public static List<Integer> initFixedSizedListInteger(int listSize) {
+		List<Integer> result = new ArrayList<Integer>();
+		for (int i = 0; i < listSize; i++) {
+			result.add(0);
+		}
+		return result;
+	}
+
 
 	public static void printList(List<Double> labelProbabilities) {
 		System.out.print("( ");

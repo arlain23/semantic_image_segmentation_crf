@@ -12,6 +12,7 @@ import java.util.Set;
 
 import masters.test2.Helper;
 import masters.test2.factorisation.FactorGraphModel;
+import masters.test2.factorisation.FactorGraphModelSP;
 import masters.test2.image.PixelDTO;
 import masters.test2.sampler.ImageMask;
 import masters.test2.train.FeatureVector;
@@ -137,13 +138,13 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	}
 	
 	public FeatureVector getLocalImageFi(ImageMask mask){
-		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		FeatureVector imageFi = new FeatureVector(FactorGraphModelSP.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
 		int featureIndex = 0;
 		int objectLabel = this.label;
 		if (mask != null) {
 			objectLabel = mask.getMask().get(this.superPixelIndex);
 		}
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < FactorGraphModelSP.NUMBER_OF_STATES; label++) {
 			if (label == objectLabel) {
 				imageFi.setFeatureValue(featureIndex++, scaledR);
 				imageFi.setFeatureValue(featureIndex++, scaledG);
@@ -154,6 +155,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 				imageFi.setFeatureValue(featureIndex++, 0.0);
 			}
 		}
+		
 		return imageFi;
 	}
 	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask){
@@ -163,7 +165,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		}
 		int label2 = superPixel.getLabel();
 		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
-		int labelDiff = Math.abs(label1 - label2);
+		boolean labelsEquality = label1 == label2;
+		int labelDiff = (labelsEquality) ? 0 : 1;
 		int featureIndex = FactorGraphModel.NUMBER_OF_STATES * 3;
 		imageFi.setFeatureValue(featureIndex++, 1 - labelDiff);
 		imageFi.setFeatureValue(featureIndex++, labelDiff);

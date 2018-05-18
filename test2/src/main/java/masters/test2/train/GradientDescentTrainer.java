@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import masters.test2.DataHelper;
 import masters.test2.Helper;
 import masters.test2.factorisation.Factor;
 import masters.test2.factorisation.FactorGraphModelSP;
@@ -16,8 +19,8 @@ import masters.test2.superpixel.SuperPixelDTO;
 
 public class GradientDescentTrainer {
 	private static int NUMBER_OF_ITERATIONS = 500;
-	private static double REGULARIZATION_FACTOR = 10;
-	private static double TRAINING_STEP = 0.01;
+	private static double REGULARIZATION_FACTOR = 300;
+	private static double TRAINING_STEP = 0.001;
 	
 	private static int NUMBER_OF_LABELS = FactorGraphModelSP.NUMBER_OF_STATES; // {0 1}
 	private static int NUMBER_OF_FEATURES = SuperPixelDTO.NUMBER_OF_FEATURES;
@@ -35,14 +38,16 @@ public class GradientDescentTrainer {
 		WeightVector weightVector = new WeightVector(NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
 		
 		int numberOfWeights = weightVector.getWeightSize();
-		
+		int counter = 0;
 		Map<ImageDTO, ImageMask> imageToMaskMap = new HashMap<ImageDTO, ImageMask>();
 		System.out.println(weightVector);
 		for (int epoch = 0; epoch < NUMBER_OF_ITERATIONS; epoch++) {
 			// for each training image
 			for (ImageDTO trainingImage : imageList) {
+				counter++;
 				// get samples
 				FactorGraphModelSP factorGraph = imageToFactorGraphMap.get(trainingImage);
+
 				ImageMask currentMask = null;
 				if (imageToMaskMap.containsKey(trainingImage)) {
 					currentMask = imageToMaskMap.get(trainingImage);
@@ -151,4 +156,7 @@ public class GradientDescentTrainer {
 
 		return sum / (double) weights1.size();
 	}
+	
+	
+	final static Logger _log = Logger.getLogger(GradientDescentTrainer.class);
 }

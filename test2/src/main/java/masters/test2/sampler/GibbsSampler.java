@@ -3,6 +3,8 @@ package masters.test2.sampler;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import masters.test2.DataHelper;
 import masters.test2.Helper;
 import masters.test2.factorisation.FactorGraphModelSP;
@@ -117,10 +119,15 @@ public class GibbsSampler {
 			double sum = 0;
 			for (int j = 0; j < labelProbabilities.size(); j++) {
 				if (i != j) {
-					sum += Math.exp(labelProbabilities.get(i) - labelProbabilities.get(j));
+					double probabilityDifference = labelProbabilities.get(i) - labelProbabilities.get(j);
+					sum += Math.exp(probabilityDifference);
+					if (Double.isNaN(sum)) {
+						_log.error("Label probability is NaN: exp(" + probabilityDifference + ")");
+					}
 				}
 			}
 			double labelProbability = (1 / (1 + sum));
+
 			finalLabelProbabilities.add(labelProbability);
 		}
 		
@@ -128,7 +135,6 @@ public class GibbsSampler {
 	}
 
 	private static int getLabelFromProbability(List<Double> labelProbabilities) {
-		//Helper.printList(labelProbabilities);
 		double randNumber = Math.random();
 		double limitValue = 0;
 		for (int label = 0; label < labelProbabilities.size(); label++) {
@@ -136,26 +142,13 @@ public class GibbsSampler {
 			if (randNumber < limitValue)
 				return label;
 		}
-		System.out.println("sth wrong (getLabelFromProbability) ");
+		_log.error("getLabelFromProbability return 0");
 		return 0;
 	}
 
 	private static double getLabelProbability(FactorGraphModelSP factorGraph, ImageMask mask,
 			WeightVector weightVector) {
-		// double d = -getSampleEnergyForOneSuperPixel(superPixelIndex, mask,
-		// superPixels, weightVector);
-		// double r = Math.exp(d);
-		// //System.out.println("# " + d + " -> " + r) ;
-		// if (Double.isInfinite(r)) {
-		// System.out.println("#Nan " +
-		// getSampleEnergyForOneSuperPixel(superPixelIndex, mask, superPixels,
-		// weightVector));
-		// }
-		// return r;
 		double labelProbability = getSampleEnergy(factorGraph, mask, weightVector);
-		//System.out.print("# " + labelProbability + " -> ");
-		//labelProbability = Math.exp(-labelProbability);
-		//System.out.println(labelProbability);
 		return labelProbability;
 	}
 
@@ -241,5 +234,5 @@ public class GibbsSampler {
 		System.out.println("sth wrong (get random label)");
 		return 0;
 	}
-
+	final static Logger _log = Logger.getLogger(GibbsSampler.class);
 }
