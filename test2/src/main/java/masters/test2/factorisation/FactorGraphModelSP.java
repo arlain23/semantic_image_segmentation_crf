@@ -17,7 +17,7 @@ import masters.test2.train.WeightVector;
 
 public class FactorGraphModelSP {
 	public static int NUMBER_OF_STATES = 3;
-	public static double CONVERGENCE_TOLERANCE = 0.1;
+	public static double CONVERGENCE_TOLERANCE = 0.000001;
 	
 	private ImageDTO image;
 	private List<SuperPixelDTO> superPixels;
@@ -213,6 +213,11 @@ public class FactorGraphModelSP {
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
 					double featureEnergy = rightNode.getEnergy(label, label);
+					
+					/*
+					 * TODO
+					 * ZDRADZIECKI MINUS
+					 */
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, -featureEnergy);
 					if (print)
 					System.out.println("feature node: " + featureEnergy);
@@ -264,14 +269,14 @@ public class FactorGraphModelSP {
 		double maxValue = Double.NEGATIVE_INFINITY;
 		//System.out.print("# ");
 		for (int i = 0; i < list.size(); i++ ){
-			System.out.print(list.get(i) + " ");
+			//System.out.print(list.get(i) + " ");
 			if (list.get(i) > maxValue) {
 				maxValue = list.get(i);
 				maxIndex = i;
 			}
 		//	System.out.print(" " + i + " " + list.get(i));
 		}
-		System.out.println();
+		//System.out.println();
 		//System.out.println( "  ->" + maxIndex);
 		return maxIndex;
 	}

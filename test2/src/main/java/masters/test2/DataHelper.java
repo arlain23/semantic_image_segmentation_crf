@@ -34,15 +34,17 @@ import masters.test2.superpixel.SuperPixelDTO;
 
 public class DataHelper {
 	//private static String FOREGROUND_HEX_COLOUR = "#c00080";
-	private static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f"});
+	private static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f", "#ff00ff"});
 	private static Map<Integer,Color> LABEL_TO_COLOUR_MAP= new HashMap<Integer,Color>();
 	static {
         Color label0Colour =  new Color(0, 0, 0); 		// Color black
         Color label1Colour = new Color(255, 255, 255); 	// Color white
         Color label2Colour = new Color(127,127,127); 	// Color gray
+        Color label3Colour = new Color(127,0,127); 	// Color gray
         LABEL_TO_COLOUR_MAP.put(0, label0Colour);
         LABEL_TO_COLOUR_MAP.put(1, label1Colour);
         LABEL_TO_COLOUR_MAP.put(2, label2Colour);
+        LABEL_TO_COLOUR_MAP.put(3, label3Colour);
 	}
 	
 	private static String IMAGE_PATH = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\JPEGImages";
@@ -114,6 +116,17 @@ public class DataHelper {
 		return imageList;
 	}
 	
+	public ImageDTO readImageToImageDTO(String path) {
+		BufferedImage trainImg = openImage(path);
+		
+		ImageDTO imageObj = new ImageDTO(path, trainImg.getWidth(),trainImg.getHeight(), trainImg);
+		
+		PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
+		imageObj.pixelData = pixelData;
+			
+		return imageObj;
+	}
+	
 	private void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
 		PixelDTO[][] pixelData = imageObj.pixelData;
 		for (int i = 0; i < pixelData[0].length; i++) {
@@ -162,7 +175,7 @@ public class DataHelper {
 	}
 	
 	public static PixelDTO[][] getPixelDTOs (BufferedImage image, boolean isSegmented) {
-		
+		Set<String> col = new HashSet<String>();
 		int[] tmpArray = null;
 		WritableRaster rasterImage = image.getRaster();
 		int width = image.getWidth();
@@ -175,12 +188,17 @@ public class DataHelper {
 				  int  r = pixelData[0];
 				  int  g = pixelData[1];
 				  int  b = pixelData[2];
-				  int alpha = pixelData[3];
-				  
+				  // TODO delete alpha
+				  //int alpha = pixelData[3];
+				  int alpha = 0;
 				  PixelDTO pixel;
 				  if (isSegmented) {
 					  int label = -1;
-					  String hexColor = String.format("#%02x%02x%02x", r, g, b);  
+					  String hexColor = String.format("#%02x%02x%02x", r, g, b);
+					  if (!col.contains(hexColor)) {
+						  System.out.println(hexColor);
+						  col.add(hexColor);
+					  }
 					  for (int i = 0; i < SEGMENTED_HEX_COLOURS.size(); i++) {
 						  String segmentedHexColour = SEGMENTED_HEX_COLOURS.get(i);
 						  if (hexColor.equals(segmentedHexColour)) {
@@ -245,7 +263,7 @@ public class DataHelper {
 			}
 		}
 	}*/
-	public void saveImage(ImageDTO imageObj){
+	public static void saveImage(ImageDTO imageObj){
 		String imagePath = imageObj.getPath();
 		String [] partPaths = imagePath.split("\\\\");
 		String fileName = partPaths[partPaths.length - 1];
@@ -257,7 +275,7 @@ public class DataHelper {
 	}
 	
 	
-	public void saveImage(ImageDTO imageObj, String path){
+	public static void saveImage(ImageDTO imageObj, String path){
 		try {
 			File outputfile = new File(path);
 			outputfile.createNewFile();
@@ -439,6 +457,44 @@ public class DataHelper {
 				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
 			}
 		}
+        ImageIcon icon = new ImageIcon(img);
+        JFrame frame = new JFrame();
+        frame.setLayout(new FlowLayout());
+        frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
+        JLabel lbl = new JLabel();
+        lbl.setIcon(icon);
+        frame.add(lbl);
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
+	public static void saveImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		BufferedImage img = image.getImage();
+		/*for (SuperPixelDTO superPixel : superPixels) {
+            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+			for (PixelDTO borderPixel : borderPixels) {
+				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			}
+		}*/
+		File outputFile = new File(path);
+		try {
+			ImageIO.write(img, "png", outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public static void viewImageSuperpixelMeanData(ImageDTO image, List<SuperPixelDTO> superPixels) {
+		/* change image pixel data */
+		BufferedImage img = image.getImage();
+		for (SuperPixelDTO sp : superPixels) {
+			int rgb = new Color(sp.getMeanR(), sp.getMeanG(), sp.getMeanB()).getRGB();
+			List<PixelDTO> pixels = sp.getPixels();
+			for (PixelDTO p : pixels) {
+				img.setRGB(p.getXIndex(), p.getYIndex(), rgb);
+			}
+		}
+            		
         ImageIcon icon = new ImageIcon(img);
         JFrame frame = new JFrame();
         frame.setLayout(new FlowLayout());

@@ -18,9 +18,9 @@ import masters.test2.sampler.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 
 public class GradientDescentTrainer {
-	private static int NUMBER_OF_ITERATIONS = 500;
-	private static double REGULARIZATION_FACTOR = 300;
-	private static double TRAINING_STEP = 0.001;
+	private static int NUMBER_OF_ITERATIONS = 1000;
+	private static double REGULARIZATION_FACTOR = 500;
+	private static double TRAINING_STEP = 0.0001;
 	
 	private static int NUMBER_OF_LABELS = FactorGraphModelSP.NUMBER_OF_STATES; // {0 1}
 	private static int NUMBER_OF_FEATURES = SuperPixelDTO.NUMBER_OF_FEATURES;
@@ -33,9 +33,12 @@ public class GradientDescentTrainer {
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
 	}
 	
-	public WeightVector train() {
+	public WeightVector train(WeightVector weightVector) {
+		
 		//random initial weights
-		WeightVector weightVector = new WeightVector(NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
+		if (weightVector == null) {
+			weightVector = new WeightVector(NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
+		}
 		
 		int numberOfWeights = weightVector.getWeightSize();
 		int counter = 0;
@@ -87,6 +90,10 @@ public class GradientDescentTrainer {
 				weightVector = newWeightVetor;
 			}
 			if (epoch % 100 == 0) {
+				System.out.println(weightVector);
+			//	Helper.playSound("cow-moo1.wav");
+			}
+			if (epoch % 101 == 0) {
 				System.out.println(weightVector);
 			}
 		}

@@ -30,30 +30,50 @@ public class App
 		Map<ImageDTO, List<SuperPixelDTO>> superPixelMap = new HashMap<ImageDTO, List<SuperPixelDTO>>();
 		Map<ImageDTO, FactorGraphModelSP> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModelSP>();
 		
+		/*boolean test = false;
+		ImageDTO testImage = dh.readImageToImageDTO("C:\\Users\\anean\\Desktop\\cowhero2.jpg");
+		List<SuperPixelDTO> superPixels = SuperPixelHelper.getSuperPixel(testImage, 100, 0.1);
+		DataHelper.viewImageSuperpixelBordersOnly(testImage, superPixels);
+		if (test) {
+			return;
+		}*/
 		WeightVector randomWeightVector = new WeightVector(FactorGraphModelSP.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_FEATURES);
+		int iterator = 0;
 		// factorisation
 		for (ImageDTO currentImage : imageList) {
 			//dh.viewImage(currentImage);
 			//DataHelper.viewImageSegmented(currentImage);
-			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 200, 0.05);
+			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 110, 0.03);
 			SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
 			superPixelMap.put(currentImage, createdSuperPixels);
 			FactorGraphModelSP factorGraph = new FactorGraphModelSP(currentImage,createdSuperPixels, randomWeightVector);
 			imageToFactorGraphMap.put(currentImage, factorGraph);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels);
+			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels);
+			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho"+ ++iterator + ".png");
 			DataHelper.viewImageSegmentedSuperPixels(currentImage, createdSuperPixels);
+			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_a_" + iterator + ".png");
 			
 		}
-		
 		// training
+		List<Double> initWeightList = Arrays.asList(new Double[] {
+				0.011903895425495298, 0.0021602971520209733, -0.001785182684517517,
+				-0.01137678391911572, 0.013138722976850394 ,0.009050441828712882,
+				-5.271115063795878E-4, -0.015299020128871368, -0.00726525914419535,
+				-0.10566926619525419, 0.10566926619525419 
+		});
+		
+
+		WeightVector pretrainedWeights = new WeightVector(initWeightList, 3, 3);
+
+		
 		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap);
-		WeightVector weights = trainer.train();
+		//WeightVector weights = pretrainedWeights;
+		WeightVector weights = trainer.train(null);
 		System.out.println(weights);
 		
 		
-		/*List<Double> weights2 = Arrays.asList(new Double[] {-1.0,0.0,0.0,0.0,-1.0,0.0,0.0,0.0,-1.0,0.0,0.0});
-		WeightVector weight2 = new WeightVector(weights2, 3, 3);*/
 		ImageDTO currentImage = imageList.get(0);
 		List<SuperPixelDTO> createdSuperPixels = superPixelMap.get(currentImage);
 				
