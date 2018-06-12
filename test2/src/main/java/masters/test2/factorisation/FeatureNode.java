@@ -5,6 +5,7 @@ import java.util.List;
 
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.train.WeightVector;
 
 public class FeatureNode implements Node{
 	private PixelDTO pixel = null;
@@ -15,29 +16,15 @@ public class FeatureNode implements Node{
 	
 	private Factor edgeFactor;
 	
-	public FeatureNode (SuperPixelDTO superPixel, List<List<Double>> pixelFeatureWeights) {
+	public FeatureNode (SuperPixelDTO superPixel, WeightVector weightVector) {
 		this.superPixel = superPixel;
 		maxBeliefs = new ArrayList<Double>();
 		energies = new ArrayList<Double>();
 		//calculate energy
 		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
-			double energy = superPixel.getMeanR() * pixelFeatureWeights.get(label).get(0) + 
-					superPixel.getMeanG() * pixelFeatureWeights.get(label).get(1) +
-					superPixel.getMeanB() * pixelFeatureWeights.get(label).get(2);
-			energies.add(energy);
-		}
-	}
-	public FeatureNode (PixelDTO pixel, List<List<Double>> pixelFeatureWeights) {
-		this.pixel = pixel;
-		maxBeliefs = new ArrayList<Double>();
-		energies = new ArrayList<Double>();
-		//calculate energy
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
-			maxBeliefs.add(Double.POSITIVE_INFINITY);
-			double energy = superPixel.getMeanR() * pixelFeatureWeights.get(label).get(0) + 
-					superPixel.getMeanG() * pixelFeatureWeights.get(label).get(1) +
-					superPixel.getMeanB() * pixelFeatureWeights.get(label).get(2);
+			double energy = superPixel.getFeatureVector().calculateEnergy(weightVector.getPixelFeatureWeights().get(label)); 
+					
 			energies.add(energy);
 		}
 	}

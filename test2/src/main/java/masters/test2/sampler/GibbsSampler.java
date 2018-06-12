@@ -7,17 +7,17 @@ import org.apache.log4j.Logger;
 
 import masters.test2.DataHelper;
 import masters.test2.Helper;
-import masters.test2.factorisation.FactorGraphModelSP;
+import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.FeatureVector;
 import masters.test2.train.GradientDescentTrainer;
 import masters.test2.train.WeightVector;
 
 public class GibbsSampler {
-	public static List<ImageMask> getSamples(FactorGraphModelSP factorGraph, WeightVector weightVector,
+	public static List<ImageMask> getSamples(FactorGraphModel factorGraph, WeightVector weightVector,
 			int numberOfSamples, boolean print) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		int numberOfLabels = FactorGraphModelSP.NUMBER_OF_STATES;
+		int numberOfLabels = FactorGraphModel.NUMBER_OF_STATES;
 
 		List<ImageMask> resultSampling = new ArrayList<ImageMask>();
 		int maskSize = superPixels.size();
@@ -60,10 +60,10 @@ public class GibbsSampler {
 	}
 
 	/* @AA 01.05 */
-	public static ImageMask getSample(FactorGraphModelSP factorGraph, WeightVector weightVector,
+	public static ImageMask getSample(FactorGraphModel factorGraph, WeightVector weightVector,
 			ImageMask previousMask) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		int numberOfLabels = FactorGraphModelSP.NUMBER_OF_STATES;
+		int numberOfLabels = FactorGraphModel.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
 		boolean save = false;
 
@@ -146,13 +146,13 @@ public class GibbsSampler {
 		return 0;
 	}
 
-	private static double getLabelProbability(FactorGraphModelSP factorGraph, ImageMask mask,
+	private static double getLabelProbability(FactorGraphModel factorGraph, ImageMask mask,
 			WeightVector weightVector) {
 		double labelProbability = getSampleEnergy(factorGraph, mask, weightVector);
 		return labelProbability;
 	}
 
-	public static double getSampleEnergy(FactorGraphModelSP factorGraph, ImageMask mask, WeightVector weightVector) {
+	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector) {
 		FeatureVector featureVector = GradientDescentTrainer.calculateImageFi(weightVector, factorGraph, mask);
 		return featureVector.calculateEnergy(weightVector);
 	}
@@ -185,8 +185,7 @@ public class GibbsSampler {
 			List<SuperPixelDTO> superPixels, WeightVector weightVector) {
 		int label = mask.get(superPixelIndex);
 		SuperPixelDTO currentSuperPixel = superPixels.get(superPixelIndex);
-		List<Double> featureWeights = weightVector.getFeatureWeightsForLabel(label);
-		return currentSuperPixel.getEnergyByWeights(featureWeights);
+		return currentSuperPixel.getEnergyByWeightVector(weightVector, label);
 	}
 
 	private static double getSuperPixelEnergyPairwiseModel(int superPixelIndex, List<Integer> mask,

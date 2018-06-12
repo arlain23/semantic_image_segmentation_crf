@@ -2,12 +2,16 @@ package masters.test2.train;
 
 import java.util.List;
 
+import masters.test2.Constants;
 import masters.test2.Helper;
 
 public class FeatureVector {
 	private List<Double> featureValues;
 	public FeatureVector (int featureSize) {
 		featureValues = Helper.initFixedSizedListDouble(featureSize);
+	}
+	public FeatureVector (List<Double> featureValues) {
+		this.featureValues = featureValues;
 	}
 	
 	public List<Double> getFeatureValues() {
@@ -27,6 +31,13 @@ public class FeatureVector {
 	}
 	public double calculateEnergy(WeightVector weightVector) {
 		List<Double> weights = weightVector.getWeights();
+		double energy = 0;
+		for (int i = 0; i < weights.size(); i++) {
+			energy += weights.get(i) * this.featureValues.get(i);
+		}
+		return energy;
+	}
+	public double calculateEnergy(List<Double> weights) {
 		double energy = 0;
 		for (int i = 0; i < weights.size(); i++) {
 			energy += weights.get(i) * this.featureValues.get(i);

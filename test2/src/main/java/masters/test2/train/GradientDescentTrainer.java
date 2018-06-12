@@ -11,24 +11,24 @@ import org.apache.log4j.Logger;
 import masters.test2.DataHelper;
 import masters.test2.Helper;
 import masters.test2.factorisation.Factor;
-import masters.test2.factorisation.FactorGraphModelSP;
+import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
 import masters.test2.sampler.GibbsSampler;
 import masters.test2.sampler.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 
 public class GradientDescentTrainer {
-	private static int NUMBER_OF_ITERATIONS = 1000;
+	private static int NUMBER_OF_ITERATIONS = 2000;
 	private static double REGULARIZATION_FACTOR = 500;
 	private static double TRAINING_STEP = 0.0001;
 	
-	private static int NUMBER_OF_LABELS = FactorGraphModelSP.NUMBER_OF_STATES; // {0 1}
+	private static int NUMBER_OF_LABELS = FactorGraphModel.NUMBER_OF_STATES; // {0 1}
 	private static int NUMBER_OF_FEATURES = SuperPixelDTO.NUMBER_OF_FEATURES;
 	
 	private List<ImageDTO> imageList;
-	private Map<ImageDTO, FactorGraphModelSP> imageToFactorGraphMap;
+	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModelSP> imageToFactorGraphMap) {
+	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
 	}
@@ -49,7 +49,7 @@ public class GradientDescentTrainer {
 			for (ImageDTO trainingImage : imageList) {
 				counter++;
 				// get samples
-				FactorGraphModelSP factorGraph = imageToFactorGraphMap.get(trainingImage);
+				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
 
 				ImageMask currentMask = null;
 				if (imageToMaskMap.containsKey(trainingImage)) {
@@ -91,7 +91,8 @@ public class GradientDescentTrainer {
 			}
 			if (epoch % 100 == 0) {
 				System.out.println(weightVector);
-			//	Helper.playSound("cow-moo1.wav");
+				System.out.println();
+				//Helper.playSound("cow-moo1.wav");
 			}
 			if (epoch % 101 == 0) {
 				System.out.println(weightVector);
@@ -100,36 +101,7 @@ public class GradientDescentTrainer {
 		return weightVector;
 	}
 	
-	
-	private double calculateSampleEnergy(WeightVector weightVector, FactorGraphModelSP factorGraph, ImageMask mask) {
-		return GibbsSampler.getSampleEnergy(mask.getMask(), factorGraph.getSuperPixels(), weightVector);
-	}
-	private double calculateEnergy(WeightVector weightVector, FactorGraphModelSP factorGraph) {
-		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		// local model
-		double localEnergy = 0;
-		for (SuperPixelDTO superPixel : superPixels) {
-			int label = superPixel.getLabel();
-			List<Double> featureWeights = weightVector.getFeatureWeightsForLabel(label);
-			localEnergy += superPixel.getEnergyByWeights(featureWeights);
-		}
-		
-		// pairwise model
-		double pairwiseEnergy = 0;
-		for (SuperPixelDTO superPixel : superPixels) {
-			int mainLabel = superPixel.getLabel();
-			List<SuperPixelDTO> neighbouringPixels = superPixel.getNeigbouringSuperPixels();
-			for (SuperPixelDTO neighbour : neighbouringPixels) {
-				int neighbourLabel = neighbour.getLabel();
-				double pairEnergy = weightVector.getPairSimilarityWeight(mainLabel, neighbourLabel);
-				pairwiseEnergy += pairEnergy;
-			}
-		}
-		
-		double totalEnergy = localEnergy + pairwiseEnergy;
-		return totalEnergy;
-	}
-	public static FeatureVector calculateImageFi(WeightVector weightVector, FactorGraphModelSP factorGraph, ImageMask mask) {
+	public static FeatureVector calculateImageFi(WeightVector weightVector, FactorGraphModel factorGraph, ImageMask mask) {
 		FeatureVector imageFi = new FeatureVector(weightVector.getWeightSize());
 
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();

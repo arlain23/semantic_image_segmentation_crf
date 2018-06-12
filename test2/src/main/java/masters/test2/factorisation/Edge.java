@@ -15,7 +15,7 @@ public class Edge {
 	public Edge(Factor factor, Node variable) {
 		factorToVariableMsgList = new ArrayList<Double>();
 		variableToFactorMsgList = new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModelSP.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
 			factorToVariableMsgList.add(0.0);
 			variableToFactorMsgList.add(0.0);
 		}

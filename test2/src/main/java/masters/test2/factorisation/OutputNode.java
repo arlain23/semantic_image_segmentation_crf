@@ -2,7 +2,8 @@ package masters.test2.factorisation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+
+import masters.test2.train.WeightVector;
 
 public class OutputNode implements Node{
 	
@@ -12,8 +13,8 @@ public class OutputNode implements Node{
 	private FeatureNode featureNode;
 	private List<Factor> adjacentFactors = new ArrayList<Factor>();
 	
-	public OutputNode (List<Double> weights, FeatureNode featureNode) {
-		energies = new ArrayList<Double>(weights);
+	public OutputNode (WeightVector weightVector, FeatureNode featureNode) {
+		energies = new ArrayList<Double>(weightVector.getPixelSimilarityWeights());
 		this.featureNode = featureNode;
 		maxBeliefs= new ArrayList<Double>();
 		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {

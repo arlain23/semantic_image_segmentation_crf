@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import masters.test2.factorisation.FactorGraphModelSP;
+import masters.test2.colors.ColorSpaceException;
+import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
 import masters.test2.sampler.GibbsSampler;
 import masters.test2.sampler.ImageMask;
@@ -21,14 +22,16 @@ import masters.test2.train.WeightVector;
  */
 public class App 
 {
-    public static void main( String[] args )
+    public static void main( String[] args ) throws ColorSpaceException
     {
         System.out.println(  System.getProperty("user.dir") );
         
         DataHelper dh = new DataHelper();
 		List<ImageDTO> imageList = dh.getTrainingDataTestSegmented();
+		
+		
 		Map<ImageDTO, List<SuperPixelDTO>> superPixelMap = new HashMap<ImageDTO, List<SuperPixelDTO>>();
-		Map<ImageDTO, FactorGraphModelSP> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModelSP>();
+		Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
 		
 		/*boolean test = false;
 		ImageDTO testImage = dh.readImageToImageDTO("C:\\Users\\anean\\Desktop\\cowhero2.jpg");
@@ -37,17 +40,20 @@ public class App
 		if (test) {
 			return;
 		}*/
-		WeightVector randomWeightVector = new WeightVector(FactorGraphModelSP.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_FEATURES);
+		WeightVector randomWeightVector = new WeightVector(FactorGraphModel.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_FEATURES);
 		int iterator = 0;
 		// factorisation
 		for (ImageDTO currentImage : imageList) {
 			//dh.viewImage(currentImage);
 			//DataHelper.viewImageSegmented(currentImage);
-			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 110, 0.03);
+			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 80, 0.5);
+			System.out.println("number of superpixels " + createdSuperPixels.size());
 			SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
 			superPixelMap.put(currentImage, createdSuperPixels);
-			FactorGraphModelSP factorGraph = new FactorGraphModelSP(currentImage,createdSuperPixels, randomWeightVector);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector);
 			imageToFactorGraphMap.put(currentImage, factorGraph);
+			System.out.println("number of superpixels " + createdSuperPixels.size());
+		//	DataHelper.increaseBlue(createdSuperPixels);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels);
 			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels);
@@ -58,10 +64,10 @@ public class App
 		}
 		// training
 		List<Double> initWeightList = Arrays.asList(new Double[] {
-				0.011903895425495298, 0.0021602971520209733, -0.001785182684517517,
-				-0.01137678391911572, 0.013138722976850394 ,0.009050441828712882,
-				-5.271115063795878E-4, -0.015299020128871368, -0.00726525914419535,
-				-0.10566926619525419, 0.10566926619525419 
+				-1.0, 1.0, 1.0,
+				1.0 ,-1.0,1.0 ,
+				1.0, 1.0, -1.0,
+				-0.10462444633910617, 0.10462444633910617 
 		});
 		
 
@@ -77,7 +83,7 @@ public class App
 		ImageDTO currentImage = imageList.get(0);
 		List<SuperPixelDTO> createdSuperPixels = superPixelMap.get(currentImage);
 				
-		FactorGraphModelSP factorGraph = new FactorGraphModelSP(currentImage,createdSuperPixels,weights);
+		FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels,weights);
 		
 		// inference 
 		for (int t = 0; t < 200; t++) {

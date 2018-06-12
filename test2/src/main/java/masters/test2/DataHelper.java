@@ -28,6 +28,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import masters.test2.colors.ColorSpaceException;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
@@ -488,7 +489,8 @@ public class DataHelper {
 		/* change image pixel data */
 		BufferedImage img = image.getImage();
 		for (SuperPixelDTO sp : superPixels) {
-			int rgb = new Color(sp.getMeanR(), sp.getMeanG(), sp.getMeanB()).getRGB();
+			double[] rgbArray = sp.getMeanRGB();
+			int rgb = new Color((int)rgbArray[0],(int)rgbArray[1], (int)rgbArray[2]).getRGB();
 			List<PixelDTO> pixels = sp.getPixels();
 			for (PixelDTO p : pixels) {
 				img.setRGB(p.getXIndex(), p.getYIndex(), rgb);
@@ -536,6 +538,32 @@ public class DataHelper {
 	        result[i] = Arrays.copyOf(original[i], original[i].length);
 	    }
 	    return result;
+	}
+	
+	public static void increaseBlue(List<SuperPixelDTO> superPixels) throws ColorSpaceException {
+		for (SuperPixelDTO superPixel : superPixels) {
+			if (superPixel.getLabel() == 0) {
+				double[] rgb = superPixel.getMeanRGB();
+				System.out.println("#Niebo " + rgb[0] + " " + rgb[1] + " " + rgb[2] );
+				int newGreen = (rgb[1] > 120) ? (int)rgb[1] - 120 : 0;
+				rgb[0] = 0;
+				rgb[1] = newGreen;
+				
+				superPixel.setMeanRGB(rgb);
+				
+				
+			}
+			if (superPixel.getLabel() == 2) {
+				double[] rgb = superPixel.getMeanRGB();
+				System.out.println("#Trawa " + rgb[0] + " " + rgb[1] + " " + rgb[2] );
+				int newBlue = (rgb[2] > 40) ? (int)rgb[2] - 40 : 0;
+				//superPixel.setMeanB(newBlue);
+				rgb[2] = 0;
+				
+				superPixel.setMeanRGB(rgb);
+			}
+		}
+		
 	}
 	
 	/* 	not used */

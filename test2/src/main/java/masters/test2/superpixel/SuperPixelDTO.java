@@ -3,6 +3,7 @@ package masters.test2.superpixel;
 import java.awt.Color;
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,22 +11,19 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import masters.test2.Helper;
+import masters.test2.Constants;
+import masters.test2.colors.ColorSpaceConverter;
+import masters.test2.colors.ColorSpaceException;
 import masters.test2.factorisation.FactorGraphModel;
-import masters.test2.factorisation.FactorGraphModelSP;
 import masters.test2.image.PixelDTO;
 import masters.test2.sampler.ImageMask;
 import masters.test2.train.FeatureVector;
+import masters.test2.train.WeightVector;
 
 public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
-	private int meanR;
-	private int meanG;
-	private int meanB;
 	
-	private double scaledR;
-	private double scaledG;
-	private double scaledB;
-	
+	private FeatureVector featureVector;
+	private double[] meanRGB;	
 	public static int NUMBER_OF_FEATURES = 3;
 	private int label;
 	
@@ -46,7 +44,29 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
         this.identifingColorRGB = superPixelColor.getRGB();
 	}
 	
-	public void initMeanColours() {
+	private void initFeatureVector(double[] rgb) throws ColorSpaceException {
+		List<Double> featureValues = null;
+		this.meanRGB = rgb;
+		switch (Constants.colorSpace) {
+		case RGB:
+			featureValues = initRGBFeatures(meanRGB);
+			break;
+		case CIELAB:
+			featureValues = initCIELABFeatures(meanRGB);
+			break;
+		case HSL:
+			featureValues = initHSLFeatures(meanRGB);
+			break;
+		default:
+			throw new ColorSpaceException("Undefined color space");
+		}
+		this.featureVector = new FeatureVector(featureValues);
+	}
+	public void initFeatureVector() throws ColorSpaceException {
+		this.meanRGB = getMeanRGBValue();
+		initFeatureVector(meanRGB);
+	}
+	private double [] getMeanRGBValue () {
 		double RSum = 0;
 		double GSum = 0;
 		double BSum = 0;
@@ -56,16 +76,30 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 			BSum += pixel.getB();
 		}
 		int numberOfPixels = pixels.size();
-		this.meanR = (int) Math.round(RSum / numberOfPixels);
-		this.meanG = (int) Math.round(GSum / numberOfPixels);
-		this.meanB = (int) Math.round(BSum / numberOfPixels);
+		double meanR = (int) Math.round(RSum / numberOfPixels);
+		double meanG = (int) Math.round(GSum / numberOfPixels);
+		double meanB = (int) Math.round(BSum / numberOfPixels);
 		
-		//scale 
-		this.scaledR = meanR / 255.0;
-		this.scaledG = meanG / 255.0;
-		this.scaledB = meanB / 255.0;
+		return new double [] {meanR, meanG, meanB};
+	}
+	private List<Double> initRGBFeatures (double [] rgb) {
+		
+		//scaled 
+		double scaledR = rgb[0] / 255.0;
+		double scaledG = rgb[1] / 255.0;
+		double scaledB = rgb[2] / 255.0;
+		
+		return Arrays.asList(new Double[] {scaledR, scaledG, scaledB});
 		
 	}
+	private List<Double> initHSLFeatures (double [] rgb) {
+		return Arrays.asList(ColorSpaceConverter.rgb2hsl(rgb));
+	}
+	private List<Double> initCIELABFeatures (double [] rgb) {
+		return Arrays.asList(ColorSpaceConverter.rgb2lab(rgb));
+	}
+	
+	
 	public void initBorderPixels() {
 		for (PixelDTO pixel : pixels) {
 			if (pixel.isBorderPixel()) {
@@ -131,28 +165,29 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		}
 	}
 	
-	public double getEnergyByWeights(List<Double> pixelFeatureWeights) {
-		return scaledR * pixelFeatureWeights.get(0) + 
-			scaledG * pixelFeatureWeights.get(1) +
-			scaledB * pixelFeatureWeights.get(2);
+	public double getEnergyByWeightVector(WeightVector weightVector) {
+		return featureVector.calculateEnergy(weightVector);
+	}
+	public double getEnergyByWeightVector(WeightVector weightVector, int label) {
+		return featureVector.calculateEnergy(weightVector.getFeatureWeightsForLabel(label));
 	}
 	
 	public FeatureVector getLocalImageFi(ImageMask mask){
-		FeatureVector imageFi = new FeatureVector(FactorGraphModelSP.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
 		int featureIndex = 0;
 		int objectLabel = this.label;
 		if (mask != null) {
 			objectLabel = mask.getMask().get(this.superPixelIndex);
 		}
-		for (int label = 0; label < FactorGraphModelSP.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
 			if (label == objectLabel) {
-				imageFi.setFeatureValue(featureIndex++, scaledR);
-				imageFi.setFeatureValue(featureIndex++, scaledG);
-				imageFi.setFeatureValue(featureIndex++, scaledB);
+				for (double featureValue : this.featureVector.getFeatureValues()) {
+					imageFi.setFeatureValue(featureIndex++, featureValue);
+				}
 			} else {
-				imageFi.setFeatureValue(featureIndex++, 0.0);
-				imageFi.setFeatureValue(featureIndex++, 0.0);
-				imageFi.setFeatureValue(featureIndex++, 0.0);
+				for (double featureValue : this.featureVector.getFeatureValues()) {
+					imageFi.setFeatureValue(featureIndex++, 0.0);
+				}
 			}
 		}
 		
@@ -177,18 +212,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return 0;
 	}
 	
-	public int getMeanR() {
-		return meanR;
-	}
-
-	public int getMeanG() {
-		return meanG;
-	}
-
-	public int getMeanB() {
-		return meanB;
-	}
-
 	public int getLabel() {
 		return label;
 	}
@@ -252,6 +275,19 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		x += minX;
 		return new Point(x,y);
 	}
+	
+	
+	public void setMeanRGB(double[] meanRGB) throws ColorSpaceException {
+		initFeatureVector(meanRGB);
+	}
+	public double[] getMeanRGB() {
+		return this.meanRGB;
+	}
+
+	public FeatureVector getFeatureVector() {
+		return featureVector;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
