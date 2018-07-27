@@ -76,7 +76,36 @@ public class ColorSpaceConverter {
 		
 		return i < 0 ? 0 : Math.sqrt(i);
 	}
-	/******************************************************/
+	/**************************HSV**************************/
+	
+	public static Double[] rgb2hsv (double [] rgb) {
+		
+		Double r = rgb[0] / 255.0;
+		Double g = rgb[1] / 255.0;
+		Double b = rgb[2] / 255.0;
+		
+		Double computedH = 0.0;
+		Double computedS = 0.0;
+		Double computedV = 0.0;
+
+
+		Double minRGB = Math.min(r, Math.min(g,b));
+		Double maxRGB = Math.max(r, Math.max(g,b));
+
+		 // Black-gray-white
+		if (minRGB == maxRGB) {
+			computedV = minRGB;
+		  return new Double [] {0.0, 0.0, computedV};
+		}
+
+		 // Colors other than black-gray-white:
+		Double d = (r == minRGB) ? g-b : ((b == minRGB) ? r-g : b-r);
+		Double h = (r == minRGB) ? 3.0 : ((b == minRGB) ? 1.0 : 5.0);
+		computedH = 60.0*(h - d/(maxRGB - minRGB));
+		computedS = (maxRGB - minRGB)/maxRGB;
+		computedV = maxRGB;
+		return new Double[]{computedH, computedS, computedV};
+	}
 	
 	/************************* HSL ************************/
 	public static Double[] rgb2hsl(double[] rgb) {
@@ -123,6 +152,7 @@ public class ColorSpaceConverter {
 		hsl[0] = h;
 		hsl[1] = s * 100.0;
 		hsl[2] = l * 100.0;
+		System.out.println("hsl " + h + " "  +  s + " "+ l);
 		return hsl;
 	}
 	
@@ -181,5 +211,7 @@ public class ColorSpaceConverter {
 
    		return p;
 	}
+	
+	
 	
 }

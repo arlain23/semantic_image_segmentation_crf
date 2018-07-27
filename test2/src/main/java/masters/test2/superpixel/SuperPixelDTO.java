@@ -11,7 +11,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import masters.test2.Constants;
+import masters.test2.Helper;
 import masters.test2.colors.ColorSpaceConverter;
 import masters.test2.colors.ColorSpaceException;
 import masters.test2.factorisation.FactorGraphModel;
@@ -24,7 +27,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	
 	private FeatureVector featureVector;
 	private double[] meanRGB;	
-	public static int NUMBER_OF_FEATURES = 3;
+	public static int NUMBER_OF_FEATURES;
 	private int label;
 	
 	private int identifingColorRGB;
@@ -57,9 +60,16 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		case HSL:
 			featureValues = initHSLFeatures(meanRGB);
 			break;
+		case HSV:
+			featureValues = initHSVFeatures(meanRGB);
+			break;
+		case HISTOGRAM:
+			featureValues = initHistogramFeatures();
+			break;
 		default:
 			throw new ColorSpaceException("Undefined color space");
 		}
+		NUMBER_OF_FEATURES = featureValues.size();
 		this.featureVector = new FeatureVector(featureValues);
 	}
 	public void initFeatureVector() throws ColorSpaceException {
@@ -92,11 +102,66 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return Arrays.asList(new Double[] {scaledR, scaledG, scaledB});
 		
 	}
+	private List<Double> initHSVFeatures (double [] rgb) {
+		return Arrays.asList(ColorSpaceConverter.rgb2hsv(rgb));
+	}
 	private List<Double> initHSLFeatures (double [] rgb) {
 		return Arrays.asList(ColorSpaceConverter.rgb2hsl(rgb));
 	}
 	private List<Double> initCIELABFeatures (double [] rgb) {
 		return Arrays.asList(ColorSpaceConverter.rgb2lab(rgb));
+	}
+	private List<Double> initHistogramFeatures() {
+		List<Double> features = Helper.initFixedSizedListDouble(3 * Constants.NUMBER_OF_HISTOGRAM_DIVISIONS);
+		int numberOfColorIndexes = 256; 
+		
+		// get frequencies of each color section
+		List<Integer> redFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
+		List<Integer> greenFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
+		List<Integer> blueFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
+		
+		for (PixelDTO pixel : pixels) {
+			int r = pixel.getR();
+			int newValue = redFrequencies.get(r) + 1;
+			redFrequencies.set(r, newValue);
+			
+			int g = pixel.getG();
+			newValue = greenFrequencies.get(g) + 1;
+			greenFrequencies.set(g, newValue);
+			
+			int b = pixel.getB();
+			newValue = blueFrequencies.get(b) + 1;
+			blueFrequencies.set(b, newValue);
+		}
+		
+		if (numberOfColorIndexes % Constants.NUMBER_OF_HISTOGRAM_DIVISIONS != 0) {
+			Constants._log.error(numberOfColorIndexes + " has to be divisable by the number of histogram divisions");
+			throw new RuntimeErrorException(null);
+		}
+		
+		int blockSize = numberOfColorIndexes / Constants.NUMBER_OF_HISTOGRAM_DIVISIONS;
+		for (int section = 0; section < Constants.NUMBER_OF_HISTOGRAM_DIVISIONS; section ++) {
+			// red
+			int redSum = 0;
+			int greenSum = 0;
+			int blueSum = 0;
+			for (int i = section * blockSize; i < (section + 1) * blockSize; i++) {
+				redSum += redFrequencies.get(i);
+				greenSum += greenFrequencies.get(i);
+				blueSum += blueFrequencies.get(i);
+			}
+			features.set(0 * section, redSum * 1.0); 	//red 
+			features.set(1 * section, greenSum * 1.0); 	//green 
+			features.set(2 * section, blueSum * 1.0); 	//blue
+		}
+		
+		// normalise
+		int numberOfPixels = pixels.size();
+		for (int i = 0; i < features.size(); i++) {
+			double scaledValue = features.get(i) / numberOfPixels;
+			features.set(i, scaledValue);
+		}
+		return features;
 	}
 	
 	
@@ -173,13 +238,13 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	}
 	
 	public FeatureVector getLocalImageFi(ImageMask mask){
-		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		FeatureVector imageFi = new FeatureVector(Constants.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
 		int featureIndex = 0;
 		int objectLabel = this.label;
 		if (mask != null) {
 			objectLabel = mask.getMask().get(this.superPixelIndex);
 		}
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			if (label == objectLabel) {
 				for (double featureValue : this.featureVector.getFeatureValues()) {
 					imageFi.setFeatureValue(featureIndex++, featureValue);
@@ -199,10 +264,10 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 			label1 = mask.getMask().get(this.superPixelIndex);
 		}
 		int label2 = superPixel.getLabel();
-		FeatureVector imageFi = new FeatureVector(FactorGraphModel.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
+		FeatureVector imageFi = new FeatureVector(Constants.NUMBER_OF_STATES * NUMBER_OF_FEATURES + 2);
 		boolean labelsEquality = label1 == label2;
 		int labelDiff = (labelsEquality) ? 0 : 1;
-		int featureIndex = FactorGraphModel.NUMBER_OF_STATES * 3;
+		int featureIndex = Constants.NUMBER_OF_STATES * 3;
 		imageFi.setFeatureValue(featureIndex++, 1 - labelDiff);
 		imageFi.setFeatureValue(featureIndex++, labelDiff);
 		return imageFi;
@@ -221,6 +286,9 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		updatePixelLabels();
 	}
 	public void updatePixelLabels() {
+		if (this.label == -1) {
+			System.out.println("setting labels " + this.superPixelIndex + " } " + this.label);
+		}
 		for (PixelDTO pixel : pixels) {
 			pixel.setLabel(this.label);
 		}

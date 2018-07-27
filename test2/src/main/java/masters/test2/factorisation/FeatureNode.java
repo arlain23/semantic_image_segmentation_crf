@@ -3,6 +3,9 @@ package masters.test2.factorisation;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.management.RuntimeErrorException;
+
+import masters.test2.Constants;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.WeightVector;
@@ -21,7 +24,7 @@ public class FeatureNode implements Node{
 		maxBeliefs = new ArrayList<Double>();
 		energies = new ArrayList<Double>();
 		//calculate energy
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
 			double energy = superPixel.getFeatureVector().calculateEnergy(weightVector.getPixelFeatureWeights().get(label)); 
 					
@@ -50,6 +53,10 @@ public class FeatureNode implements Node{
 	public void setPixelLabel(int label) {
 		if (superPixel != null) {
 			superPixel.setLabel(label);
+			if (label == -1) {
+				Constants._log.error("set pixel label -1" );
+				throw new RuntimeErrorException(null);
+			}
 			return;
 		}
 		pixel.setLabel(label);

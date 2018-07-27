@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import masters.test2.Constants;
 import masters.test2.DataHelper;
 import masters.test2.Helper;
 import masters.test2.factorisation.FactorGraphModel;
@@ -17,7 +18,7 @@ public class GibbsSampler {
 	public static List<ImageMask> getSamples(FactorGraphModel factorGraph, WeightVector weightVector,
 			int numberOfSamples, boolean print) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		int numberOfLabels = FactorGraphModel.NUMBER_OF_STATES;
+		int numberOfLabels = Constants.NUMBER_OF_STATES;
 
 		List<ImageMask> resultSampling = new ArrayList<ImageMask>();
 		int maskSize = superPixels.size();
@@ -63,7 +64,7 @@ public class GibbsSampler {
 	public static ImageMask getSample(FactorGraphModel factorGraph, WeightVector weightVector,
 			ImageMask previousMask) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		int numberOfLabels = FactorGraphModel.NUMBER_OF_STATES;
+		int numberOfLabels = Constants.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
 		boolean save = false;
 

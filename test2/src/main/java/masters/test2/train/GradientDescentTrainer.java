@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import masters.test2.Constants;
 import masters.test2.DataHelper;
 import masters.test2.Helper;
 import masters.test2.factorisation.Factor;
@@ -18,11 +19,11 @@ import masters.test2.sampler.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 
 public class GradientDescentTrainer {
-	private static int NUMBER_OF_ITERATIONS = 2000;
-	private static double REGULARIZATION_FACTOR = 500;
-	private static double TRAINING_STEP = 0.0001;
+	private static int NUMBER_OF_ITERATIONS = Constants.NUMBER_OF_ITERATIONS;
+	private static double REGULARIZATION_FACTOR = Constants.REGULARIZATION_FACTOR;
+	private static double TRAINING_STEP = Constants.TRAINING_STEP;
 	
-	private static int NUMBER_OF_LABELS = FactorGraphModel.NUMBER_OF_STATES; // {0 1}
+	private static int NUMBER_OF_LABELS = Constants.NUMBER_OF_STATES; // {0 1}
 	private static int NUMBER_OF_FEATURES = SuperPixelDTO.NUMBER_OF_FEATURES;
 	
 	private List<ImageDTO> imageList;
@@ -85,7 +86,11 @@ public class GradientDescentTrainer {
 				WeightVector newWeightVetor = new WeightVector(newWeights, NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
 				if (epoch % 100 == 0) {
 					double mse = MSE(weightVector, newWeightVetor);
-					System.out.println("mse " + mse);
+					System.out.print("Gradients ( ");
+					for (Double d : gradients) {
+						System.out.print(d + " ");
+					}
+					System.out.println(" )");
 				}
 				weightVector = newWeightVetor;
 			}

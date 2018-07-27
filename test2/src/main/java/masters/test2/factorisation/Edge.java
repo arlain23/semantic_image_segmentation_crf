@@ -5,6 +5,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
 
+import masters.test2.Constants;
+
 public class Edge {
 	private List<Double> factorToVariableMsgList;
 	private List<Double> variableToFactorMsgList;
@@ -15,7 +17,7 @@ public class Edge {
 	public Edge(Factor factor, Node variable) {
 		factorToVariableMsgList = new ArrayList<Double>();
 		variableToFactorMsgList = new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			factorToVariableMsgList.add(0.0);
 			variableToFactorMsgList.add(0.0);
 		}

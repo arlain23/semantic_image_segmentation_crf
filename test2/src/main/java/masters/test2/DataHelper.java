@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,19 +26,23 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
+import javax.management.RuntimeErrorException;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+
+import org.apache.log4j.Logger;
 
 import masters.test2.colors.ColorSpaceException;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.train.GradientDescentTrainer;
 
 public class DataHelper {
 	//private static String FOREGROUND_HEX_COLOUR = "#c00080";
 	private static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f", "#ff00ff"});
-	private static Map<Integer,Color> LABEL_TO_COLOUR_MAP= new HashMap<Integer,Color>();
+	private static Map<Integer,Color> LABEL_TO_COLOUR_MAP = new HashMap<Integer,Color>();
 	static {
         Color label0Colour =  new Color(0, 0, 0); 		// Color black
         Color label1Colour = new Color(255, 255, 255); 	// Color white
@@ -59,8 +65,9 @@ public class DataHelper {
 	private static String VAL_LIST_PATH = "src/resources/horse_val.txt";
 	private static String TRAIN_AND_VAL_LIST_PATH = "src/resources/horse_trainval.txt";
 	
-	public static String TEST_TRAIN_SET = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\zielone_kropki\\Train";
-	public static String TEST_SEGMENTATION_RESULTS = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\zielone_kropki\\Result";
+	public static String TEST_TEST_SET = Constants.TEST_PATH;
+	public static String TEST_TRAIN_SET = Constants.TRAIN_PATH;
+	public static String TEST_SEGMENTATION_RESULTS = Constants.RESULT_PATH;
 	
 	public List<ImageDTO> getTrainingDataTest() {
 		
@@ -88,17 +95,59 @@ public class DataHelper {
 		return imageList;
 		
 	}
-	private List<File> getFilesFromDirectory(String path) {
+	private static List<File> getFilesFromDirectory(String path) {
 		File folder = new File(path);
 		File[] listOfFiles = folder.listFiles();
 		return Arrays.asList(listOfFiles);
 	}
-	public List<ImageDTO> getTrainingDataTestSegmented() {
+	public static void foo () {
+		String basePath = "E:\\Studia\\CSIT\\praca_magisterska\\datasets\\VOCtrainval_11-May-2012\\VOCdevkit\\VOC2012\\JPEGImages\\";
+		List<File> resultFiles = getFilesFromDirectory(TEST_SEGMENTATION_RESULTS);
+		for (int i = 0; i < resultFiles.size(); i++) {
+			File trainFile = resultFiles.get(i);
+			String fileName = trainFile.getName();
+			fileName = fileName.replaceAll("_N","");
+			System.out.println(fileName);
+			String src = basePath + fileName;
+			String dst = TEST_TRAIN_SET  + fileName;
+			try {
+				Files.copy(new File(src).toPath(), new File(dst).toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	public static List<ImageDTO> getTestData() {
+		List<File> testFiles = getFilesFromDirectory(TEST_TRAIN_SET);
+		
+		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
+		for (int i = 0; i < testFiles.size(); i++) {
+			if (i >= Constants.TEST_IMAGE_LIMIT) {
+				break;
+			}
+			File trainFile = testFiles.get(i);
+			
+			BufferedImage trainImg = openImage(trainFile.getPath());
+			
+			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg);
+			PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
+			imageObj.pixelData = pixelData;
+			
+			imageList.add(imageObj);
+		}
+		return imageList;
+	}
+	
+	public static List<ImageDTO> getTrainingDataTestSegmented() {
 		List<File> trainingFiles = getFilesFromDirectory(TEST_TRAIN_SET);
 		List<File> resultFiles = getFilesFromDirectory(TEST_SEGMENTATION_RESULTS);
 		
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		for (int i = 0; i < trainingFiles.size(); i++) {
+			if (i >= Constants.TRAIN_IMAGE_LIMIT) {
+				break;
+			}
 			File trainFile = trainingFiles.get(i);
 			File segmentedFile = resultFiles.get(i);
 			
@@ -128,7 +177,7 @@ public class DataHelper {
 		return imageObj;
 	}
 	
-	private void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
+	private static void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
 		PixelDTO[][] pixelData = imageObj.pixelData;
 		for (int i = 0; i < pixelData[0].length; i++) {
 			for (int j = 0; j < pixelData.length; j++) {
@@ -165,7 +214,7 @@ public class DataHelper {
 		}
 		return imageList;
 	}
-	private BufferedImage openImage(String path) {
+	private static BufferedImage openImage(String path) {
 		BufferedImage img;
 		try {
 			img = ImageIO.read(new File(path));
@@ -197,7 +246,7 @@ public class DataHelper {
 					  int label = -1;
 					  String hexColor = String.format("#%02x%02x%02x", r, g, b);
 					  if (!col.contains(hexColor)) {
-						  System.out.println(hexColor);
+//						  _log.info(hexColor);
 						  col.add(hexColor);
 					  }
 					  for (int i = 0; i < SEGMENTED_HEX_COLOURS.size(); i++) {
@@ -308,7 +357,7 @@ public class DataHelper {
 		}
 	}
 	
-	public void saveImage(int[][] pixelData){
+	public static void saveImage(int[][] pixelData){
 		try {
 			String newFileName = UUID.randomUUID() + ".png";
 			String newFilePath = SEGMENTATION_PATH_HORSE + "\\" +  newFileName;
@@ -350,18 +399,28 @@ public class DataHelper {
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
+	
 	public static void viewImageSegmented(ImageDTO image) {
+		viewImageSegmented(image, "");
+	}
+	public static void viewImageSegmented(ImageDTO image, String title) {
 		/* change image pixel data */
 		BufferedImage img = image.getImage();
 		
         for (int x = 0; x < img.getWidth(); x++) {
             for (int y = 0; y < img.getHeight(); y++) {
+            	try {
             	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
             	img.setRGB(x, y, value);
+            	} catch (NullPointerException e) {
+            		Constants._log.error("null", e);
+                	System.out.println("image.pixelData[x][y].getLabel()" + image.pixelData[x][y].getLabel());
+                	throw new RuntimeErrorException(null);
+            	}
             }
         }
         ImageIcon icon = new ImageIcon(img);
-        JFrame frame=new JFrame();
+        JFrame frame=new JFrame(title);
         frame.setLayout(new FlowLayout());
         frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
         JLabel lbl = new JLabel();
@@ -372,6 +431,9 @@ public class DataHelper {
 	}
 	
 	public static void viewImageSegmented(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask) {
+		viewImageSegmented(image, superPixels, mask, "");
+	}
+	public static void viewImageSegmented(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask, String title) {
 		
 		/* change image pixel data */
 		BufferedImage img = image.getImage();
@@ -385,7 +447,7 @@ public class DataHelper {
 		}
             		
         ImageIcon icon = new ImageIcon(img);
-        JFrame frame = new JFrame();
+        JFrame frame = new JFrame(title);
         frame.setLayout(new FlowLayout());
         frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
         JLabel lbl = new JLabel();
@@ -395,11 +457,11 @@ public class DataHelper {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
-	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels) {
+	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
 		for (SuperPixelDTO superPixel : superPixels) {
 			superPixel.updatePixelLabels();
 		}
-		viewImageSegmented(image);
+		viewImageSegmented(image, title);
 	}
 	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask) {
 		for (SuperPixelDTO superPixel : superPixels) {
@@ -450,6 +512,9 @@ public class DataHelper {
         
 	}
 	public static void viewImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels) {
+		viewImageSuperpixelBordersOnly(image, superPixels, "");
+	}
+	public static void viewImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
 		BufferedImage img = image.getImage();
 		for (SuperPixelDTO superPixel : superPixels) {
             int rgbSuperPixel = superPixel.getIdentifingColorRGB();
@@ -459,7 +524,7 @@ public class DataHelper {
 			}
 		}
         ImageIcon icon = new ImageIcon(img);
-        JFrame frame = new JFrame();
+        JFrame frame = new JFrame(title);
         frame.setLayout(new FlowLayout());
         frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
         JLabel lbl = new JLabel();
@@ -486,6 +551,9 @@ public class DataHelper {
 		}
 	}
 	public static void viewImageSuperpixelMeanData(ImageDTO image, List<SuperPixelDTO> superPixels) {
+		viewImageSuperpixelMeanData(image, superPixels, "");
+	}
+	public static void viewImageSuperpixelMeanData(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
 		/* change image pixel data */
 		BufferedImage img = image.getImage();
 		for (SuperPixelDTO sp : superPixels) {
@@ -498,7 +566,7 @@ public class DataHelper {
 		}
             		
         ImageIcon icon = new ImageIcon(img);
-        JFrame frame = new JFrame();
+        JFrame frame = new JFrame(title);
         frame.setLayout(new FlowLayout());
         frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
         JLabel lbl = new JLabel();
@@ -601,4 +669,7 @@ public class DataHelper {
 	  }
 	  return hashColours;
   }
+  
+  
+  final static Logger _log = Logger.getLogger(DataHelper.class);
 }

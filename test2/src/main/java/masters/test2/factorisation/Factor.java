@@ -3,6 +3,8 @@ package masters.test2.factorisation;
 import java.util.ArrayList;
 import java.util.List;
 
+import masters.test2.Constants;
+
 public class Factor {
 
 	public int leftX = -1;
@@ -31,7 +33,7 @@ public class Factor {
 		this.rightSuperPixelIndex = rightSuperPixelIndex;
 		isSuperPixelFactor = true;
 		maxBeliefs= new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
 		}
 	}
@@ -50,7 +52,7 @@ public class Factor {
 		this.rightX = rightX;
 		this.rightY = rightY;
 		maxBeliefs= new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
 		}
 		

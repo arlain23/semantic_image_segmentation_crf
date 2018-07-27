@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.RuntimeErrorException;
+
+import masters.test2.Constants;
 import masters.test2.colors.ColorSpaceException;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
@@ -95,24 +98,28 @@ public class SuperPixelHelper {
 		for (SuperPixelDTO superPixel : superPixels) {
 			List<PixelDTO> pixels = superPixel.getPixels();
 			List<Integer> labelOccurrences = new ArrayList<Integer>();
-			for (int i = 0; i < FactorGraphModel.NUMBER_OF_STATES; i++) {
+			for (int i = 0; i < Constants.NUMBER_OF_STATES; i++) {
 				labelOccurrences.add(0);
 			}
 			// count label occurances
 			for (PixelDTO pixel : pixels) {
 				int label = pixel.getLabel();
-				if (label >= FactorGraphModel.NUMBER_OF_STATES) label = 0; //asign other colours as background
+				if (label >= Constants.NUMBER_OF_STATES) label = 0; //asign other colours as background
 				int numberOfOccurances = labelOccurrences.get(label);
 				labelOccurrences.set(label, ++numberOfOccurances);
 			}
 			// get most common label
 			int occurreceMax = 0;
 			int chosenLabel = -1;
-			for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+			for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 				if (labelOccurrences.get(label) > occurreceMax) {
 					occurreceMax = labelOccurrences.get(label);
 					chosenLabel = label;
 				}
+			}
+			if (chosenLabel == -1) {
+				Constants._log.error("updateSuperPixelLabels" + " chosen label -1");
+				throw new RuntimeErrorException(null);
 			}
 			superPixel.setLabel(chosenLabel);
 		}

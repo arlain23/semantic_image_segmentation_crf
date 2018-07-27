@@ -3,6 +3,7 @@ package masters.test2.factorisation;
 import java.util.ArrayList;
 import java.util.List;
 
+import masters.test2.Constants;
 import masters.test2.train.WeightVector;
 
 public class OutputNode implements Node{
@@ -17,7 +18,7 @@ public class OutputNode implements Node{
 		energies = new ArrayList<Double>(weightVector.getPixelSimilarityWeights());
 		this.featureNode = featureNode;
 		maxBeliefs= new ArrayList<Double>();
-		for (int label = 0; label < FactorGraphModel.NUMBER_OF_STATES; label++) {
+		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 			maxBeliefs.add(Double.POSITIVE_INFINITY);
 		}
 		

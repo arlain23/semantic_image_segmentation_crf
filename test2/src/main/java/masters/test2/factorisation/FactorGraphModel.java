@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
+import masters.test2.Constants;
 import masters.test2.Helper;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
@@ -16,8 +19,8 @@ import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.WeightVector;
 
 public class FactorGraphModel {
-	public static int NUMBER_OF_STATES = 3;
-	public static double CONVERGENCE_TOLERANCE = 0.000001;
+	public static int NUMBER_OF_STATES = Constants.NUMBER_OF_STATES;
+	public static double CONVERGENCE_TOLERANCE = Constants.CONVERGENCE_TOLERANCE;
 	
 	private ImageDTO image;
 	private List<SuperPixelDTO> superPixels;
@@ -77,9 +80,6 @@ public class FactorGraphModel {
 			factorVariableToEdgeMap.put(factorToFeatureNodeKey, factorToFeatureNodeEdge);
 			
 		}
-		System.out.println("nr of factors: " + createdFactors.size() );
-
-		System.out.println("nr of edges: " + factorVariableToEdgeMap.keySet().size());
 	}
 	
 	public void computeFactorToVariableMessages() {
@@ -216,17 +216,16 @@ public class FactorGraphModel {
 	private int getMaximumIndexOfAList(List<Double> list){
 		int maxIndex = -1;
 		double maxValue = Double.NEGATIVE_INFINITY;
-		//System.out.print("# ");
 		for (int i = 0; i < list.size(); i++ ){
-			//System.out.print(list.get(i) + " ");
 			if (list.get(i) > maxValue) {
 				maxValue = list.get(i);
 				maxIndex = i;
 			}
-		//	System.out.print(" " + i + " " + list.get(i));
 		}
-		//System.out.println();
-		//System.out.println( "  ->" + maxIndex);
+		if (maxIndex == -1) {
+			Constants._log.error("getMaximumIndexOfAList - 1");
+			throw new RuntimeErrorException(null);
+		}
 		return maxIndex;
 	}
 	
@@ -242,10 +241,13 @@ public class FactorGraphModel {
 					winnerLabelIndex = i;
 				}
 			}
-			
+			if (winnerLabelIndex == -1) {
+				Constants._log.error("updatePixelData  -1");
+			}
 			//update label
 			FeatureNode featureNode = currentNode.getFeatureNode();
 			featureNode.setPixelLabel(winnerLabelIndex);
+			
 		}
 	}
 	public boolean checkIfConverged() {
