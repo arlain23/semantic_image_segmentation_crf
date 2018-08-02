@@ -1,6 +1,5 @@
 package masters.test2;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -9,8 +8,6 @@ import java.util.Map;
 import masters.test2.colors.ColorSpaceException;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
-import masters.test2.sampler.GibbsSampler;
-import masters.test2.sampler.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.superpixel.SuperPixelHelper;
 import masters.test2.train.GradientDescentTrainer;
@@ -22,10 +19,10 @@ import masters.test2.train.WeightVector;
  */
 public class App 
 {
+	public static boolean PRINT = false;
     public static void main( String[] args ) throws ColorSpaceException
     {
         System.out.println(  System.getProperty("user.dir") );
-        
 		List<ImageDTO> imageList = DataHelper.getTrainingDataTestSegmented();
 		
 		
@@ -38,7 +35,7 @@ public class App
 		for (ImageDTO currentImage : imageList) {
 			//dh.viewImage(currentImage);
 			//DataHelper.viewImageSegmented(currentImage);
-			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 200, 100);
+			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
 			SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
 			superPixelMap.put(currentImage, createdSuperPixels);
 			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector);
@@ -75,13 +72,13 @@ public class App
 		
 		// get test image
 		List<ImageDTO> testImageList = DataHelper.getTestData();
-
+		App.PRINT = false;
 		System.out.println("");
 		System.out.println("Performing testing");
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {
-			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, 200, 100);
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights);
+			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights, imageToFactorGraphMap);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, ("test " + imageCounter));
 			

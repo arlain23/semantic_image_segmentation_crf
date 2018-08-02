@@ -7,8 +7,8 @@ import org.apache.log4j.Logger;
 
 import masters.test2.Constants;
 import masters.test2.DataHelper;
-import masters.test2.Helper;
 import masters.test2.factorisation.FactorGraphModel;
+import masters.test2.image.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.FeatureVector;
 import masters.test2.train.GradientDescentTrainer;
@@ -156,51 +156,6 @@ public class GibbsSampler {
 	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector) {
 		FeatureVector featureVector = GradientDescentTrainer.calculateImageFi(weightVector, factorGraph, mask);
 		return featureVector.calculateEnergy(weightVector);
-	}
-
-	public static double getSampleEnergy(List<Integer> mask, List<SuperPixelDTO> superPixels,
-			WeightVector weightVector) {
-		// local model
-		double localEnergy = 0;
-		for (int superPixelIndex = 0; superPixelIndex < mask.size(); superPixelIndex++) {
-			localEnergy += getSuperPixelEnergyLocalModel(superPixelIndex, mask, superPixels, weightVector);
-		}
-		// pairwise model
-		double pairwiseEnergy = 0;
-		for (int superPixelIndex = 0; superPixelIndex < mask.size(); superPixelIndex++) {
-			pairwiseEnergy += getSuperPixelEnergyPairwiseModel(superPixelIndex, mask, superPixels, weightVector);
-		}
-
-		double totalEnergy = localEnergy + pairwiseEnergy;
-		return totalEnergy;
-	}
-
-	public static double getSampleEnergyForOneSuperPixel(int superPixelIndex, List<Integer> mask,
-			List<SuperPixelDTO> superPixels, WeightVector weightVector) {
-		double localEnergy = getSuperPixelEnergyLocalModel(superPixelIndex, mask, superPixels, weightVector);
-		double pairwiseEnergy = getSuperPixelEnergyPairwiseModel(superPixelIndex, mask, superPixels, weightVector);
-		return localEnergy + pairwiseEnergy;
-	}
-
-	private static double getSuperPixelEnergyLocalModel(int superPixelIndex, List<Integer> mask,
-			List<SuperPixelDTO> superPixels, WeightVector weightVector) {
-		int label = mask.get(superPixelIndex);
-		SuperPixelDTO currentSuperPixel = superPixels.get(superPixelIndex);
-		return currentSuperPixel.getEnergyByWeightVector(weightVector, label);
-	}
-
-	private static double getSuperPixelEnergyPairwiseModel(int superPixelIndex, List<Integer> mask,
-			List<SuperPixelDTO> superPixels, WeightVector weightVector) {
-		double pairwiseEnergy = 0;
-		int mainLabel = mask.get(superPixelIndex);
-		SuperPixelDTO currentSuperPixel = superPixels.get(superPixelIndex);
-		List<SuperPixelDTO> neighbouringPixels = currentSuperPixel.getNeigbouringSuperPixels();
-		for (SuperPixelDTO neighbour : neighbouringPixels) {
-			int neighbourLabel = mask.get(neighbour.getSuperPixelIndex());
-			double pairEnergy = weightVector.getPairSimilarityWeight(mainLabel, neighbourLabel);
-			pairwiseEnergy += pairEnergy;
-		}
-		return pairwiseEnergy;
 	}
 
 	private static List<Integer> joinLists(List<Integer> resultingList, int value, List<Integer> previousList) {

@@ -14,8 +14,8 @@ import masters.test2.Helper;
 import masters.test2.factorisation.Factor;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
+import masters.test2.image.ImageMask;
 import masters.test2.sampler.GibbsSampler;
-import masters.test2.sampler.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 
 public class GradientDescentTrainer {
@@ -62,15 +62,15 @@ public class GradientDescentTrainer {
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
 				//fi for image
-				FeatureVector imageFi = calculateImageFi(weightVector, factorGraph, null);
+				FeatureVector imageFi = calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask());
 				
 				//fi for sample
 				FeatureVector sampleFi = calculateImageFi(weightVector, factorGraph, currentMask);
 				
 				for (int weightIndex = 0; weightIndex < numberOfWeights; weightIndex++) {
 					double regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
-					double imageFiTerm = imageFi.getFeatureValues().get(weightIndex);
-					double sampleFiTerm = sampleFi.getFeatureValues().get(weightIndex);
+					double imageFiTerm = (Double)imageFi.getFeatures().get(weightIndex).getValue();
+					double sampleFiTerm = (Double)sampleFi.getFeatures().get(weightIndex).getValue();
 					double gradientValue = regularizationTerm + imageFiTerm - sampleFiTerm;
 					gradients.set(weightIndex, gradientValue);
 				}
@@ -86,11 +86,8 @@ public class GradientDescentTrainer {
 				WeightVector newWeightVetor = new WeightVector(newWeights, NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
 				if (epoch % 100 == 0) {
 					double mse = MSE(weightVector, newWeightVetor);
-					System.out.print("Gradients ( ");
-					for (Double d : gradients) {
-						System.out.print(d + " ");
-					}
-					System.out.println(" )");
+					double gradientLength = getVectorLength(gradients);
+					System.out.println("Gradient length: " + gradientLength);
 				}
 				weightVector = newWeightVetor;
 			}
@@ -116,13 +113,13 @@ public class GradientDescentTrainer {
 			SuperPixelDTO leftSuperPixel = superPixels.get(leftSuperPixelIndex);
 			int rightSuperPixelIndex = factor.getRightSuperPixelIndex();
 			if (rightSuperPixelIndex < 0) {
-				// feature node - local model (R6)
-				FeatureVector localModel = leftSuperPixel.getLocalImageFi(mask);
+				// feature node - local model (R label*feature size)
+				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph, null);
 				imageFi.add(localModel);
 			} else {
 				// output node - pairwise model (R2)
 				SuperPixelDTO rightSuperPixel = superPixels.get(rightSuperPixelIndex);
-				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask);
+				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null);
 				imageFi.add(pairWiseModel);
 			}
 			
@@ -139,6 +136,14 @@ public class GradientDescentTrainer {
 		}
 
 		return sum / (double) weights1.size();
+	}
+	private double getVectorLength(List<Double> vector) {
+		double length = 0;
+		for (Double d : vector) {
+			length += d*d;
+		}
+		length = Math.sqrt(length);
+		return length;
 	}
 	
 	

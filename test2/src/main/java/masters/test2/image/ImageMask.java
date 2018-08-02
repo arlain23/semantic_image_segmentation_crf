@@ -1,8 +1,10 @@
-package masters.test2.sampler;
+package masters.test2.image;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import masters.test2.Constants;
+import masters.test2.Helper;
 import masters.test2.superpixel.SuperPixelDTO;
 
 public class ImageMask {
@@ -12,7 +14,6 @@ public class ImageMask {
 		mask = new ArrayList<Integer>(maskSize);
 		
 	}
-	
 	public ImageMask(List<Integer> mask) {
 		this.mask = mask;
 	}
@@ -30,6 +31,14 @@ public class ImageMask {
 	}
 	public List<Integer> getMask() {
 		return mask;
+	}
+	public List<Integer> getLabelCounts() {
+		List<Integer> labelCount = Helper.initFixedSizedListInteger(Constants.NUMBER_OF_STATES);
+		for (Integer label : this.mask) {
+			int previousValue = labelCount.get(label);
+			labelCount.set(label, ++previousValue);
+		}
+		return labelCount;
 	}
 	@Override
 	public String toString() {

@@ -15,21 +15,12 @@ public class FeatureNode implements Node{
 	private SuperPixelDTO superPixel = null;
 	
 	private List<Double> maxBeliefs;
-	private List<Double> energies;
 	
 	private Factor edgeFactor;
 	
 	public FeatureNode (SuperPixelDTO superPixel, WeightVector weightVector) {
 		this.superPixel = superPixel;
 		maxBeliefs = new ArrayList<Double>();
-		energies = new ArrayList<Double>();
-		//calculate energy
-		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
-			maxBeliefs.add(Double.POSITIVE_INFINITY);
-			double energy = superPixel.getFeatureVector().calculateEnergy(weightVector.getPixelFeatureWeights().get(label)); 
-					
-			energies.add(energy);
-		}
 	}
 	
 	public Factor getEdgeFactor() {
@@ -66,20 +57,8 @@ public class FeatureNode implements Node{
 		return pixel.getLabel();
 	}
 
-	public List<Double> getEnergies() {
-		return energies;
-	}
-
-	public void setEnergies(List<Double> energies) {
-		this.energies = energies;
-	}
-	public void setEnergiesValue(int index, double value) {
-		this.energies.set(index, value);
-	}
-
-	public double getEnergy(int label1, int label2) {
-		//obsolete
-		return energies.get(label1);
+	public SuperPixelDTO getSuperPixel() {
+		return superPixel;
 	}
 
 	@Override

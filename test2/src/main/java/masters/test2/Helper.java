@@ -3,7 +3,9 @@ package masters.test2;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -11,7 +13,9 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.apache.log4j.chainsaw.Main;
+import masters.test2.features.ContinousColourFeature;
+import masters.test2.features.Feature;
+
 
 public class Helper {
 	public static List<Double> initFixedSizedListDouble(int listSize) {
@@ -21,7 +25,13 @@ public class Helper {
 		}
 		return result;
 	}
-	
+	public static List<Feature> initFixedSizedListContinuousFeature(int listSize) {
+		List<Feature> result = new ArrayList<Feature>();
+		for (int i = 0; i < listSize; i++) {
+			result.add(new ContinousColourFeature(0.0));
+		}
+		return result;
+	}
 	public static List<Integer> initFixedSizedListInteger(int listSize) {
 		List<Integer> result = new ArrayList<Integer>();
 		for (int i = 0; i < listSize; i++) {
@@ -29,7 +39,6 @@ public class Helper {
 		}
 		return result;
 	}
-
 
 	public static void printList(List<Double> labelProbabilities) {
 		System.out.print("( ");

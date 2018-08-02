@@ -9,13 +9,11 @@ import masters.test2.train.WeightVector;
 public class OutputNode implements Node{
 	
 	private List<Double> maxBeliefs;
-	private List<Double> energies;					// 0: the same; 1:different
 	
 	private FeatureNode featureNode;
 	private List<Factor> adjacentFactors = new ArrayList<Factor>();
 	
 	public OutputNode (WeightVector weightVector, FeatureNode featureNode) {
-		energies = new ArrayList<Double>(weightVector.getPixelSimilarityWeights());
 		this.featureNode = featureNode;
 		maxBeliefs= new ArrayList<Double>();
 		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
@@ -54,25 +52,6 @@ public class OutputNode implements Node{
 	}
 	public void setMaxBeliefsValue(int index, double value) {
 		this.maxBeliefs.set(index, value);
-	}
-
-	public List<Double> getEnergies() {
-		return energies;
-	}
-
-	public void setEnergies(List<Double> energies) {
-		this.energies = energies;
-	}
-	public void setEnergiesValue(int index, double value) {
-		this.energies.set(index, value);
-	}
-	public double getEnergy(int label1, int label2) {
-		if (label1 == label2) {
-			return energies.get(0);
-		} else {
-			return energies.get(1);
-		}
-		
 	}
 
 	@Override

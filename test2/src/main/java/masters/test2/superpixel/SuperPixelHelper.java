@@ -101,10 +101,10 @@ public class SuperPixelHelper {
 			for (int i = 0; i < Constants.NUMBER_OF_STATES; i++) {
 				labelOccurrences.add(0);
 			}
-			// count label occurances
+			// count label occurrences
 			for (PixelDTO pixel : pixels) {
 				int label = pixel.getLabel();
-				if (label >= Constants.NUMBER_OF_STATES) label = 0; //asign other colours as background
+				if (label >= Constants.NUMBER_OF_STATES) label = 0; //Assign other colours as background
 				int numberOfOccurances = labelOccurrences.get(label);
 				labelOccurrences.set(label, ++numberOfOccurances);
 			}
