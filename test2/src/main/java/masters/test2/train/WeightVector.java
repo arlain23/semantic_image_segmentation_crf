@@ -8,13 +8,13 @@ import masters.test2.Constants;
 public class WeightVector {
 	private List<Double> weights;
 	
-	public WeightVector (int numberOfLabels, int numberOfFeatures) {
+	public WeightVector (int numberOfLabels, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		//random
 		int numberOfWeights;
 		if (Constants.USE_NON_LINEAR_MODEL) {
-			numberOfWeights = numberOfFeatures + numberOfFeatures + 1;
+			numberOfWeights = numberOfLocalFeatures + numberOfPairwiseFeatures + 1;
 		} else {
-			numberOfWeights = numberOfFeatures * numberOfLabels + 2;
+			numberOfWeights = numberOfLocalFeatures * numberOfLabels + 2;
 		}
 		List<Double> weights = new ArrayList<Double>();
 		for (int i = 0; i < numberOfWeights; i++) {
@@ -23,7 +23,7 @@ public class WeightVector {
 		}
 		this.weights = weights;
 	}
-	public WeightVector (List<Double> weights, int numberOfLabels, int numberOfFeatures) {
+	public WeightVector (List<Double> weights) {
 		this.weights = weights;
 	}
 	public WeightVector (List<List<Double>> pixelFeatureWeights, List<Double> pixelSimilarityWeights) {

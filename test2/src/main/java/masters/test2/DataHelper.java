@@ -9,21 +9,16 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.imageio.ImageIO;
 import javax.management.RuntimeErrorException;
@@ -33,11 +28,9 @@ import javax.swing.JLabel;
 
 import org.apache.log4j.Logger;
 
-import masters.test2.colors.ColorSpaceException;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
-import masters.test2.train.GradientDescentTrainer;
 
 public class DataHelper {
 	private static List<String>	SEGMENTED_HEX_COLOURS = Constants.SEGMENTED_HEX_COLOURS;
@@ -206,6 +199,10 @@ public class DataHelper {
 							  break;
 						  }
 					  }
+					  if (label == -1) {
+						  _log.error("getPixelDTOs: chosen label -1 for hex colour " + hexColor);
+						  throw new RuntimeErrorException(null);
+					  }
 					  pixel = new PixelDTO(x, y, r, g, b, alpha, label);
 				  } else {
 					  pixel = new PixelDTO(x, y, r, g, b, alpha, null);
@@ -281,7 +278,7 @@ public class DataHelper {
             	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
             	img.setRGB(x, y, value);
             	} catch (NullPointerException e) {
-            		Constants._log.error("null", e);
+            		_log.error("null", e);
                 	System.out.println("image.pixelData[x][y].getLabel()" + image.pixelData[x][y].getLabel());
                 	throw new RuntimeErrorException(null);
             	}
@@ -404,14 +401,33 @@ public class DataHelper {
 	
 	public static void saveImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
 		BufferedImage img = image.getImage();
-		/*for (SuperPixelDTO superPixel : superPixels) {
+		for (SuperPixelDTO superPixel : superPixels) {
             int rgbSuperPixel = superPixel.getIdentifingColorRGB();
 			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
 			for (PixelDTO borderPixel : borderPixels) {
 				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
 			}
-		}*/
+		}
 		File outputFile = new File(path);
+		try {
+			ImageIO.write(img, "png", outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public static void saveImageSuperpixelMeanData(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		BufferedImage img = image.getImage();
+		/* change image pixel data */
+		for (SuperPixelDTO sp : superPixels) {
+			double[] rgbArray = sp.getMeanRGB();
+			int rgb = new Color((int)rgbArray[0],(int)rgbArray[1], (int)rgbArray[2]).getRGB();
+			List<PixelDTO> pixels = sp.getPixels();
+			for (PixelDTO p : pixels) {
+				img.setRGB(p.getXIndex(), p.getYIndex(), rgb);
+			}
+		}
+            		
+        File outputFile = new File(path);
 		try {
 			ImageIO.write(img, "png", outputFile);
 		} catch (IOException e) {
@@ -494,5 +510,5 @@ public class DataHelper {
   }
   
   
-  final static Logger _log = Logger.getLogger(DataHelper.class);
+  private static Logger _log = Logger.getLogger(DataHelper.class);
 }

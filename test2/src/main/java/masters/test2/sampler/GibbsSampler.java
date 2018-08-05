@@ -189,5 +189,5 @@ public class GibbsSampler {
 		System.out.println("sth wrong (get random label)");
 		return 0;
 	}
-	final static Logger _log = Logger.getLogger(GibbsSampler.class);
+	private static Logger _log = Logger.getLogger(GibbsSampler.class);
 }

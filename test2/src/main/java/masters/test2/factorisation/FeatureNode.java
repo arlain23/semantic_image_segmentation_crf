@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.management.RuntimeErrorException;
 
+import org.apache.log4j.Logger;
+
 import masters.test2.Constants;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;
@@ -45,7 +47,7 @@ public class FeatureNode implements Node{
 		if (superPixel != null) {
 			superPixel.setLabel(label);
 			if (label == -1) {
-				Constants._log.error("set pixel label -1" );
+				_log.error("set pixel label -1" );
 				throw new RuntimeErrorException(null);
 			}
 			return;
@@ -93,4 +95,7 @@ public class FeatureNode implements Node{
 	public String toString() {
 		return ("p: " + pixel + " | sp " + superPixel);
 	}
+	
+	private static Logger _log = Logger.getLogger(FeatureNode.class);
+
 }

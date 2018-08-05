@@ -1,8 +1,11 @@
 package masters.test2.train;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import masters.test2.Helper;
 import masters.test2.features.ContinousColourFeature;
@@ -10,6 +13,7 @@ import masters.test2.features.Feature;
 
 public class FeatureVector {
 	private List<Feature> features;
+	private Map<Feature, Object> featureToValueMap= null;
 	public FeatureVector (int featureSize) {
 		features = Helper.initFixedSizedListContinuousFeature(featureSize);
 	}
@@ -21,10 +25,16 @@ public class FeatureVector {
 	public FeatureVector (List<Double> featureValues) {
 		this.features = new ArrayList<Feature>();
 		for (Double d : featureValues) {
-			this.features.add(new ContinousColourFeature(d));
+			this.features.add(new ContinousColourFeature(d, -1));
+		}
+		initFeatureToValueMapping();
+	}
+	public void initFeatureToValueMapping() {
+		this.featureToValueMap = new HashMap<Feature, Object>();
+		for (Feature feature : this.features) {
+			featureToValueMap.put(feature, feature.getValue());
 		}
 	}
-	
 	public List<Feature> getFeatures() {
 		return this.features;
 	}
@@ -87,6 +97,13 @@ public class FeatureVector {
 			}
 		}
 		return true;
+	}
+
+	public Object getFeatureValue(Feature feature) {
+		if (this.featureToValueMap == null) {
+			initFeatureToValueMapping();
+		}
+		return this.featureToValueMap.get(feature);
 	}
 	
 	

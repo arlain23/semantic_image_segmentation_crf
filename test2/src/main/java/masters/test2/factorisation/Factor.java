@@ -68,6 +68,7 @@ public class Factor {
 		this.maxBeliefs = maxBeliefs;
 	}
 	public void setMaxBeliefsValue(int index, double value) {
+		System.out.println("MAX BEL " + index + " -> " + value);
 		this.maxBeliefs.set(index, value);
 	}
 	

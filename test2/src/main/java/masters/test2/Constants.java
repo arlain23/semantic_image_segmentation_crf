@@ -8,14 +8,13 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import masters.test2.sampler.GibbsSampler;
-import masters.test2.superpixel.SuperPixelDTO;
-
 public class Constants {
 
 	public static Logger _log = Logger.getLogger(App.class);
 
 	public static boolean USE_NON_LINEAR_MODEL = true;
+	public static boolean INCLUDE_DESCRETE_FEATURES = false;
+	public static boolean INCLUDE_CONTINUOUS_FEATURES = true;
 	
 	public static enum ColorSpace {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
@@ -30,20 +29,21 @@ public class Constants {
 	public static enum ColorAverageMethod {
 	    MEAN, POPULARITY
 	}
-	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
-//	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
+//	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
+	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
 	
 	public static int NUMBER_OF_HISTOGRAM_DIVISIONS = 16;
 	
 	//image path
 	
 	public static enum ImageFolder {
-	    cow, horse, paint, pig
+	    cow, horse, paint, pig, paint_neighbours
 	}
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.cow;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.pig;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
 	
 	public static String MAIN_PATH = System.getProperty("user.dir") + "\\src\\resources\\";
 	public static String TRAIN_PATH = MAIN_PATH + IMAGE_FOLDER + "\\train\\" ;
@@ -51,28 +51,28 @@ public class Constants {
 	public static String TEST_PATH = MAIN_PATH + IMAGE_FOLDER + "\\test\\" ;
 	
 	
-	public static int TRAIN_IMAGE_LIMIT = 1;
-	public static int TEST_IMAGE_LIMIT = 2;
+	public static int TRAIN_IMAGE_LIMIT = 5;
+	public static int TEST_IMAGE_LIMIT = 5;
 	
-	public static double KERNEL_BANDWIDTH = 1.0; 
+	public static double KERNEL_BANDWIDTH = 0.25; 
 	
 	// training
-	public static int NUMBER_OF_ITERATIONS = 400;
+	public static int NUMBER_OF_ITERATIONS = 1500;
 	public static double REGULARIZATION_FACTOR = 1000;
 	public static double TRAINING_STEP = 0.000001;
 	
 	//factorisation
-	public static int NUMBER_OF_STATES = 3;
+	public static int NUMBER_OF_STATES = 4;
 	public static double CONVERGENCE_TOLERANCE = 0.000001;
 	
 	// image input
-	public static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f", "#ff00ff"});
+	public static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f", "#7f007f"});
 	public static Map<Integer,Color> LABEL_TO_COLOUR_MAP = new HashMap<Integer,Color>();
 	static {
-        Color label0Colour =  new Color(0, 0, 0); 		// Color black
-        Color label1Colour = new Color(255, 255, 255); 	// Color white
-        Color label2Colour = new Color(127,127,127); 	// Color gray
-        Color label3Colour = new Color(127,0,127); 	// Color gray
+        Color label0Colour =  new Color(0, 0, 0); 		// Colour black
+        Color label1Colour = new Color(255, 255, 255); 	// Colour white
+        Color label2Colour = new Color(127,127,127); 	// Colour gray
+        Color label3Colour = new Color(127,0,127); 	// Colour violet
         LABEL_TO_COLOUR_MAP.put(0, label0Colour);
         LABEL_TO_COLOUR_MAP.put(1, label1Colour);
         LABEL_TO_COLOUR_MAP.put(2, label2Colour);

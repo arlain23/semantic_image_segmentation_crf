@@ -10,9 +10,16 @@ import java.util.Set;
 
 import javax.management.RuntimeErrorException;
 
+import org.apache.log4j.Logger;
+
+import masters.test2.App;
 import masters.test2.Constants;
+import masters.test2.Helper;
 import masters.test2.features.BinaryMask;
+import masters.test2.features.ContinousColourFeature;
+import masters.test2.features.DiscreteColourFeature;
 import masters.test2.features.Feature;
+import masters.test2.features.ValueMask;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
@@ -31,8 +38,8 @@ public class FactorGraphModel {
 	private Map<FactorEdgeKey, Edge> factorVariableToEdgeMap = new HashMap<FactorEdgeKey, Edge>();
 	
 	private int numberOfSuperPixels;
-	// TODO remove for continuous? 
-	private Map<Feature, BinaryMask> featureMap;
+	private Map<Feature, BinaryMask> descreteFeatureMap;
+	private Map<Feature, ValueMask> continuousFeatureMap;
 	private Map<Integer, BinaryMask> labelMap;
 	
 	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
@@ -47,7 +54,6 @@ public class FactorGraphModel {
 	
 
 	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector) {
-		System.out.println("################ calling constructor ######################");
 		this.image = image;
 		this.superPixels = superPixels;
 		this.numberOfSuperPixels = superPixels.size();
@@ -55,7 +61,8 @@ public class FactorGraphModel {
 		this.createdFactors = new HashSet<Factor>();
 		this.weightVector = weightVector;
 		// prepare binary masks for features and labels
-		this.featureMap = new HashMap<Feature, BinaryMask>();
+		this.descreteFeatureMap = new HashMap<Feature, BinaryMask>();
+		this.continuousFeatureMap = new HashMap<Feature, ValueMask>();
 		this.labelMap = initLabelToBinaryMaskMap(numberOfSuperPixels);
 		
 		
@@ -65,14 +72,25 @@ public class FactorGraphModel {
 			BinaryMask labelMask = labelMap.get(superPixel.getLabel());
 			labelMask.switchOnByte(superPixel.getSuperPixelIndex());
 			
-			//prepare feature masks
-			List<Feature> features = superPixel.getFeatureVector().getFeatures();
-			for (Feature feature : features) {
-				if (!featureMap.containsKey(feature)) {
-					featureMap.put(feature, new BinaryMask(numberOfSuperPixels));
+			if (Constants.USE_NON_LINEAR_MODEL) {
+				//prepare feature masks
+				List<Feature> features = superPixel.getLocalFeatureVector().getFeatures();
+				for (Feature feature : features) {
+					if (feature instanceof DiscreteColourFeature){
+						if (!descreteFeatureMap.containsKey(feature)) {
+							descreteFeatureMap.put(feature, new BinaryMask(numberOfSuperPixels));
+						}
+						BinaryMask featureMask = descreteFeatureMap.get(feature);
+						featureMask.switchOnByte(superPixel.getSuperPixelIndex());
+					} else if (feature instanceof ContinousColourFeature) {
+						if (!continuousFeatureMap.containsKey(feature)) {
+							continuousFeatureMap.put(feature, new ValueMask(numberOfSuperPixels));
+						}
+						ValueMask featureMask = continuousFeatureMap.get(feature);
+						featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)superPixel.getLocalFeatureVector().getFeatureValue(feature));
+					}
+					
 				}
-				BinaryMask featureMask = featureMap.get(feature);
-				featureMask.switchOnByte(superPixel.getSuperPixelIndex());
 			}
 			
 			FeatureNode featureNode = new FeatureNode(superPixel, weightVector);
@@ -92,7 +110,7 @@ public class FactorGraphModel {
 						if (factor.equals(f)) {
 							outputNode.addAdjacentFactors(f);
 							factor = f;
-							//break;
+							break;
 						}
 					}
 				}
@@ -117,36 +135,41 @@ public class FactorGraphModel {
 			Edge factorToFeatureNodeEdge = new Edge(factor, featureNode);
 			factorVariableToEdgeMap.put(factorToFeatureNodeKey, factorToFeatureNodeEdge);
 		}
-		System.out.println("printing binary masks");
-		System.out.println("**************************************");
-		for (Integer label : labelMap.keySet()) {
-			System.out.println("label " + label);
-			BinaryMask bm = labelMap.get(label);
-			System.out.println(bm);
-		}
-		System.out.println("**************************************");
-		for (Feature feature : featureMap.keySet()) {
-			System.out.println(feature);
-			BinaryMask bm = featureMap.get(feature);
-			System.out.println(bm);
+		if (Constants.USE_NON_LINEAR_MODEL && App.PRINT) {
+			System.out.println("printing binary masks");
+			System.out.println("**************************************");
+			for (Integer label : labelMap.keySet()) {
+				System.out.println("label " + label);
+				BinaryMask bm = labelMap.get(label);
+				System.out.println(bm);
+			}
+			System.out.println("**************************************");
+			for (Feature feature : descreteFeatureMap.keySet()) {
+				System.out.println(feature);
+				BinaryMask bm = descreteFeatureMap.get(feature);
+				System.out.println(bm);
+			}
+			System.out.println("**************************************");
+			for (Feature feature : continuousFeatureMap.keySet()) {
+				System.out.println(feature);
+				ValueMask vm = continuousFeatureMap.get(feature);
+				System.out.println(vm);
+			}
 		}
 	}
 	
 
 	public void computeFactorToVariableMessages() {
-		boolean print = false;
 		//for every factor
 		for (Factor factor : createdFactors) {
 			//for every label
 			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				//OutputNode leftNode = factorisedImage[factor.leftX][factor.leftY];
 				OutputNode leftNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
 				Node rightNode;
 				boolean isOutputNode = (factor.getRightSuperPixelIndex() >= 0);
 				
 				// pairwise model
 				if (isOutputNode) {
-					//rightNode = factorisedImage[factor.rightX][factor.rightY];
 					rightNode = factorisedSuperPixels.get(factor.getRightSuperPixelIndex());
 					OutputNode rightNodeCast = (OutputNode) rightNode;
 					
@@ -156,7 +179,7 @@ public class FactorGraphModel {
 					FactorEdgeKey factorToLeftNodeKey = new FactorEdgeKey(factor, leftNode);
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
-					//transfering message to left node
+					//Transferring message to left node
 					double msgToLeftNode = 0;
 					List<Double> innerSumValues = new ArrayList<Double>();
 					// inner sum
@@ -167,7 +190,6 @@ public class FactorGraphModel {
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
 						double rightNodeVariableToFactorMsg = factorToRightNodeEdge.getVariableToFactorMsg().get(variableLabel);
-						//double rightNodeVariableToFactorMsg = factorToRightNodeEdge.getVariableToFactorMsg().get(label);
 						double differenceValue = rightNodeVariableToFactorMsg - featureEnergy;
 						innerSumValues.add(differenceValue);
 					}
@@ -180,8 +202,6 @@ public class FactorGraphModel {
 					}
 					
 					msgToLeftNode = maxInnerSum + Math.log(msgToLeftNode);
-					if (print)
-					System.out.println("L" + label + ": " + factorToLeftNodeEdge.getFactorToVariableMsg().get(label) + "->" + msgToLeftNode);
 					
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, msgToLeftNode);
 					
@@ -197,7 +217,6 @@ public class FactorGraphModel {
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
 						double leftNodeVariableToFactorMsg = factorToLeftNodeEdge.getVariableToFactorMsg().get(variableLabel);
-						//double leftNodeVariableToFactorMsg = factorToLeftNodeEdge.getVariableToFactorMsg().get(label);
 						double differenceValue = leftNodeVariableToFactorMsg - featureEnergy;
 						innerSumValues.add(differenceValue);
 					}
@@ -209,9 +228,6 @@ public class FactorGraphModel {
 					
 						
 					msgToRightNode = maxInnerSum + Math.log(msgToRightNode);
-					if (print)
-						System.out.println("R" + label + ": " + factorToRightNodeEdge.getFactorToVariableMsg().get(label) + "->" + msgToRightNode);
-						
 					factorToRightNodeEdge.setFactorToVariableMsgValue(label, msgToRightNode);
 					
 				} else {		// local model
@@ -227,15 +243,11 @@ public class FactorGraphModel {
 					double featureEnergy = localImageFi.calculateEnergy(this.weightVector);
 					
 					/*
-					 * TODO
 					 * ZDRADZIECKI MINUS
 					 */
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, -featureEnergy);
-					if (print)
-					System.out.println("feature node: " + featureEnergy);
 				}
 			}
-			print = false;
 		}
 	}
 	public void computeVariableToFactorMessages() {
@@ -269,7 +281,6 @@ public class FactorGraphModel {
 					}
 					normalisationFactor = Math.log(normalisationFactor);
 					double normalisedMsgValue = msgSums.get(label) - normalisationFactor;
-					//System.out.println("L" + label + ": " + factorToNodeEdge.getVariableToFactorMsg().get(label) + "->" + normalisedMsgValue);
 					
 					factorToNodeEdge.setVariableToFactorMsgValue(label, normalisedMsgValue);
 				}
@@ -286,7 +297,7 @@ public class FactorGraphModel {
 			}
 		}
 		if (maxIndex == -1) {
-			Constants._log.error("getMaximumIndexOfAList - 1");
+			_log.error("getMaximumIndexOfAList - 1");
 			throw new RuntimeErrorException(null);
 		}
 		return maxIndex;
@@ -305,7 +316,7 @@ public class FactorGraphModel {
 				}
 			}
 			if (winnerLabelIndex == -1) {
-				Constants._log.error("updatePixelData  -1");
+				_log.error("updatePixelData  -1 ");
 			}
 			//update label
 			FeatureNode featureNode = currentNode.getFeatureNode();
@@ -324,8 +335,6 @@ public class FactorGraphModel {
 			// check maxBeliefChange
 			for (int i = 0; i < previousMaxBeliefs.size(); i++) {
 				Double beliefChange = Math.abs(newMaxBeliefs.get(i) - previousMaxBeliefs.get(i));
-				//System.out.print((factor.isFeatureFactor ? "feature " : "output") + "  ->  ");
-				//System.out.println("belief change " + beliefChange);
 				if (beliefChange > maxFactorBefiefChange) {
 					maxFactorBefiefChange = beliefChange;
 				}
@@ -354,7 +363,6 @@ public class FactorGraphModel {
 	private List<Double> computeFactorBeliefs(Factor factor) {
 		if (factor.isFeatureFactor) {
 			// Energy E1 - local model
-			// factor domain 0 1
 			OutputNode currentNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
 			FeatureNode featureNode =  currentNode.getFeatureNode();
 			
@@ -385,13 +393,11 @@ public class FactorGraphModel {
 			
 			for (int label = 0; label < NUMBER_OF_STATES; label++) {
 				double normalisedBelief = Math.exp(newFactorBeliefs.get(label) - normalisationFactor);
-				//System.out.println(newFactorBeliefs.get(label) + "->" + normalisedBelief);
 				newFactorBeliefs.set(label, normalisedBelief);
 			}
 			return newFactorBeliefs;
 		} else {
 			// Energy E2 - pairwise model
-			// factor domain 00 01 10 11
 			OutputNode leftNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
 			OutputNode rightNode = factorisedSuperPixels.get(factor.getRightSuperPixelIndex());
 			
@@ -432,7 +438,6 @@ public class FactorGraphModel {
 			
 			for (int i = 0; i < newFactorBeliefs.size(); i++) {
 				double normalisedBelief = Math.exp(newFactorBeliefs.get(i) - normalisationFactor);
-				//System.out.println("#" + newFactorBeliefs.get(i) + "->" + normalisedBelief);
 				newFactorBeliefs.set(i, normalisedBelief);
 			}
 			return newFactorBeliefs;
@@ -466,7 +471,6 @@ public class FactorGraphModel {
 		for (Double belief : variableBeliefs) {
 				double outputBelief = Math.exp(belief - normalisingFactorPlus);
 				outputBeliefs.add(outputBelief);
-				//System.out.println("$" + outputBelief);
 		}
 		
 		return outputBeliefs;
@@ -477,7 +481,6 @@ public class FactorGraphModel {
 		for (int i = 0; i < FactorGraphModel.NUMBER_OF_STATES; i++) {
 			labelCount.put(i,0);
 		}
-		
 		for (OutputNode currentNode : factorisedSuperPixels) {
 			FeatureNode featureNode = currentNode.getFeatureNode();
 			int label = getMaximumIndexOfAList(currentNode.getMaxBeliefs());
@@ -530,7 +533,11 @@ public class FactorGraphModel {
 	}
 
 	public Map<Feature, BinaryMask> getFeatureMap() {
-		return featureMap;
+		return descreteFeatureMap;
+	}
+
+	public Map<Feature, ValueMask> getContinuousFeatureMap() {
+		return continuousFeatureMap;
 	}
 
 	public Map<Integer, BinaryMask> getLabelMap() {
@@ -539,9 +546,13 @@ public class FactorGraphModel {
 	public BinaryMask getLabelBinaryMask(Integer label) {
 		return this.labelMap.get(label);
 	}
-	public BinaryMask getFeatureBinaryMask(Feature feature) {
-		return this.featureMap.get(feature);
+	public BinaryMask getDiscreteFeatureBinaryMask(Feature feature) {
+		return this.descreteFeatureMap.get(feature);
 	}
 	
-
+	public ValueMask getContinuousFeatureValueMask(Feature feature) {
+		return this.continuousFeatureMap.get(feature);
+	}
+	
+	private static Logger _log = Logger.getLogger(FactorGraphModel.class);
 }

@@ -38,6 +38,8 @@ public class BinaryMask {
 		}
 		this.listSize = maskList.size();
 	}
+
+
 	public int getValue(int index) {
 		return binaryList.get(index);
 	}

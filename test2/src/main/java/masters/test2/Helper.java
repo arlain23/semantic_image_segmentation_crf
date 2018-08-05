@@ -28,7 +28,7 @@ public class Helper {
 	public static List<Feature> initFixedSizedListContinuousFeature(int listSize) {
 		List<Feature> result = new ArrayList<Feature>();
 		for (int i = 0; i < listSize; i++) {
-			result.add(new ContinousColourFeature(0.0));
+			result.add(new ContinousColourFeature(0.0, -1));
 		}
 		return result;
 	}

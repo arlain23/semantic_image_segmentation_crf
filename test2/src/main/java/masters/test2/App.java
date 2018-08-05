@@ -29,7 +29,7 @@ public class App
 		Map<ImageDTO, List<SuperPixelDTO>> superPixelMap = new HashMap<ImageDTO, List<SuperPixelDTO>>();
 		Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
 		
-		WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_FEATURES);
+		WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_LOCAL_FEATURES, SuperPixelDTO.NUMBER_OF_PAIRWISE_FEATURES);
 		int iterator = 0;
 		// factorisation
 		for (ImageDTO currentImage : imageList) {
@@ -50,29 +50,25 @@ public class App
 		}
 		// training
 		List<Double> initWeightList = Arrays.asList(new Double[] {
-				0.08292468359694471, 0.06052600318127024, 0.12554237532561843,
-				0.0898448781054524, 0.07695783160281422, 0.024718181360882035,
-				0.08879491811743553, 0.1100196824625974, 0.0945666684977111,
-				0.08930024167642975, 0.09067010498884343, 0.10900655504883139,
-				0.07482432828437814, 0.13957085957423876 
+				0.06159802235050312, 0.01641777959323196, 0.06049836548305326
  
 
  
 		});
 		
 
-		WeightVector pretrainedWeights = new WeightVector(initWeightList, 3, 3);
+		WeightVector pretrainedWeights = new WeightVector(initWeightList);
 
 		
 		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap);
 		//WeightVector weights = pretrainedWeights;
 		WeightVector weights = trainer.train(null);
+		System.out.println("final weights");
 		System.out.println(weights);
 		
 		
 		// get test image
 		List<ImageDTO> testImageList = DataHelper.getTestData();
-		App.PRINT = false;
 		System.out.println("");
 		System.out.println("Performing testing");
 		int imageCounter = 0;
@@ -81,9 +77,13 @@ public class App
 			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights, imageToFactorGraphMap);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, ("test " + imageCounter));
+			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels, "test " + (imageCounter) + " mean");
+			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_a_" + imageCounter + ".png");
+			DataHelper.saveImageSuperpixelMeanData(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_b_" + imageCounter + ".png");
+			
 			
 			// inference 
-			for (int t = 0; t < 200; t++) {
+			for (int t = 0; t < 20; t++) {
 				factorGraph.computeFactorToVariableMessages();
 				factorGraph.computeVariableToFactorMessages();
 
@@ -102,13 +102,13 @@ public class App
 					if (!shown) {
 						DataHelper.viewImageSegmentedSuperPixels(factorGraph.getImage(), createdSuperPixels, "test " + imageCounter + " inference " + t);
 					}
-					break;
+					//break;
 				}
 			}
 			factorGraph.computeLabeling();
 			DataHelper.viewImageSegmentedSuperPixels(factorGraph.getImage(), createdSuperPixels, "test " + imageCounter + " final result");
 			String filePath = "E:\\Studia\\CSIT\\praca_magisterska\\output" + (++imageCounter) + ".png";
-			DataHelper.saveImage(factorGraph.getImage(), filePath);
+			//DataHelper.saveImage(factorGraph.getImage(), filePath);
 			System.out.println("finished for image " + imageCounter);
 			System.out.println();
 		}

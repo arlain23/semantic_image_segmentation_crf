@@ -11,9 +11,12 @@ import java.util.Map;
 
 import javax.management.RuntimeErrorException;
 
+import org.apache.log4j.Logger;
+
 import masters.test2.Constants;
 import masters.test2.colors.ColorSpaceException;
 import masters.test2.factorisation.FactorGraphModel;
+import masters.test2.factorisation.FeatureNode;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 
@@ -65,8 +68,11 @@ public class SuperPixelHelper {
 		Collections.sort(superPixels);
 		initBorderData(imageDTO, superPixels);
 		for (SuperPixelDTO superPixel : superPixels) {
-			superPixel.initFeatureVector();
+			superPixel.initMeanRGB();
 			superPixel.initNeighbours(imageDTO.getPixelData(), superPixels);
+		}
+		for (SuperPixelDTO superPixel : superPixels) {
+			superPixel.initFeatureVector();
 		}
 		return superPixels;
 	}
@@ -118,11 +124,12 @@ public class SuperPixelHelper {
 				}
 			}
 			if (chosenLabel == -1) {
-				Constants._log.error("updateSuperPixelLabels" + " chosen label -1");
+				_log.error("updateSuperPixelLabels" + " chosen label -1");
 				throw new RuntimeErrorException(null);
 			}
 			superPixel.setLabel(chosenLabel);
 		}
 		
 	}
+	private static Logger _log = Logger.getLogger(SuperPixelHelper.class);
 }

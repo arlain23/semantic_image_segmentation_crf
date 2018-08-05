@@ -24,7 +24,8 @@ public class GradientDescentTrainer {
 	private static double TRAINING_STEP = Constants.TRAINING_STEP;
 	
 	private static int NUMBER_OF_LABELS = Constants.NUMBER_OF_STATES; // {0 1}
-	private static int NUMBER_OF_FEATURES = SuperPixelDTO.NUMBER_OF_FEATURES;
+	private static int NUMBER_OF_LOCAL_FEATURES = SuperPixelDTO.NUMBER_OF_LOCAL_FEATURES;
+	private static int NUMBER_OF_PAIRWISE_FEATURES = SuperPixelDTO.NUMBER_OF_PAIRWISE_FEATURES;
 	
 	private List<ImageDTO> imageList;
 	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
@@ -38,7 +39,7 @@ public class GradientDescentTrainer {
 		
 		//random initial weights
 		if (weightVector == null) {
-			weightVector = new WeightVector(NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
+			weightVector = new WeightVector(NUMBER_OF_LABELS, NUMBER_OF_LOCAL_FEATURES, NUMBER_OF_PAIRWISE_FEATURES);
 		}
 		
 		int numberOfWeights = weightVector.getWeightSize();
@@ -83,7 +84,7 @@ public class GradientDescentTrainer {
 					double newWeight = previousWeights.get(i) - TRAINING_STEP * gradients.get(i);
 					newWeights.add(newWeight);
 				}
-				WeightVector newWeightVetor = new WeightVector(newWeights, NUMBER_OF_LABELS, NUMBER_OF_FEATURES);
+				WeightVector newWeightVetor = new WeightVector(newWeights);
 				if (epoch % 100 == 0) {
 					double mse = MSE(weightVector, newWeightVetor);
 					double gradientLength = getVectorLength(gradients);
