@@ -1,6 +1,8 @@
 package masters.test2.features;
 
-public class DiscreteColourFeature implements Feature{
+import org.apache.log4j.Logger;
+
+public class DiscreteFeature implements Feature{
 	private String value;
 	
 	public Object getValue() {
@@ -11,13 +13,18 @@ public class DiscreteColourFeature implements Feature{
 		this.value = (String) value;
 	}
 	
-	public DiscreteColourFeature(String value) {
+	public DiscreteFeature(String value) {
 		this.value = value;
 	}
 	
 	public double getDifference(Feature otherFeature) {
 		return (this.value.equals((String)otherFeature.getValue()) ? 0 : 1);
 	}
+	public int getFeatureIndex() {
+		_log.error("returning feature index for discrete feature");
+		return 0;
+	}
+	
 	
 	@Override
 	public String toString() {
@@ -40,7 +47,7 @@ public class DiscreteColourFeature implements Feature{
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DiscreteColourFeature other = (DiscreteColourFeature) obj;
+		DiscreteFeature other = (DiscreteFeature) obj;
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -48,4 +55,5 @@ public class DiscreteColourFeature implements Feature{
 			return false;
 		return true;
 	}
+	Logger _log = Logger.getLogger(DiscreteFeature.class);
 }

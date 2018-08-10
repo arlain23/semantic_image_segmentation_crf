@@ -5,12 +5,12 @@ import org.apache.log4j.Logger;
 import masters.test2.App;
 import masters.test2.Constants;
 
-public class ContinousColourFeature implements Feature{
+public class ContinousFeature implements Feature{
 
 	private Double value;
 	private int featureIndex;
 	
-	public ContinousColourFeature(Double value, int featureIndex) {
+	public ContinousFeature(Double value, int featureIndex) {
 		this.value = value;
 		this.featureIndex = featureIndex;
 	}
@@ -24,6 +24,9 @@ public class ContinousColourFeature implements Feature{
 	}
 	public double getDifference(Feature otherFeature) {
 		return value - (Double)otherFeature.getValue();
+	}
+	public int getFeatureIndex() {
+		return featureIndex;
 	}
 	
 	@Override
@@ -53,7 +56,7 @@ public class ContinousColourFeature implements Feature{
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			ContinousColourFeature other = (ContinousColourFeature) obj;
+			ContinousFeature other = (ContinousFeature) obj;
 			if (featureIndex != other.featureIndex)
 				return false;
 			return true;
@@ -64,7 +67,7 @@ public class ContinousColourFeature implements Feature{
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			ContinousColourFeature other = (ContinousColourFeature) obj;
+			ContinousFeature other = (ContinousFeature) obj;
 			if (value == null) {
 				if (other.value != null)
 					return false;
@@ -75,6 +78,6 @@ public class ContinousColourFeature implements Feature{
 	}
 
 	
-	private static Logger _log = Logger.getLogger(ContinousColourFeature.class);
+	private static Logger _log = Logger.getLogger(ContinousFeature.class);
 
 }

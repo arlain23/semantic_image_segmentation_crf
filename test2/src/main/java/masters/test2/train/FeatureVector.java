@@ -7,9 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import masters.test2.Helper;
-import masters.test2.features.ContinousColourFeature;
+import masters.test2.features.ContinousFeature;
 import masters.test2.features.Feature;
+import masters.test2.utils.Helper;
 
 public class FeatureVector {
 	private List<Feature> features;
@@ -25,7 +25,7 @@ public class FeatureVector {
 	public FeatureVector (List<Double> featureValues) {
 		this.features = new ArrayList<Feature>();
 		for (Double d : featureValues) {
-			this.features.add(new ContinousColourFeature(d, -1));
+			this.features.add(new ContinousFeature(d, -1));
 		}
 		initFeatureToValueMapping();
 	}
@@ -56,16 +56,6 @@ public class FeatureVector {
 		for (int i = 0; i < weights.size(); i++) {
 			energy += weights.get(i) * (Double)this.features.get(i).getValue();
 		}
-		return energy;
-	}
-	public double calculateEnergy(List<Double> weights) {
-		System.out.println("&&&&&&&&&& calling calc energ &&&&&&&&&&&&&&&");
-		double energy = 0;
-		for (int i = 0; i < weights.size(); i++) {
-			energy += weights.get(i) * (Double)this.features.get(i).getValue();
-			System.out.print(this.features.get(i).getValue() + " ");
-		}
-		System.out.println();
 		return energy;
 	}
 	@Override

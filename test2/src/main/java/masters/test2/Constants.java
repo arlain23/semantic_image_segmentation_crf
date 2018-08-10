@@ -20,10 +20,10 @@ public class Constants {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
 	}
 	
-//	public static ColorSpace colorSpace = ColorSpace.RGB; 
+	public static ColorSpace colorSpace = ColorSpace.RGB; 
 //	public static ColorSpace colorSpace = ColorSpace.HSL; 
 //	public static ColorSpace colorSpace = ColorSpace.HSV; 
-	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
+//	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
 //	public static ColorSpace colorSpace = ColorSpace.HISTOGRAM;
 	
 	public static enum ColorAverageMethod {
@@ -42,8 +42,8 @@ public class Constants {
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.cow;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.pig;
-//	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
 	
 	public static String MAIN_PATH = System.getProperty("user.dir") + "\\src\\resources\\";
 	public static String TRAIN_PATH = MAIN_PATH + IMAGE_FOLDER + "\\train\\" ;
@@ -57,12 +57,12 @@ public class Constants {
 	public static double KERNEL_BANDWIDTH = 0.25; 
 	
 	// training
-	public static int NUMBER_OF_ITERATIONS = 1500;
+	public static int NUMBER_OF_ITERATIONS = 1000;
 	public static double REGULARIZATION_FACTOR = 1000;
 	public static double TRAINING_STEP = 0.000001;
 	
 	//factorisation
-	public static int NUMBER_OF_STATES = 4;
+	public static int NUMBER_OF_STATES = 3;
 	public static double CONVERGENCE_TOLERANCE = 0.000001;
 	
 	// image input
@@ -81,5 +81,5 @@ public class Constants {
 	
 	//superpixels 
 	public static int NUMBER_OF_SUPERPIXELS = 30;
-	public static double RIGIDNESS = 30.0;
+	public static double RIGIDNESS = 5.0;
 }

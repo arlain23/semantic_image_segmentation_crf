@@ -14,10 +14,9 @@ import org.apache.log4j.Logger;
 
 import masters.test2.App;
 import masters.test2.Constants;
-import masters.test2.Helper;
 import masters.test2.features.BinaryMask;
-import masters.test2.features.ContinousColourFeature;
-import masters.test2.features.DiscreteColourFeature;
+import masters.test2.features.ContinousFeature;
+import masters.test2.features.DiscreteFeature;
 import masters.test2.features.Feature;
 import masters.test2.features.ValueMask;
 import masters.test2.image.ImageDTO;
@@ -25,6 +24,8 @@ import masters.test2.image.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.FeatureVector;
 import masters.test2.train.WeightVector;
+import masters.test2.utils.Helper;
+import masters.test2.utils.ProbabilityContainer;
 
 public class FactorGraphModel {
 	public static int NUMBER_OF_STATES = Constants.NUMBER_OF_STATES;
@@ -42,18 +43,20 @@ public class FactorGraphModel {
 	private Map<Feature, ValueMask> continuousFeatureMap;
 	private Map<Integer, BinaryMask> labelMap;
 	
-	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
+	private Map<Feature, Double> betaMap;
 	
+	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
+	private ProbabilityContainer probabiltyContainer = null;
 	
 	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels, WeightVector weightVector,
-			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
-		this(currentImage, createdSuperPixels, weightVector);
+			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
+		this(currentImage, createdSuperPixels, weightVector, probabiltyContainer);
 		this.trainingDataimageToFactorGraphMap = imageToFactorGraphMap;
 		// TODO Auto-generated constructor stub
 	}
 	
 
-	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector) {
+	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ProbabilityContainer probabiltyContainer) {
 		this.image = image;
 		this.superPixels = superPixels;
 		this.numberOfSuperPixels = superPixels.size();
@@ -63,7 +66,9 @@ public class FactorGraphModel {
 		// prepare binary masks for features and labels
 		this.descreteFeatureMap = new HashMap<Feature, BinaryMask>();
 		this.continuousFeatureMap = new HashMap<Feature, ValueMask>();
+		this.betaMap = new HashMap<Feature, Double>();
 		this.labelMap = initLabelToBinaryMaskMap(numberOfSuperPixels);
+		this.probabiltyContainer = probabiltyContainer;
 		
 		
 		//create factors and edges
@@ -76,13 +81,13 @@ public class FactorGraphModel {
 				//prepare feature masks
 				List<Feature> features = superPixel.getLocalFeatureVector().getFeatures();
 				for (Feature feature : features) {
-					if (feature instanceof DiscreteColourFeature){
+					if (feature instanceof DiscreteFeature){
 						if (!descreteFeatureMap.containsKey(feature)) {
 							descreteFeatureMap.put(feature, new BinaryMask(numberOfSuperPixels));
 						}
 						BinaryMask featureMask = descreteFeatureMap.get(feature);
 						featureMask.switchOnByte(superPixel.getSuperPixelIndex());
-					} else if (feature instanceof ContinousColourFeature) {
+					} else if (feature instanceof ContinousFeature) {
 						if (!continuousFeatureMap.containsKey(feature)) {
 							continuousFeatureMap.put(feature, new ValueMask(numberOfSuperPixels));
 						}
@@ -186,7 +191,7 @@ public class FactorGraphModel {
 					for (int variableLabel = 0; variableLabel < NUMBER_OF_STATES; variableLabel++) {
 						
 						FeatureVector pairWiseImageFi = leftNode.getFeatureNode().getSuperPixel().getPairwiseImageFi(rightNodeCast.getFeatureNode().getSuperPixel(), 
-								this.getImageMask(), label, variableLabel);
+								this.getImageMask(), label, variableLabel, this);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
 						double rightNodeVariableToFactorMsg = factorToRightNodeEdge.getVariableToFactorMsg().get(variableLabel);
@@ -213,7 +218,7 @@ public class FactorGraphModel {
 					for (int variableLabel = 0; variableLabel < NUMBER_OF_STATES; variableLabel++) {
 						
 						FeatureVector pairWiseImageFi = rightNodeCast.getFeatureNode().getSuperPixel().getPairwiseImageFi(leftNode.getFeatureNode().getSuperPixel(), 
-								this.getImageMask(), label, variableLabel);
+								this.getImageMask(), label, variableLabel, this);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
 						double leftNodeVariableToFactorMsg = factorToLeftNodeEdge.getVariableToFactorMsg().get(variableLabel);
@@ -239,7 +244,8 @@ public class FactorGraphModel {
 					FactorEdgeKey factorToLeftNodeKey = new FactorEdgeKey(factor, leftNode);
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
-					FeatureVector localImageFi = rightNodeFeatureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap);
+					FeatureVector localImageFi = rightNodeFeatureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, 
+							this.probabiltyContainer);
 					double featureEnergy = localImageFi.calculateEnergy(this.weightVector);
 					
 					/*
@@ -373,9 +379,8 @@ public class FactorGraphModel {
 			
 			double maxFactorBeliefValue = 0;
 			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				FeatureVector localImageFi = featureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap);
+				FeatureVector localImageFi = featureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, probabiltyContainer);
 				double energy = localImageFi.calculateEnergy(this.weightVector);
-				
 				double variableToFactorMsg = factorToNodeEdge.getVariableToFactorMsg().get(label);
 				
 				double newFactorBelief = variableToFactorMsg - energy;
@@ -414,9 +419,8 @@ public class FactorGraphModel {
 			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
 				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
 					FeatureVector pairWiseImageFi = leftNode.getFeatureNode().getSuperPixel().getPairwiseImageFi(rightNode.getFeatureNode().getSuperPixel(), 
-							this.getImageMask(), label1, label2);
+							this.getImageMask(), label1, label2, this);
 					double energy = pairWiseImageFi.calculateEnergy(this.weightVector);
-					
 					double variableToFactorMsg = leftMsgs.get(label1) + rightMsgs.get(label2);
 					double newFactorBelief = variableToFactorMsg - energy;
 					if (newFactorBelief > maxFactorBelief) maxFactorBelief = newFactorBelief;
@@ -496,7 +500,34 @@ public class FactorGraphModel {
 		System.out.println("***************");
 	}
 	
+	public Double getBeta(Feature feature) {
+		Double beta = this.betaMap.get(feature);
+		return (beta == null) ? getBetaImageValue(feature) : beta;
+	}
 	
+	private Double getBetaImageValue(Feature feature) {
+		int featureIndex = feature.getFeatureIndex();
+		double betaSum = 0;
+		int numberOfPairs = 0;
+		for(Factor factor : createdFactors) {
+			if (!factor.isFeatureFactor) {
+				SuperPixelDTO leftSuperPixel = this.superPixels.get(factor.getLeftSuperPixelIndex());
+				SuperPixelDTO rightSuperPixel = this.superPixels.get(factor.getRightSuperPixelIndex());
+				
+				betaSum += Math.pow(leftSuperPixel.getPairwiseFeatureVector().getFeatures().get(featureIndex).getDifference(
+						rightSuperPixel.getPairwiseFeatureVector().getFeatures().get(featureIndex)), 2);
+				numberOfPairs++;
+			}
+		}
+		double betaValue = betaSum / numberOfPairs;
+		betaValue *= 2.0;
+		if (betaValue == 0) betaValue = 1;
+		else betaValue = 1.0 / betaValue;
+		this.betaMap.put(feature, betaValue);
+		return betaValue;
+	}
+
+
 	public ImageDTO getImage() {
 		return image;
 	}

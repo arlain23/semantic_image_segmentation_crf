@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import masters.test2.Constants;
-import masters.test2.Helper;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.utils.Helper;
 
 public class ImageMask {
 	private List<Integer> mask;

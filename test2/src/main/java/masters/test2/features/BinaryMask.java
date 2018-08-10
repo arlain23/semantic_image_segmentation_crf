@@ -2,8 +2,8 @@ package masters.test2.features;
 
 import java.util.List;
 
-import masters.test2.Helper;
 import masters.test2.image.ImageMask;
+import masters.test2.utils.Helper;
 
 public class BinaryMask {
 	private List<Integer> binaryList;

@@ -6,13 +6,13 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import masters.test2.Constants;
-import masters.test2.DataHelper;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.FeatureVector;
 import masters.test2.train.GradientDescentTrainer;
 import masters.test2.train.WeightVector;
+import masters.test2.utils.DataHelper;
 
 public class GibbsSampler {
 	public static List<ImageMask> getSamples(FactorGraphModel factorGraph, WeightVector weightVector,

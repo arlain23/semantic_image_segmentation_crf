@@ -1,4 +1,4 @@
-package masters.test2;
+package masters.test2.utils;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 
 import org.apache.log4j.Logger;
 
+import masters.test2.Constants;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.PixelDTO;
 import masters.test2.superpixel.SuperPixelDTO;

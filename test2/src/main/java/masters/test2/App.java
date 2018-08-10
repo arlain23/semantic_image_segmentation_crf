@@ -12,6 +12,8 @@ import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.superpixel.SuperPixelHelper;
 import masters.test2.train.GradientDescentTrainer;
 import masters.test2.train.WeightVector;
+import masters.test2.utils.DataHelper;
+import masters.test2.utils.ProbabilityContainer;
 
 /**
  * Hello world!
@@ -38,7 +40,7 @@ public class App
 			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
 			SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
 			superPixelMap.put(currentImage, createdSuperPixels);
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector, null);
 			imageToFactorGraphMap.put(currentImage, factorGraph);
 		//	DataHelper.increaseBlue(createdSuperPixels);
 			
@@ -48,9 +50,13 @@ public class App
 //			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_a_" + iterator + ".png");
 			iterator ++;
 		}
+		
+		//Data holders
+		ProbabilityContainer probabiltyContainer = new ProbabilityContainer(imageToFactorGraphMap);
+		
 		// training
 		List<Double> initWeightList = Arrays.asList(new Double[] {
-				0.06159802235050312, 0.01641777959323196, 0.06049836548305326
+				0.033156268062451706, 0.03281594178569262, 0.050641381268472764, 0.050945967364127494, 0.0016190301973335545 
  
 
  
@@ -60,8 +66,8 @@ public class App
 		WeightVector pretrainedWeights = new WeightVector(initWeightList);
 
 		
-		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap);
-		//WeightVector weights = pretrainedWeights;
+		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, probabiltyContainer);
+//		WeightVector weights = pretrainedWeights;
 		WeightVector weights = trainer.train(null);
 		System.out.println("final weights");
 		System.out.println(weights);
@@ -74,12 +80,12 @@ public class App
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {
 			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights, imageToFactorGraphMap);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights, imageToFactorGraphMap, probabiltyContainer);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, ("test " + imageCounter));
 			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels, "test " + (imageCounter) + " mean");
-			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_a_" + imageCounter + ".png");
-			DataHelper.saveImageSuperpixelMeanData(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_b_" + imageCounter + ".png");
+//			DataHelper.saveImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_a_" + imageCounter + ".png");
+//			DataHelper.saveImageSuperpixelMeanData(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho_b_" + imageCounter + ".png");
 			
 			
 			// inference 

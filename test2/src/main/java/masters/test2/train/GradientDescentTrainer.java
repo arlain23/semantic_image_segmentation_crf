@@ -9,14 +9,15 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import masters.test2.Constants;
-import masters.test2.DataHelper;
-import masters.test2.Helper;
 import masters.test2.factorisation.Factor;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.ImageMask;
 import masters.test2.sampler.GibbsSampler;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.utils.DataHelper;
+import masters.test2.utils.Helper;
+import masters.test2.utils.ProbabilityContainer;
 
 public class GradientDescentTrainer {
 	private static int NUMBER_OF_ITERATIONS = Constants.NUMBER_OF_ITERATIONS;
@@ -30,9 +31,12 @@ public class GradientDescentTrainer {
 	private List<ImageDTO> imageList;
 	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
+	private static ProbabilityContainer probabiltyContainer;
+	
+	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
+		this.probabiltyContainer = probabiltyContainer;
 	}
 	
 	public WeightVector train(WeightVector weightVector) {
@@ -115,12 +119,12 @@ public class GradientDescentTrainer {
 			int rightSuperPixelIndex = factor.getRightSuperPixelIndex();
 			if (rightSuperPixelIndex < 0) {
 				// feature node - local model (R label*feature size)
-				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph, null);
+				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph, null, probabiltyContainer);
 				imageFi.add(localModel);
 			} else {
 				// output node - pairwise model (R2)
 				SuperPixelDTO rightSuperPixel = superPixels.get(rightSuperPixelIndex);
-				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null);
+				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null, factorGraph);
 				imageFi.add(pairWiseModel);
 			}
 			

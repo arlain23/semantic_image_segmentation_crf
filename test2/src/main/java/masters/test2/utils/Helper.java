@@ -1,4 +1,4 @@
-package masters.test2;
+package masters.test2.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import masters.test2.features.ContinousColourFeature;
+import masters.test2.features.ContinousFeature;
 import masters.test2.features.Feature;
 
 
@@ -28,7 +28,7 @@ public class Helper {
 	public static List<Feature> initFixedSizedListContinuousFeature(int listSize) {
 		List<Feature> result = new ArrayList<Feature>();
 		for (int i = 0; i < listSize; i++) {
-			result.add(new ContinousColourFeature(0.0, -1));
+			result.add(new ContinousFeature(0.0, -1));
 		}
 		return result;
 	}
