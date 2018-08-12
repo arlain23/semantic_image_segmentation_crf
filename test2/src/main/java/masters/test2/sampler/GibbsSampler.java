@@ -10,59 +10,15 @@ import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.image.ImageMask;
 import masters.test2.superpixel.SuperPixelDTO;
 import masters.test2.train.FeatureVector;
-import masters.test2.train.GradientDescentTrainer;
 import masters.test2.train.WeightVector;
+import masters.test2.utils.CRFUtils;
 import masters.test2.utils.DataHelper;
+import masters.test2.utils.ProbabilityContainer;
 
 public class GibbsSampler {
-	public static List<ImageMask> getSamples(FactorGraphModel factorGraph, WeightVector weightVector,
-			int numberOfSamples, boolean print) {
-		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		int numberOfLabels = Constants.NUMBER_OF_STATES;
 
-		List<ImageMask> resultSampling = new ArrayList<ImageMask>();
-		int maskSize = superPixels.size();
-		for (int sampleNumber = 0; sampleNumber < numberOfSamples; sampleNumber++) {
-			// randomly generate first mask
-			ImageMask singleSampling = new ImageMask(maskSize);
-			List<Integer> resultingMask = new ArrayList<Integer>();
-			List<Integer> initMask = new ArrayList<Integer>();
-			for (int i = 0; i < maskSize; i++) {
-				int randomLabel = getRandomLabel(numberOfLabels);
-				initMask.add(randomLabel);
-			}
-
-			DataHelper.viewImageSegmentedSuperPixels(factorGraph.getImage(), superPixels, initMask);
-			for (int maskIndex = 0; maskIndex < maskSize; maskIndex++) {
-				List<Double> labelProbabilities = new ArrayList<Double>();
-
-				for (int label = 0; label < numberOfLabels; label++) {
-					ImageMask tmpMask = new ImageMask(joinLists(resultingMask, label, initMask));
-					// get probability for label
-					labelProbabilities.add(getLabelProbability(factorGraph, tmpMask, weightVector));
-				}
-				
-				calculateLabelProbabilities(labelProbabilities);
-				
-				// choose label for mask position
-				int chosenLabel = getLabelFromProbability(labelProbabilities);
-				// set label
-				resultingMask.add(chosenLabel);
-			}
-
-			singleSampling.setMask(resultingMask);
-			if (sampleNumber < 10 && print)
-				DataHelper.viewImageSegmentedSuperPixels(factorGraph.getImage(), superPixels, resultingMask);
-			resultSampling.add(singleSampling);
-		}
-
-		return resultSampling;
-
-	}
-
-	/* @AA 01.05 */
 	public static ImageMask getSample(FactorGraphModel factorGraph, WeightVector weightVector,
-			ImageMask previousMask) {
+			ImageMask previousMask, ProbabilityContainer probabilityContainer) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
 		int numberOfLabels = Constants.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
@@ -95,7 +51,7 @@ public class GibbsSampler {
 			for (int label = 0; label < numberOfLabels; label++) {
 				ImageMask tmpMask = new ImageMask(joinLists(resultingMask, label, initMask));
 				// get probability for label
-				labelProbabilities.add(getSampleEnergy(factorGraph, tmpMask, weightVector));
+				labelProbabilities.add(getSampleEnergy(factorGraph, tmpMask, weightVector, probabilityContainer));
 			}
 			labelProbabilities = calculateLabelProbabilities(labelProbabilities);
 			
@@ -147,14 +103,8 @@ public class GibbsSampler {
 		return 0;
 	}
 
-	private static double getLabelProbability(FactorGraphModel factorGraph, ImageMask mask,
-			WeightVector weightVector) {
-		double labelProbability = getSampleEnergy(factorGraph, mask, weightVector);
-		return labelProbability;
-	}
-
-	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector) {
-		FeatureVector featureVector = GradientDescentTrainer.calculateImageFi(weightVector, factorGraph, mask);
+	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector, ProbabilityContainer probabilityContainer) {
+		FeatureVector featureVector = CRFUtils.calculateImageFi(weightVector, factorGraph, mask, probabilityContainer);
 		return featureVector.calculateEnergy(weightVector);
 	}
 

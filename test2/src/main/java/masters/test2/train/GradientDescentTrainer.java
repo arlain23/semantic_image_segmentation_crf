@@ -15,6 +15,7 @@ import masters.test2.image.ImageDTO;
 import masters.test2.image.ImageMask;
 import masters.test2.sampler.GibbsSampler;
 import masters.test2.superpixel.SuperPixelDTO;
+import masters.test2.utils.CRFUtils;
 import masters.test2.utils.DataHelper;
 import masters.test2.utils.Helper;
 import masters.test2.utils.ProbabilityContainer;
@@ -25,15 +26,19 @@ public class GradientDescentTrainer {
 	private static double TRAINING_STEP = Constants.TRAINING_STEP;
 	
 	private static int NUMBER_OF_LABELS = Constants.NUMBER_OF_STATES; // {0 1}
-	private static int NUMBER_OF_LOCAL_FEATURES = SuperPixelDTO.NUMBER_OF_LOCAL_FEATURES;
-	private static int NUMBER_OF_PAIRWISE_FEATURES = SuperPixelDTO.NUMBER_OF_PAIRWISE_FEATURES;
+	private int NUMBER_OF_LOCAL_FEATURES;
+	private int NUMBER_OF_PAIRWISE_FEATURES;
 	
 	private List<ImageDTO> imageList;
 	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
 	
-	private static ProbabilityContainer probabiltyContainer;
+	private ProbabilityContainer probabiltyContainer;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
+	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer,
+			int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+		
+		this.NUMBER_OF_LOCAL_FEATURES = numberOfLocalFeatures;
+		this.NUMBER_OF_PAIRWISE_FEATURES = numberOfPairwiseFeatures;
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
 		this.probabiltyContainer = probabiltyContainer;
@@ -61,16 +66,16 @@ public class GradientDescentTrainer {
 				if (imageToMaskMap.containsKey(trainingImage)) {
 					currentMask = imageToMaskMap.get(trainingImage);
 				}
-				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask);
+				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask, probabiltyContainer);
 				imageToMaskMap.put(trainingImage, currentMask);
 				// calculate gradient
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
 				//fi for image
-				FeatureVector imageFi = calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask());
+				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask(), probabiltyContainer);
 				
 				//fi for sample
-				FeatureVector sampleFi = calculateImageFi(weightVector, factorGraph, currentMask);
+				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, probabiltyContainer);
 				
 				for (int weightIndex = 0; weightIndex < numberOfWeights; weightIndex++) {
 					double regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
@@ -108,29 +113,6 @@ public class GradientDescentTrainer {
 		return weightVector;
 	}
 	
-	public static FeatureVector calculateImageFi(WeightVector weightVector, FactorGraphModel factorGraph, ImageMask mask) {
-		FeatureVector imageFi = new FeatureVector(weightVector.getWeightSize());
-
-		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		Set<Factor> createdFactors = factorGraph.getCreatedFactors();
-		for (Factor factor : createdFactors) {
-			int leftSuperPixelIndex = factor.getLeftSuperPixelIndex();
-			SuperPixelDTO leftSuperPixel = superPixels.get(leftSuperPixelIndex);
-			int rightSuperPixelIndex = factor.getRightSuperPixelIndex();
-			if (rightSuperPixelIndex < 0) {
-				// feature node - local model (R label*feature size)
-				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph, null, probabiltyContainer);
-				imageFi.add(localModel);
-			} else {
-				// output node - pairwise model (R2)
-				SuperPixelDTO rightSuperPixel = superPixels.get(rightSuperPixelIndex);
-				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null, factorGraph);
-				imageFi.add(pairWiseModel);
-			}
-			
-		}
-		return imageFi;
-	}
 	private double MSE (WeightVector vector1, WeightVector vector2) {
 		List<Double> weights1 = vector1.getWeights();
 		List<Double> weights2 = vector2.getWeights();

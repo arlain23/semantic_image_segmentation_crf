@@ -50,7 +50,7 @@ public class PixelDTO implements Cloneable {
 		return superPixelIdex;
 	}
 
-	public void setSuperPixelIdex(int superPixelIdex) {
+	public void setSuperPixelIndex(int superPixelIdex) {
 		this.superPixelIdex = superPixelIdex;
 	}
 	public int getXIndex() {

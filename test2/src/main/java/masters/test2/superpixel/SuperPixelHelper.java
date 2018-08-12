@@ -33,9 +33,6 @@ public class SuperPixelHelper {
 			BufferedReader stdInput = new BufferedReader(new 
 				     InputStreamReader(proc.getInputStream()));
 
-			BufferedReader stdError = new BufferedReader(new 
-			     InputStreamReader(proc.getErrorStream()));
-
 			// read the output from the command
 			Map<SuperPixelDTO,SuperPixelDTO> createdSuperPixels = new HashMap<SuperPixelDTO, SuperPixelDTO>();
 			String s = null;
@@ -55,7 +52,7 @@ public class SuperPixelHelper {
 						SuperPixelDTO currentSuperPixel = createdSuperPixels.get(tmpSuperPixel);
 						currentSuperPixel.addPixel(currentPixel);
 					}
-					currentPixel.setSuperPixelIdex(superPixelIndex);
+					currentPixel.setSuperPixelIndex(superPixelIndex);
 					//System.out.print(superPixelIndex + " ");
 				}
 				rowIndex++;

@@ -21,6 +21,7 @@ import masters.test2.App;
 import masters.test2.Constants;
 import masters.test2.colors.ColorSpaceConverter;
 import masters.test2.colors.ColorSpaceException;
+import masters.test2.factorisation.Factor;
 import masters.test2.factorisation.FactorGraphModel;
 import masters.test2.features.BinaryMask;
 import masters.test2.features.ContinousFeature;
@@ -32,6 +33,8 @@ import masters.test2.image.ImageDTO;
 import masters.test2.image.ImageMask;
 import masters.test2.image.PixelDTO;
 import masters.test2.train.FeatureVector;
+import masters.test2.train.WeightVector;
+import masters.test2.utils.CRFUtils;
 import masters.test2.utils.Helper;
 import masters.test2.utils.ProbabilityContainer;
 
@@ -40,8 +43,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	private FeatureVector localFeatureVector;
 	private FeatureVector pairwiseFeatureVector;
 	private double[] meanRGB;	
-	public static int NUMBER_OF_LOCAL_FEATURES;
-	public static int NUMBER_OF_PAIRWISE_FEATURES;
+	public int numberOfLocalFeatures;
+	public int numberOfPairwiseFeatures;
 	private int label;
 	
 	private int identifingColorRGB;
@@ -82,8 +85,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		} else {
 			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
 		}
-		NUMBER_OF_LOCAL_FEATURES = localFeatures.size();
-		NUMBER_OF_PAIRWISE_FEATURES = pairwiseFeatures.size();
+		numberOfLocalFeatures = localFeatures.size();
+		numberOfPairwiseFeatures = pairwiseFeatures.size();
 		this.localFeatureVector = new FeatureVector(localFeatures, 1);
 		this.pairwiseFeatureVector = new FeatureVector(pairwiseFeatures, 1);
 		
@@ -190,6 +193,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	private List<Feature> initLocalContinuousFeatures(double [] rgb) throws ColorSpaceException {
 		List<Feature> features = new ArrayList<Feature> ();
 		features.addAll(getColourFeatures(rgb, features.size()));
+		//features.addAll(getNeighbourColourFeatures(features.size()));
+		
 		return features;
 	}
 	private List<Feature> initPairwiseContinuousFeatures(double [] rgb) throws ColorSpaceException {
@@ -197,8 +202,16 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
 		return features;
 	}
-	private double[] getNeighboursMeanRGB() {
-		double [] meanRGB = new double[] {0.0, 0.0, 0.0};
+	private List<Feature> getNeighbourColourFeatures(int startingIndex) {
+		List<Feature> features = new ArrayList<Feature> ();
+		List<Double> featureValues = getNeighboursMeanRGB();
+		for (int i = 0; i < featureValues.size(); i++) {
+			features.add(new ContinousFeature(featureValues.get(i), i + startingIndex));
+		}
+		return features;
+	}
+	private List<Double> getNeighboursMeanRGB() {
+		Double[] meanRGB = new Double[] {0.0, 0.0, 0.0};
 		int numberOfNeighbours = this.neigbouringSuperPixels.size();
 		for (SuperPixelDTO neighbour : this.neigbouringSuperPixels) {
 			double[] rgb = neighbour.getMeanRGB();
@@ -206,11 +219,11 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 			meanRGB[1] = meanRGB[1] + rgb[1];
 			meanRGB[2] = meanRGB[2] + rgb[2];
 		}
-		meanRGB[0] = meanRGB[0] / numberOfNeighbours;
-		meanRGB[1] = meanRGB[1] / numberOfNeighbours;
-		meanRGB[2] = meanRGB[2] /numberOfNeighbours;
+		meanRGB[0] = scaleColour(meanRGB[0] / numberOfNeighbours);
+		meanRGB[1] = scaleColour(meanRGB[1] / numberOfNeighbours);
+		meanRGB[2] = scaleColour(meanRGB[2] /numberOfNeighbours);
 		
-		return meanRGB;
+		return Arrays.asList(meanRGB);
 	}
 	
 	private List<Feature> getColourFeatures(double [] rgb, int startingIndex) throws ColorSpaceException {
@@ -237,9 +250,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		default:
 			throw new ColorSpaceException("Undefined color space");
 		}
-	}
-	private String intToStringWithZeros(int value) {
-		return String.format("%03d", value);
 	}
 	
 	private double scaleColour(double value) {
@@ -268,7 +278,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		List<Double> featureValues = Helper.initFixedSizedListDouble(3 * Constants.NUMBER_OF_HISTOGRAM_DIVISIONS);
 		int numberOfColorIndexes = 256; 
 		
-		// get frequencies of each color section
+		// get frequencies of each colour section
 		List<Integer> redFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
 		List<Integer> greenFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
 		List<Integer> blueFrequencies = Helper.initFixedSizedListInteger(numberOfColorIndexes);
@@ -317,7 +327,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		
 		return featureValues;
 	}		
-	
 	
 	
 	public void initBorderPixels() {
@@ -377,298 +386,24 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	}
 	
 	
-	
-	
-	
-	
 	/*
 	 * 	
 	 * 			COMPUTING OF FEATURE VECTORS
 	 * 
 	 */
-	public FeatureVector getLocalImageFi(Integer objectLabel, ImageMask mask, FactorGraphModel factorGraph,
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer){
-		FeatureVector imageFi;
-		int featureIndex = 0;
-		if (objectLabel == null){
-			objectLabel = mask.getMask().get(this.superPixelIndex);
-		}
 		
-		if (Constants.USE_NON_LINEAR_MODEL) {
-			imageFi = new FeatureVector(NUMBER_OF_LOCAL_FEATURES + (NUMBER_OF_PAIRWISE_FEATURES + 1));
-			for (Feature feature : this.localFeatureVector.getFeatures()) {
-				double featureValue = getFeatureProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap, probabiltyContainer);
-				//featureValue = -Math.log(featureValue);
-				imageFi.setFeatureValue(featureIndex++, featureValue);
-			}
-		} else {
-			imageFi = new FeatureVector(Constants.NUMBER_OF_STATES * NUMBER_OF_LOCAL_FEATURES + 2);
-			for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
-				if (label == objectLabel) {
-					for (Feature feature : this.localFeatureVector.getFeatures()) {
-						imageFi.setFeatureValue(featureIndex++, (Double)feature.getValue());
-					}
-				} else {
-					for (@SuppressWarnings("unused") Feature feature : this.localFeatureVector.getFeatures()) {
-						imageFi.setFeatureValue(featureIndex++, 0.0);
-					}
-				}
-			}
-		}
-		
-		return imageFi;
-	}
-	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel, FactorGraphModel factorGraph){
-		if (Constants.USE_NON_LINEAR_MODEL) {
-			return getPairwiseImageFiNonLinear(superPixel, factorGraph);
-		} else {
-			return getPairwiseImageFiLinear(superPixel, mask, label, variableLabel);
-		}
-	}
-	
-	public FeatureVector getPairwiseImageFiNonLinear(SuperPixelDTO superPixel, FactorGraphModel factorGraph) {
-		FeatureVector imageFi = new FeatureVector(NUMBER_OF_LOCAL_FEATURES
-				+ (NUMBER_OF_PAIRWISE_FEATURES + 1));
-		int featureIndex = NUMBER_OF_LOCAL_FEATURES;
-		for (int i = 0; i < NUMBER_OF_PAIRWISE_FEATURES; i++) {
-			double featureValue = getPairWiseFeatureTerm(this.pairwiseFeatureVector.getFeatures().get(i), 
-					superPixel.getPairwiseFeatureVector().getFeatures().get(i), factorGraph);
-			imageFi.setFeatureValue(featureIndex++, featureValue);
-		}
-		imageFi.setFeatureValue(featureIndex++, 1);
-		
-		return imageFi;
-	}
-	
-	private double getPairWiseFeatureTerm(Feature thisFeature, Feature otherFeature, FactorGraphModel factorGraph) {
-		double beta = factorGraph.getBeta(thisFeature);
-		double featureDifference = thisFeature.getDifference(otherFeature);
-		double featureValue = Math.exp(-beta * Math.pow(Math.abs(featureDifference), 2));
-		return featureValue;
-	}
-	
-	
-	public FeatureVector getPairwiseImageFiLinear(SuperPixelDTO superPixel, ImageMask mask, Integer label1, Integer label2){
-		if (label1 == null) {
-			label1 = mask.getMask().get(this.superPixelIndex);
-		} 
-		if (label2 == null) {
-			label2 = superPixel.getLabel();
-		}
-		FeatureVector imageFi = new FeatureVector(Constants.NUMBER_OF_STATES * NUMBER_OF_LOCAL_FEATURES + 2);
-		boolean labelsEquality = label1 == label2;
-		int labelDiff = (labelsEquality) ? 0 : 1;
-		int featureIndex = Constants.NUMBER_OF_STATES * NUMBER_OF_LOCAL_FEATURES;
-		imageFi.setFeatureValue(featureIndex++, 1 - labelDiff);
-		imageFi.setFeatureValue(featureIndex++, labelDiff);
-		return imageFi;
-	}
-	public double getPairSimilarityFeature(int label1, int label2) {
-		if (label1 == label2) return 1;
-		return 0;
-	}
-	
-	private double getFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, 
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
-		if (feature instanceof DiscreteFeature) {
-			return getDiscreteFeatureProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap);
-		} else if (feature instanceof ContinousFeature) {
-			return getContinuousFeatureProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap, probabiltyContainer);
-		}
-		throw new RuntimeException("Undefined feature type -> " + feature);
-	}
-	
-	private double getDiscreteFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap) {
-		if (trainingDataimageToFactorGraphMap == null) {
-			return getDiscreteFeatureProbabilityTraining(mask, factorGraph, objectLabel, feature);
-		} else {
-			return getDisreteFeatureProbabilityInference(trainingDataimageToFactorGraphMap, objectLabel, feature);
-		}
-	}
-	private double getDisreteFeatureProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature) {
-		int numberOfLabels = 0;
-		int numberOfFeatures = 0;
-		int numberOfFeatureOnLabel = 0;
-		
-		int labelMaskTotalSize = 0;
-		int featureMaskTotalSize = 0;
-		int featureOnLabelMaskTotalSize = 0;
-		
-		for (ImageDTO trainingImage : trainingDataimageToFactorGraphMap.keySet()) {
-			FactorGraphModel trainingFactorGraph = trainingDataimageToFactorGraphMap.get(trainingImage);
-			BinaryMask labelMask = new BinaryMask(trainingFactorGraph.getImageMask(), objectLabel);
-			numberOfLabels += labelMask.getNumberOfOnBytes();
-			labelMaskTotalSize += labelMask.getListSize();
-			
-			BinaryMask featureMask = trainingFactorGraph.getDiscreteFeatureBinaryMask(feature);
-			if (featureMask == null) {
-				_log.error("Feature " + feature + " not present in training set");
-			} else {
-				numberOfFeatures += featureMask.getNumberOfOnBytes();
-				featureMaskTotalSize += featureMask.getListSize();
-				
-				BinaryMask featureOnLabelMask = new BinaryMask(featureMask, labelMask);
-				numberOfFeatureOnLabel += featureOnLabelMask.getNumberOfOnBytes();
-				featureOnLabelMaskTotalSize += featureOnLabelMask.getListSize();
-			}
-		}
-		
-		double probabilityLabel = Double.valueOf(numberOfLabels) / Double.valueOf(labelMaskTotalSize);
-		double probabilityFeature = Double.valueOf(numberOfFeatures) / Double.valueOf(featureMaskTotalSize);
-		double probabilityFeatureLabel = Double.valueOf(numberOfFeatureOnLabel) / Double.valueOf(featureOnLabelMaskTotalSize);
-		
-		// p (l|f) = (p(f|l)*p(l)/p(f)
-		double probabilityLabelFeature = (probabilityFeatureLabel * probabilityLabel) / probabilityFeature;
-		return probabilityLabelFeature;
-	}
-	
-	private double getDiscreteFeatureProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature) {
-		
-		BinaryMask labelMask = new BinaryMask(mask, objectLabel);
-		BinaryMask featureMask = factorGraph.getDiscreteFeatureBinaryMask(feature);
-		BinaryMask featureOnLabelMask = new BinaryMask(featureMask, labelMask);
-		
-		double probabilityLabel = Double.valueOf(labelMask.getNumberOfOnBytes()) / Double.valueOf(labelMask.getListSize());
-		double probabilityFeature = Double.valueOf(featureMask.getNumberOfOnBytes()) / Double.valueOf(featureMask.getListSize());
-		double probabilityFeatureLabel = Double.valueOf(featureOnLabelMask.getNumberOfOnBytes()) / Double.valueOf(featureOnLabelMask.getListSize());
-		
-		// p (l|f) = (p(f|l)*p(l)/p(f)
-		double probabilityLabelFeature = (probabilityFeatureLabel * probabilityLabel) / probabilityFeature;
-		return probabilityLabelFeature;
-	}
-	
-	private double getContinuousFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel,
-			Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
-		if (trainingDataimageToFactorGraphMap == null) {
-			return getFeatureKernelProbabilityTraining(mask, factorGraph, objectLabel, feature, probabiltyContainer);
-		} else {
-			return getFeatureKernelProbabilityInference(trainingDataimageToFactorGraphMap, objectLabel, feature, probabiltyContainer);
-		}
-	}
-	
-	private double getFeatureKernelProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature,
+	public FeatureVector getLocalImageFi(Integer objectLabel, ImageMask imageMask, FactorGraphModel factorGraphModel,
+			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap,
 			ProbabilityContainer probabiltyContainer) {
 		
-		double probablityCurrentLabel = 0;
-		double probabilityFeatureCurrentLabel = 0;
-		double probabilityFeature = 0;
-		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
-			
-			double probabilityLabel = probabiltyContainer.getLabelProbability(label);
-			
-			List<ValueMask> featureMasks = new ArrayList<ValueMask>();
-			List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>();
-			
-			for (ImageDTO trainingImage : trainingDataimageToFactorGraphMap.keySet()) {
-				FactorGraphModel trainingFactorGraph = trainingDataimageToFactorGraphMap.get(trainingImage);
-				BinaryMask labelMask = new BinaryMask(trainingFactorGraph.getImageMask(), label);
-				ValueMask featureMask = trainingFactorGraph.getContinuousFeatureValueMask(feature);
-				ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);	
-				
-				featureMasks.add(featureMask);
-				featureOnLabelMasks.add(featureOnLabelMask);
-			}
-			
-			double probabilityFeatureLabel;
-			try {
-				probabilityFeatureLabel = getParzenKernelEstimate((Double)feature.getValue(), featureOnLabelMasks);
-			} catch (LabelException e) {
-				_log.error(e.getMessage());
-				probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
-			}
-			if (label == objectLabel) {
-				probablityCurrentLabel = probabilityLabel;
-				probabilityFeatureCurrentLabel = probabilityFeatureLabel;
-			}
-			
-			
-			probabilityFeature += probabilityFeatureLabel * probabilityLabel;
-			
-		}
-		
-		// p (l|f) = (p(f|l)*p(l)/p(f)
-		double probabilityLabelFeature = (probabilityFeatureCurrentLabel * probablityCurrentLabel) / probabilityFeature;
-		System.out.println(feature + "   L:" + objectLabel);
-		System.out.println("#I# " +  probabilityLabelFeature + "  | P(f|l) "+ probabilityFeatureCurrentLabel + " p(l) " + probablityCurrentLabel + " p(f) " + probabilityFeature);
-		return probabilityLabelFeature;
-			
-		
-	}
-
-	private double getFeatureKernelProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, ProbabilityContainer probabiltyContainer) {
-		
-		double probablityCurrentLabel = 0;
-		double probabilityFeatureCurrentLabel = 0;
-		double probabilityFeature = 0;
-		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
-			
-			double probabilityLabel = probabiltyContainer.getLabelProbability(label);
-			
-			List<ValueMask> featureMasks = new ArrayList<ValueMask>();
-			List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>();
-			
-			BinaryMask labelMask = new BinaryMask(factorGraph.getImageMask(), label);
-			ValueMask featureMask = factorGraph.getContinuousFeatureValueMask(feature);
-			ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);	
-			
-			featureMasks.add(featureMask);
-			featureOnLabelMasks.add(featureOnLabelMask);
-
-			double probabilityFeatureLabel;
-			try {
-				probabilityFeatureLabel = getParzenKernelEstimate((Double)feature.getValue(), featureOnLabelMasks);
-			} catch (LabelException e) {
-				_log.error(e.getMessage());
-				probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
-			}
-			if (label == objectLabel) {
-				probablityCurrentLabel = probabilityLabel;
-				probabilityFeatureCurrentLabel = probabilityFeatureLabel;
-			}
-			
-			
-			probabilityFeature += probabilityFeatureLabel * probabilityLabel;
-			
-		}
-		
-		// p (l|f) = (p(f|l)*p(l)/p(f)
-		double probabilityLabelFeature = (probabilityFeatureCurrentLabel * probablityCurrentLabel) / probabilityFeature;
-		
-		return probabilityLabelFeature;
+		return CRFUtils.getLocalImageFi(this.superPixelIndex, objectLabel, imageMask, factorGraphModel, trainingDataimageToFactorGraphMap,
+				probabiltyContainer, this.localFeatureVector.getFeatures(), this.numberOfLocalFeatures, this.numberOfPairwiseFeatures);
 	}
 	
-	private double getParzenKernelEstimate(double featureValue, List<ValueMask> featureMasks) throws LabelException {
-		int numberOfTrainingData = 0;
-		double output = 0;
-		boolean allNull = true;
-		for (ValueMask featureMask : featureMasks) {
-			for (int i = 0; i < featureMask.getListSize(); i++) {
-				Double trainingFeatureValue = featureMask.getValue(i);
-				if (trainingFeatureValue != null) {
-					allNull = false;
-					numberOfTrainingData++;
-					double u = (featureValue - trainingFeatureValue) / Constants.KERNEL_BANDWIDTH;
-					output += getKernelValue(u);
-				}
-			}
-		}
-		if (allNull) {
-			throw new LabelException("Feature " + featureValue + " not found in an image");
-		}
-		
-		double foo = output / (numberOfTrainingData * Constants.KERNEL_BANDWIDTH);
-		return foo;
-		
+	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel, FactorGraphModel factorGraph){
+		return CRFUtils.getPairwiseImageFi(this.superPixelIndex, superPixel, mask, label, variableLabel, factorGraph, this.pairwiseFeatureVector.getFeatures(), this.numberOfLocalFeatures, this.numberOfPairwiseFeatures);
+			
 	}
-	private double getKernelValue(double input) {
-		double prob =  Math.exp( -0.5 * Math.pow(input, 2)) / Math.sqrt(2*Math.PI);
-		if (prob == 0) {
-			_log.error("KERNEL VALUE IS 0 for " + input);
-		}
-		return prob;
-	}
-
-	
 	
 	/*
 	 * 		GETTERS & SETTERS
@@ -741,7 +476,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return new Point(x,y);
 	}
 	
-	
 	public void setMeanRGB(double[] meanRGB) throws ColorSpaceException {
 		this.meanRGB = meanRGB;
 		initFeatureVector();
@@ -790,4 +524,5 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 	}
 	
 	private static Logger _log = Logger.getLogger(SuperPixelDTO.class);
+
 }

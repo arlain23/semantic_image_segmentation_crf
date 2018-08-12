@@ -29,8 +29,8 @@ public class Constants {
 	public static enum ColorAverageMethod {
 	    MEAN, POPULARITY
 	}
-//	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
-	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
+	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
+//	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
 	
 	public static int NUMBER_OF_HISTOGRAM_DIVISIONS = 16;
 	

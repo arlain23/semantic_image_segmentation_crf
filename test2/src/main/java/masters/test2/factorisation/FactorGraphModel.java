@@ -48,21 +48,23 @@ public class FactorGraphModel {
 	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
 	private ProbabilityContainer probabiltyContainer = null;
 	
-	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels, WeightVector weightVector,
-			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
-		this(currentImage, createdSuperPixels, weightVector, probabiltyContainer);
+	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels,
+			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, WeightVector weightVector, ProbabilityContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+		this(currentImage, createdSuperPixels, weightVector,
+				probabiltyContainer, numberOfLocalFeatures, numberOfPairwiseFeatures);
 		this.trainingDataimageToFactorGraphMap = imageToFactorGraphMap;
 		// TODO Auto-generated constructor stub
 	}
 	
 
-	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ProbabilityContainer probabiltyContainer) {
+	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ProbabilityContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		this.image = image;
 		this.superPixels = superPixels;
 		this.numberOfSuperPixels = superPixels.size();
 		this.factorisedSuperPixels = new ArrayList<OutputNode>();
 		this.createdFactors = new HashSet<Factor>();
 		this.weightVector = weightVector;
+		
 		// prepare binary masks for features and labels
 		this.descreteFeatureMap = new HashMap<Feature, BinaryMask>();
 		this.continuousFeatureMap = new HashMap<Feature, ValueMask>();

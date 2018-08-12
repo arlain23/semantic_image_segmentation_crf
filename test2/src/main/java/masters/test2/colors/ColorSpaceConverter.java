@@ -93,14 +93,14 @@ public class ColorSpaceConverter {
 		Double maxRGB = Math.max(r, Math.max(g,b));
 
 		 // Black-gray-white
-		if (minRGB == maxRGB) {
+		if (minRGB.equals(maxRGB)) {
 			computedV = minRGB;
 		  return new Double [] {0.0, 0.0, computedV};
 		}
 
 		 // Colors other than black-gray-white:
-		Double d = (r == minRGB) ? g-b : ((b == minRGB) ? r-g : b-r);
-		Double h = (r == minRGB) ? 3.0 : ((b == minRGB) ? 1.0 : 5.0);
+		Double d = (r.equals(minRGB) ? g-b : ((b.equals(minRGB)) ? r-g : b-r));
+		Double h = (r.equals(minRGB) ? 3.0 : ((b.equals(minRGB)) ? 1.0 : 5.0));
 		computedH = 60.0*(h - d/(maxRGB - minRGB));
 		computedS = (maxRGB - minRGB)/maxRGB;
 		computedV = maxRGB;
@@ -124,13 +124,13 @@ public class ColorSpaceConverter {
 
 		Double h = 0.0;
 
-		if (max == min)
+		if (max.equals(min))
 			h = 0.0;
-		else if (max == r)
+		else if (max.equals(r))
 			h = ((60.0 * (g - b) / (max - min)) + 360.0) % 360.0;
-		else if (max == g)
+		else if (max.equals(g))
 			h = (60.0 * (b - r) / (max - min)) + 120.0;
-		else if (max == b)
+		else if (max.equals(b))
 			h = (60.0 * (r - g) / (max - min)) + 240.0;
 
 		//  Calculate the Luminance
@@ -141,7 +141,7 @@ public class ColorSpaceConverter {
 
 		Double s = 0.0;
 
-		if (max == min)
+		if (max.equals(min))
 			s = 0.0;
 		else if (l <= 0.5)
 			s = (max - min) / (max + min);

@@ -31,18 +31,25 @@ public class App
 		Map<ImageDTO, List<SuperPixelDTO>> superPixelMap = new HashMap<ImageDTO, List<SuperPixelDTO>>();
 		Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
 		
-		WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, SuperPixelDTO.NUMBER_OF_LOCAL_FEATURES, SuperPixelDTO.NUMBER_OF_PAIRWISE_FEATURES);
 		int iterator = 0;
+
+		int numberOfLocalFeatures = 0;
+		int numberOfParwiseFeatures = 0;
+		
 		// factorisation
 		for (ImageDTO currentImage : imageList) {
-			//dh.viewImage(currentImage);
-			//DataHelper.viewImageSegmented(currentImage);
+//			DataHelper.viewImageSegmented(currentImage);
 			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
+			
+			numberOfLocalFeatures = createdSuperPixels.get(0).numberOfLocalFeatures;
+			numberOfParwiseFeatures = createdSuperPixels.get(0).numberOfPairwiseFeatures;
+			WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, numberOfLocalFeatures, numberOfParwiseFeatures);
+			
 			SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
 			superPixelMap.put(currentImage, createdSuperPixels);
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector, null);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector, null, numberOfLocalFeatures, numberOfParwiseFeatures);
+			
 			imageToFactorGraphMap.put(currentImage, factorGraph);
-		//	DataHelper.increaseBlue(createdSuperPixels);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "train " + (iterator) + " borders");
 			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels, "train " + (iterator) + " mean");
@@ -63,10 +70,10 @@ public class App
 		});
 		
 
-		WeightVector pretrainedWeights = new WeightVector(initWeightList);
+//		WeightVector pretrainedWeights = new WeightVector(initWeightList);
 
 		
-		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, probabiltyContainer);
+		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, probabiltyContainer, numberOfLocalFeatures, numberOfParwiseFeatures);
 //		WeightVector weights = pretrainedWeights;
 		WeightVector weights = trainer.train(null);
 		System.out.println("final weights");
@@ -80,7 +87,7 @@ public class App
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {
 			List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, weights, imageToFactorGraphMap, probabiltyContainer);
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage, createdSuperPixels, imageToFactorGraphMap, weights, probabiltyContainer,  numberOfLocalFeatures, numberOfParwiseFeatures);
 			
 			DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, ("test " + imageCounter));
 			DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels, "test " + (imageCounter) + " mean");
@@ -114,7 +121,7 @@ public class App
 			factorGraph.computeLabeling();
 			DataHelper.viewImageSegmentedSuperPixels(factorGraph.getImage(), createdSuperPixels, "test " + imageCounter + " final result");
 			String filePath = "E:\\Studia\\CSIT\\praca_magisterska\\output" + (++imageCounter) + ".png";
-			//DataHelper.saveImage(factorGraph.getImage(), filePath);
+//			DataHelper.saveImage(factorGraph.getImage(), filePath);
 			System.out.println("finished for image " + imageCounter);
 			System.out.println();
 		}
