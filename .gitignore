@@ -25,3 +25,5 @@ hs_err_pid*
 .recommenders/*
 RemoteSystemsTempFiles/*
 test2/.settings
+test2/.classpath
+test2/.project

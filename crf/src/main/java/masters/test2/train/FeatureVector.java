@@ -18,7 +18,7 @@ public class FeatureVector {
 		features = Helper.initFixedSizedListContinuousFeature(featureSize);
 	}
 	
-	public FeatureVector (List<Feature> features, int flag) {
+	public FeatureVector (List<Feature> features, boolean flag) {
 		this.features = features;
 	}
 	

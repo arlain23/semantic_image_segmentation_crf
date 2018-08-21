@@ -18,6 +18,7 @@ import masters.test2.features.BinaryMask;
 import masters.test2.features.ContinousFeature;
 import masters.test2.features.DiscreteFeature;
 import masters.test2.features.Feature;
+import masters.test2.features.FeatureContainer;
 import masters.test2.features.ValueMask;
 import masters.test2.image.ImageDTO;
 import masters.test2.image.ImageMask;
@@ -81,7 +82,18 @@ public class FactorGraphModel {
 			
 			if (Constants.USE_NON_LINEAR_MODEL) {
 				//prepare feature masks
-				List<Feature> features = superPixel.getLocalFeatureVector().getFeatures();
+				List<Feature> nonLinearFeatures = superPixel.getLocalFeatureVector().getFeatures();
+        
+        List<Feature> features = new ArrayList<Feature>();
+        for (Feature feature : nonLinearFeatures) {
+          if (feature instanceof FeatureContainer) {
+            features.addAll(((FeatureContainer)feature).getFeatures());
+          } else {
+            features.add(feature);
+          }
+        }
+				
+				
 				for (Feature feature : features) {
 					if (feature instanceof DiscreteFeature){
 						if (!descreteFeatureMap.containsKey(feature)) {
@@ -94,9 +106,8 @@ public class FactorGraphModel {
 							continuousFeatureMap.put(feature, new ValueMask(numberOfSuperPixels));
 						}
 						ValueMask featureMask = continuousFeatureMap.get(feature);
-						featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)superPixel.getLocalFeatureVector().getFeatureValue(feature));
+						featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)feature.getValue());
 					}
-					
 				}
 			}
 			

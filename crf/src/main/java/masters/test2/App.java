@@ -63,19 +63,19 @@ public class App
 		
 		// training
 		List<Double> initWeightList = Arrays.asList(new Double[] {
-				0.033156268062451706, 0.03281594178569262, 0.050641381268472764, 0.050945967364127494, 0.0016190301973335545 
+		    0.02596068092947962, 1.7739373684198315E-19, 1.7734444204022248E-19
  
 
  
 		});
 		
 
-//		WeightVector pretrainedWeights = new WeightVector(initWeightList);
+		WeightVector pretrainedWeights = new WeightVector(initWeightList);
 
 		
 		GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, probabiltyContainer, numberOfLocalFeatures, numberOfParwiseFeatures);
 //		WeightVector weights = pretrainedWeights;
-		WeightVector weights = trainer.train(null);
+		WeightVector weights = trainer.train(pretrainedWeights);
 		System.out.println("final weights");
 		System.out.println(weights);
 		

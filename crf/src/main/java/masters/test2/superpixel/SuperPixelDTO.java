@@ -27,6 +27,7 @@ import masters.test2.features.BinaryMask;
 import masters.test2.features.ContinousFeature;
 import masters.test2.features.DiscreteFeature;
 import masters.test2.features.Feature;
+import masters.test2.features.FeatureContainer;
 import masters.test2.features.ValueMask;
 import masters.test2.features.VectorFeature;
 import masters.test2.image.ImageDTO;
@@ -74,21 +75,20 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		List<Feature> pairwiseFeatures = new ArrayList<Feature>();
 		
 		if (Constants.USE_NON_LINEAR_MODEL) {
-			if (Constants.INCLUDE_DESCRETE_FEATURES) {
-				localFeatures.addAll(initBayesFeatures());
-				pairwiseFeatures.addAll(localFeatures);
-			}
-			if (Constants.INCLUDE_CONTINUOUS_FEATURES) {
-				localFeatures.addAll(initLocalContinuousFeatures(this.meanRGB));
-				pairwiseFeatures.addAll(initPairwiseContinuousFeatures(this.meanRGB));
-			}
+		  List<Feature> tmpLocalFeatures = new ArrayList<Feature>();
+		  tmpLocalFeatures.addAll(initLocalFeatures(this.meanRGB));
+		  Feature featureContainer = new FeatureContainer(tmpLocalFeatures, 0);
+		  localFeatures.add(featureContainer);
+
+		  pairwiseFeatures.addAll(initPairwiseFeatures(this.meanRGB));
+			
 		} else {
 			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
 		}
 		numberOfLocalFeatures = localFeatures.size();
 		numberOfPairwiseFeatures = pairwiseFeatures.size();
-		this.localFeatureVector = new FeatureVector(localFeatures, 1);
-		this.pairwiseFeatureVector = new FeatureVector(pairwiseFeatures, 1);
+		this.localFeatureVector = new FeatureVector(localFeatures, true);
+		this.pairwiseFeatureVector = new FeatureVector(pairwiseFeatures, true);
 		
 	}
 	public void initMeanRGB() throws ColorSpaceException {
@@ -181,36 +181,70 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return new double[] {maxR, maxG, maxB};
 	}
 	
-	private List<Feature> initBayesFeatures() {
+	private List<Feature> initBayesFeatures(double rgb[]) {
 		List<Feature> features = new ArrayList<Feature> ();
 		
-		String hex = String.format("#%02x%02x%02x", (int)meanRGB[0], (int)meanRGB[1], (int)meanRGB[2]);
+		String hex = String.format("#%02x%02x%02x", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 		Feature colorFeature = new DiscreteFeature(hex);
 		
 		features.add(colorFeature);
 		return features;
 	}
-	private List<Feature> initLocalContinuousFeatures(double [] rgb) throws ColorSpaceException {
+	private List<Feature> initLocalFeatures(double [] rgb) throws ColorSpaceException {
 		List<Feature> features = new ArrayList<Feature> ();
 		features.addAll(getColourFeatures(rgb, features.size()));
-		//features.addAll(getNeighbourColourFeatures(features.size()));
+		features.add(getNeighbourBayesColourFeature());
 		
 		return features;
 	}
-	private List<Feature> initPairwiseContinuousFeatures(double [] rgb) throws ColorSpaceException {
+	private List<Feature> initPairwiseFeatures(double [] rgb) throws ColorSpaceException {
 		List<Feature> features = new ArrayList<Feature> ();
 		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
 		return features;
 	}
-	private List<Feature> getNeighbourColourFeatures(int startingIndex) {
-		List<Feature> features = new ArrayList<Feature> ();
-		List<Double> featureValues = getNeighboursMeanRGB();
-		for (int i = 0; i < featureValues.size(); i++) {
-			features.add(new ContinousFeature(featureValues.get(i), i + startingIndex));
-		}
-		return features;
+	private Feature getNeighbourBayesColourFeature() {
+	  
+	  
+	  //most popular colour of neigbours 
+	  String baseHex = String.format("#%02x%02x%02x", (int)this.meanRGB[0], (int)this.meanRGB[1], (int)this.meanRGB[2]);
+	  
+	  Map<String, Integer> hexToCounterMap = new HashMap<String, Integer>();
+	  hexToCounterMap = getNeigbourBayesColourCount(5, hexToCounterMap, this, baseHex);
+	  
+	  String mostPopularHex = "";
+	  int maxCounter = 0;
+	  for (String hex : hexToCounterMap.keySet()) {
+	    Integer counter = hexToCounterMap.get(hex);
+      if (counter > maxCounter) {
+	      mostPopularHex = hex;
+	      maxCounter = counter;
+	    }
+	  }
+    Feature colorFeature = new DiscreteFeature(mostPopularHex);
+	  
+		return colorFeature;
 	}
-	private List<Double> getNeighboursMeanRGB() {
+	
+	private Map<String, Integer> getNeigbourBayesColourCount(int level, Map<String, Integer> hexToCounterMap, SuperPixelDTO superPixel, String baseHex) {
+	  if (level < 1) return hexToCounterMap;
+	  
+	  for (SuperPixelDTO neighbour : superPixel.neigbouringSuperPixels) {
+	    double[] rgb = neighbour.getMeanRGB();
+      String hex = String.format("#%02x%02x%02x", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+      if (hex.equals(baseHex)) {
+        getNeigbourBayesColourCount((level-1), hexToCounterMap, neighbour, baseHex);
+      } else {
+        if (hexToCounterMap.containsKey(hex)) {
+          int counter = hexToCounterMap.get(hex) + level;
+          hexToCounterMap.put(hex, counter);
+        } else {
+          hexToCounterMap.put(hex, level);
+        }
+      }
+	  }
+	  return hexToCounterMap;
+	}
+	private Double[] getNeighboursMeanRGB() {
 		Double[] meanRGB = new Double[] {0.0, 0.0, 0.0};
 		int numberOfNeighbours = this.neigbouringSuperPixels.size();
 		for (SuperPixelDTO neighbour : this.neigbouringSuperPixels) {
@@ -223,7 +257,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		meanRGB[1] = scaleColour(meanRGB[1] / numberOfNeighbours);
 		meanRGB[2] = scaleColour(meanRGB[2] /numberOfNeighbours);
 		
-		return Arrays.asList(meanRGB);
+		return meanRGB;
 	}
 	
 	private List<Feature> getColourFeatures(double [] rgb, int startingIndex) throws ColorSpaceException {
