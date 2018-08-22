@@ -8,7 +8,9 @@ import masters.Constants;
 
 public class VectorFeature implements Feature {
 
-	private List<Double> values;
+  private static final long serialVersionUID = -3526273600320990373L;
+  
+  private List<Double> values;
 	private double vectorLength;
 	private int featureIndex;
 	
@@ -93,6 +95,6 @@ public class VectorFeature implements Feature {
 	}
 	
 	
-	private static Logger _log = Logger.getLogger(VectorFeature.class);
+	private static transient Logger _log = Logger.getLogger(VectorFeature.class);
 
 }

@@ -5,9 +5,10 @@ import org.apache.log4j.Logger;
 import masters.App;
 import masters.Constants;
 
-public class ContinousFeature implements Feature{
-
-	private Double value;
+public class ContinousFeature implements Feature {
+  private static final long serialVersionUID = 8860208681108964405L;
+  
+  private Double value;
 	private int featureIndex;
 	
 	public ContinousFeature(Double value, int featureIndex) {
@@ -78,6 +79,6 @@ public class ContinousFeature implements Feature{
 	}
 
 	
-	private static Logger _log = Logger.getLogger(ContinousFeature.class);
+	private static transient Logger _log = Logger.getLogger(ContinousFeature.class);
 
 }

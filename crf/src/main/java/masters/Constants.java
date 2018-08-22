@@ -1,6 +1,7 @@
 package masters;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,8 @@ public class Constants {
 	public static Logger _log = Logger.getLogger(App.class);
 
 	public static boolean USE_NON_LINEAR_MODEL = true;
+	
+
 	
 	public static enum ColorSpace {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
@@ -43,10 +46,10 @@ public class Constants {
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
 	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
 	
-	public static String MAIN_PATH = System.getProperty("user.dir") + "\\src\\resources\\";
-	public static String TRAIN_PATH = MAIN_PATH + IMAGE_FOLDER + "\\train\\" ;
-	public static String RESULT_PATH = MAIN_PATH + IMAGE_FOLDER + "\\result\\" ;
-	public static String TEST_PATH = MAIN_PATH + IMAGE_FOLDER + "\\test\\" ;
+	public static String MAIN_PATH = System.getProperty("user.dir") + File.separator + "src" + File.separator + "resources" + File.separator;
+	public static String TRAIN_PATH = MAIN_PATH + IMAGE_FOLDER + File.separator + "train" + File.separator ;
+	public static String RESULT_PATH = MAIN_PATH + IMAGE_FOLDER + File.separator + "result" + File.separator ;
+	public static String TEST_PATH = MAIN_PATH + IMAGE_FOLDER + File.separator + "test" + File.separator;
 	
 	
 	public static int TRAIN_IMAGE_LIMIT = 5;
@@ -55,7 +58,7 @@ public class Constants {
 	public static double KERNEL_BANDWIDTH = 0.15; 
 	
 	// training
-	public static int NUMBER_OF_ITERATIONS = 500;
+	public static int NUMBER_OF_ITERATIONS = 300;
 	public static double REGULARIZATION_FACTOR = 10000;
 	public static double TRAINING_STEP = 0.0000001;
 	
@@ -80,4 +83,10 @@ public class Constants {
 	//superpixels 
 	public static int NUMBER_OF_SUPERPIXELS = 18;
 	public static double RIGIDNESS = 5.0;
+	
+	 /* serialization */
+  public static boolean CLEAR_CACHE = false;
+  public static String IMAGE_TO_FACTOR_GRAPH_FILE_NAME = "image_to_factor_graph";
+  
+  
 }

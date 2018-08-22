@@ -1,5 +1,6 @@
 package masters.factorisation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +29,10 @@ import masters.train.WeightVector;
 import masters.utils.Helper;
 import masters.utils.ProbabilityContainer;
 
-public class FactorGraphModel {
-	public static int NUMBER_OF_STATES = Constants.NUMBER_OF_STATES;
+public class FactorGraphModel implements Serializable {
+  private static final long serialVersionUID = 531050692457565781L;
+  
+  public static int NUMBER_OF_STATES = Constants.NUMBER_OF_STATES;
 	public static double CONVERGENCE_TOLERANCE = Constants.CONVERGENCE_TOLERANCE;
 	
 	private ImageDTO image;
@@ -84,15 +87,14 @@ public class FactorGraphModel {
 				//prepare feature masks
 				List<Feature> nonLinearFeatures = superPixel.getLocalFeatureVector().getFeatures();
         
-        List<Feature> features = new ArrayList<Feature>();
-        for (Feature feature : nonLinearFeatures) {
-          if (feature instanceof FeatureContainer) {
-            features.addAll(((FeatureContainer)feature).getFeatures());
-          } else {
-            features.add(feature);
-          }
-        }
-				
+				List<Feature> features = new ArrayList<Feature>();
+				for (Feature feature : nonLinearFeatures) {
+					if (feature instanceof FeatureContainer) {
+						features.addAll(((FeatureContainer)feature).getFeatures());
+					} else {
+						features.add(feature);
+					}
+				}
 				
 				for (Feature feature : features) {
 					if (feature instanceof DiscreteFeature){
@@ -598,5 +600,5 @@ public class FactorGraphModel {
 		return this.continuousFeatureMap.get(feature);
 	}
 	
-	private static Logger _log = Logger.getLogger(FactorGraphModel.class);
+	private static transient Logger _log = Logger.getLogger(FactorGraphModel.class);
 }

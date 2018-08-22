@@ -1,7 +1,7 @@
 package masters.factorisation;
 
-import java.util.List;
+import java.io.Serializable;
 
-public interface Node {
+public interface Node extends Serializable {
 	public String toString();
 }

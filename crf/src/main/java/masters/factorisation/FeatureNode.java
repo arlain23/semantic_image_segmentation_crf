@@ -12,8 +12,10 @@ import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
 import masters.train.WeightVector;
 
-public class FeatureNode implements Node{
-	private PixelDTO pixel = null;
+public class FeatureNode implements Node {
+  private static final long serialVersionUID = -8681526956284931559L;
+  
+  private PixelDTO pixel = null;
 	private SuperPixelDTO superPixel = null;
 	
 	private List<Double> maxBeliefs;
@@ -96,6 +98,6 @@ public class FeatureNode implements Node{
 		return ("p: " + pixel + " | sp " + superPixel);
 	}
 	
-	private static Logger _log = Logger.getLogger(FeatureNode.class);
+	private static transient Logger _log = Logger.getLogger(FeatureNode.class);
 
 }

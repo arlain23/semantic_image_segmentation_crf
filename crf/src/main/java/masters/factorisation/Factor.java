@@ -1,13 +1,16 @@
 package masters.factorisation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import masters.Constants;
 
-public class Factor {
+public class Factor implements Serializable {
 
-	public int leftX = -1;
+  private static final long serialVersionUID = -5623003383671897432L;
+  
+  public int leftX = -1;
 	public int leftY = -1;
 	
 	private int leftSuperPixelIndex = -1;

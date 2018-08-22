@@ -6,8 +6,9 @@ import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Logger;
 
-public class FeatureContainer implements Feature{
-
+public class FeatureContainer implements Feature {
+  private static final long serialVersionUID = -2607718850680822924L;
+  
   private List<Feature> features;
   private int featureIndex;
   
@@ -42,6 +43,6 @@ public class FeatureContainer implements Feature{
 	public List<Feature> getFeatures() {
 	  return this.features;
 	}
-	private static Logger _log = Logger.getLogger(FeatureContainer.class);
+	private static transient Logger _log = Logger.getLogger(FeatureContainer.class);
 
 }

@@ -1,5 +1,6 @@
 package masters.train;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,8 +12,10 @@ import masters.features.ContinousFeature;
 import masters.features.Feature;
 import masters.utils.Helper;
 
-public class FeatureVector {
-	private List<Feature> features;
+public class FeatureVector implements Serializable {
+  private static final long serialVersionUID = 3918193495910965229L;
+  
+  private List<Feature> features;
 	private Map<Feature, Object> featureToValueMap= null;
 	public FeatureVector (int featureSize) {
 		features = Helper.initFixedSizedListContinuousFeature(featureSize);

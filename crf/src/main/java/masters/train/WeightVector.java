@@ -1,12 +1,15 @@
 package masters.train;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import masters.Constants;
 
-public class WeightVector {
-	private List<Double> weights;
+public class WeightVector implements Serializable {
+  private static final long serialVersionUID = 2470739546889724894L;
+  
+  private List<Double> weights;
 	
 	public WeightVector (int numberOfLabels, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		//random

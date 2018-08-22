@@ -1,13 +1,16 @@
 package masters.features;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import masters.image.ImageMask;
 import masters.utils.Helper;
 
-public class ValueMask {
-	private List<Double> valueList;
+public class ValueMask implements Serializable {
+  private static final long serialVersionUID = -5207202416466490499L;
+  
+  private List<Double> valueList;
 	private int listSize;
 	
 	public ValueMask (int listSize) {

@@ -1,12 +1,15 @@
 package masters.features;
 
+import java.io.Serializable;
 import java.util.List;
 
 import masters.image.ImageMask;
 import masters.utils.Helper;
 
-public class BinaryMask {
-	private List<Integer> binaryList;
+public class BinaryMask implements Serializable {
+  private static final long serialVersionUID = -6289462124334681440L;
+  
+  private List<Integer> binaryList;
 	private int listSize;
 	
 	

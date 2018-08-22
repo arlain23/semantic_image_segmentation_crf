@@ -6,9 +6,11 @@ import java.util.List;
 import masters.Constants;
 import masters.train.WeightVector;
 
-public class OutputNode implements Node{
+public class OutputNode implements Node {
 	
-	private List<Double> maxBeliefs;
+  private static final long serialVersionUID = -8556195807007808706L;
+
+  private List<Double> maxBeliefs;
 	
 	private FeatureNode featureNode;
 	private List<Factor> adjacentFactors = new ArrayList<Factor>();

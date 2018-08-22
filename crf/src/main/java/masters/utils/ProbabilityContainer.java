@@ -1,5 +1,6 @@
 package masters.utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,8 +10,10 @@ import masters.factorisation.FactorGraphModel;
 import masters.features.BinaryMask;
 import masters.image.ImageDTO;
 
-public class ProbabilityContainer {
-	List<Double> labelProbabilities;
+public class ProbabilityContainer implements Serializable{
+  private static final long serialVersionUID = -1023100465899785888L;
+  
+  List<Double> labelProbabilities;
 	
 	public ProbabilityContainer(Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
 		setLabelProbabilities(imageToFactorGraphMap);

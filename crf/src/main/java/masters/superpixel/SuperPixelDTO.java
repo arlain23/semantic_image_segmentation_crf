@@ -2,6 +2,7 @@ package masters.superpixel;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Currency;
@@ -39,9 +40,11 @@ import masters.utils.CRFUtils;
 import masters.utils.Helper;
 import masters.utils.ProbabilityContainer;
 
-public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
-	
-	private FeatureVector localFeatureVector;
+public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
+  private static final long serialVersionUID = -7965602668333570635L;
+  
+  
+  private FeatureVector localFeatureVector;
 	private FeatureVector pairwiseFeatureVector;
 	private double[] meanRGB;	
 	public int numberOfLocalFeatures;
@@ -557,6 +560,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO> {
 		return ("superpixel index " + superPixelIndex);
 	}
 	
-	private static Logger _log = Logger.getLogger(SuperPixelDTO.class);
+	private static transient Logger _log = Logger.getLogger(SuperPixelDTO.class);
 
 }

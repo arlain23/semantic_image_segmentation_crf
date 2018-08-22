@@ -2,8 +2,10 @@ package masters.features;
 
 import org.apache.log4j.Logger;
 
-public class DiscreteFeature implements Feature{
-	private String value;
+public class DiscreteFeature implements Feature {
+  private static final long serialVersionUID = 6620717680231231595L;
+  
+  private String value;
 	
 	public Object getValue() {
 		return value;
@@ -58,5 +60,5 @@ public class DiscreteFeature implements Feature{
   }
 
 
-  Logger _log = Logger.getLogger(DiscreteFeature.class);
+  private static transient Logger _log = Logger.getLogger(DiscreteFeature.class);
 }

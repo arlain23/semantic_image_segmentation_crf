@@ -161,7 +161,7 @@ public class DataHelper {
 			}
 		}
 	}
-	private static BufferedImage openImage(String path) {
+	public static BufferedImage openImage(String path) {
 		BufferedImage img;
 		try {
 			img = ImageIO.read(new File(path));

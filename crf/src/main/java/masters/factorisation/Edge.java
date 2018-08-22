@@ -1,14 +1,15 @@
 package masters.factorisation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Objects;
 
 import masters.Constants;
 
-public class Edge {
-	private List<Double> factorToVariableMsgList;
+public class Edge implements Serializable {
+  private static final long serialVersionUID = -3142214097703887535L;
+  
+  private List<Double> factorToVariableMsgList;
 	private List<Double> variableToFactorMsgList;
 	
 	Factor factor;

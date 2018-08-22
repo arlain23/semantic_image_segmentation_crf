@@ -1,6 +1,8 @@
 package masters.features;
 
-public interface Feature {
+import java.io.Serializable;
+
+public interface Feature extends Serializable{
 
 	Object value = null;
 	public Object getValue();

@@ -1,8 +1,11 @@
 package masters.factorisation;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class FactorEdgeKey {
+public class FactorEdgeKey implements Serializable {
+  private static final long serialVersionUID = 1419744393941621558L;
+  
     private final Factor factor;
     private final Node variable;
 
