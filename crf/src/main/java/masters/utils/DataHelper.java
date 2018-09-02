@@ -6,15 +6,13 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +24,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 
 import masters.Constants;
 import masters.image.ImageDTO;
@@ -43,21 +42,25 @@ public class DataHelper {
 	public static String TEST_TRAIN_SET = Constants.TRAIN_PATH;
 	public static String TEST_SEGMENTATION_RESULTS = Constants.RESULT_PATH;
 	
+	public static String IMAGE_EXTENSION = Constants.IMAGE_EXTENSION;
+	public static String RESULT_IMAGE_SUFFIX = Constants.RESULT_IMAGE_SUFFIX;
 	
 	/* getters */ 
 
 	
 	public static List<ImageDTO> getTrainingDataTestSegmented() {
-		List<File> trainingFiles = getFilesFromDirectory(TEST_TRAIN_SET);
-		List<File> resultFiles = getFilesFromDirectory(TEST_SEGMENTATION_RESULTS);
+		Map<String, File> trainingFiles = getFilesFromDirectory(TEST_TRAIN_SET);
+		Map<String, File> resultFiles = getFilesFromDirectory(TEST_SEGMENTATION_RESULTS);
 		
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
-		for (int i = 0; i < trainingFiles.size(); i++) {
-			if (i >= Constants.TRAIN_IMAGE_LIMIT) {
+		int i = 0;
+		for (String key : trainingFiles.keySet()) {
+			if (++i >= Constants.TRAIN_IMAGE_LIMIT) {
 				return imageList;
 			}
-			File trainFile = trainingFiles.get(i);
-			File segmentedFile = resultFiles.get(i);
+			
+			File trainFile = trainingFiles.get(key);
+			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
 			
 			BufferedImage trainImg = openImage(trainFile.getPath());
 			BufferedImage segmentedImg = openImage(segmentedFile.getPath());
@@ -75,14 +78,15 @@ public class DataHelper {
 	}
 
 	public static List<ImageDTO> getTestData() {
-		List<File> testFiles = getFilesFromDirectory(TEST_TEST_SET);
+		Map<String, File> testFiles = getFilesFromDirectory(TEST_TEST_SET);
 		
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
-		for (int i = 0; i < testFiles.size(); i++) {
-			if (i >= Constants.TEST_IMAGE_LIMIT) {
+		int i = 0;
+		for (String key : testFiles.keySet()) {
+			if (++i >= Constants.TEST_IMAGE_LIMIT) {
 				break;
 			}
-			File trainFile = testFiles.get(i);
+			File trainFile = testFiles.get(key);
 			
 			BufferedImage trainImg = openImage(trainFile.getPath());
 			
@@ -140,14 +144,27 @@ public class DataHelper {
 	}
 	
 	
-	private static List<File> getFilesFromDirectory(String path) {
-		File folder = new File(path);
-		File[] listOfFiles = folder.listFiles();
-		if (listOfFiles == null) {
-			_log.error("path " + path + " has no files");
+	private static Map<String,File> getFilesFromDirectory(String path) {
+		File folder;
+		try {
+			folder = new File(DataHelper.class.getClassLoader().getResource(path).toURI());
+			File[] listOfFiles = folder.listFiles();
+			if (listOfFiles == null) {
+				_log.error("path " + folder.getAbsolutePath() + " has no files");
+				throw new RuntimeErrorException(null);
+			}
+			Map<String,File> result = new HashMap<String, File>();
+			
+			for (int i = 0; i < listOfFiles.length; i++) {
+				File file = listOfFiles[i];
+				result.put(FilenameUtils.removeExtension(file.getName()), file);
+			}
+			return result;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 			throw new RuntimeErrorException(null);
 		}
-		return Arrays.asList(listOfFiles);
+		
 	}
 	
 	private static void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
@@ -283,7 +300,7 @@ public class DataHelper {
 		}
 		File outputFile = new File(path);
 		try {
-			ImageIO.write(img, "png", outputFile);
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -302,7 +319,7 @@ public class DataHelper {
             		
         File outputFile = new File(path);
 		try {
-			ImageIO.write(img, "png", outputFile);
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -344,7 +361,7 @@ public class DataHelper {
 	        	graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
 	        }
 	        
-			ImageIO.write(img, "png", outputfile);
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -377,7 +394,7 @@ public class DataHelper {
 	                theImage.setRGB(i, j, value);
 	            }
 	        }
-	        ImageIO.write(theImage, "png", outputfile);
+	        ImageIO.write(theImage, Constants.IMAGE_EXTENSION, outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
