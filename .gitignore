@@ -24,6 +24,8 @@ hs_err_pid*
 .metadata/*
 .recommenders/*
 RemoteSystemsTempFiles/*
-test2/.settings
-test2/.classpath
-test2/.project
+crf/.settings
+crf/.classpath
+crf/.project
+crf/src/work
+
