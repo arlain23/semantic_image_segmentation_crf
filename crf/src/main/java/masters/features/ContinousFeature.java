@@ -2,7 +2,6 @@ package masters.features;
 
 import org.apache.log4j.Logger;
 
-import masters.App;
 import masters.Constants;
 
 public class ContinousFeature implements Feature {

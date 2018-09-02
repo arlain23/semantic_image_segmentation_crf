@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import masters.image.ImageMask;
 import masters.utils.Helper;
 
 public class ValueMask implements Serializable {

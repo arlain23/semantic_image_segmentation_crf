@@ -24,7 +24,6 @@ public class App {
 	
   @SuppressWarnings("unchecked")
   public static void main( String[] args ) throws ColorSpaceException {
-    System.out.println(  System.getProperty("user.dir") );
     List<ImageDTO> imageList = DataHelper.getTrainingDataTestSegmented();
     
     
@@ -87,7 +86,7 @@ public class App {
 	
 	// training
 	List<Double> initWeightList = Arrays.asList(new Double[] {
-	    0.02596068092947962, 1.7739373684198315E-19, 1.7734444204022248E-19
+		0.030862184982075637, 0.0018824333852663505, 0.0026369318438681233 
 	});
 	
 

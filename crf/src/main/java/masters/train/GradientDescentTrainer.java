@@ -4,19 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import masters.Constants;
-import masters.factorisation.Factor;
 import masters.factorisation.FactorGraphModel;
 import masters.image.ImageDTO;
 import masters.image.ImageMask;
 import masters.sampler.GibbsSampler;
-import masters.superpixel.SuperPixelDTO;
 import masters.utils.CRFUtils;
-import masters.utils.DataHelper;
 import masters.utils.Helper;
 import masters.utils.ProbabilityContainer;
 
@@ -52,13 +48,11 @@ public class GradientDescentTrainer {
 		}
 		
 		int numberOfWeights = weightVector.getWeightSize();
-		int counter = 0;
 		Map<ImageDTO, ImageMask> imageToMaskMap = new HashMap<ImageDTO, ImageMask>();
 		System.out.println(weightVector);
 		for (int epoch = 0; epoch < NUMBER_OF_ITERATIONS; epoch++) {
 			// for each training image
 			for (ImageDTO trainingImage : imageList) {
-				counter++;
 				// get samples
 				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
 
@@ -95,7 +89,6 @@ public class GradientDescentTrainer {
 				}
 				WeightVector newWeightVetor = new WeightVector(newWeights);
 				if (epoch % 100 == 0) {
-					double mse = MSE(weightVector, newWeightVetor);
 					double gradientLength = getVectorLength(gradients);
 					System.out.println("Gradient length: " + gradientLength);
 				}
@@ -109,21 +102,11 @@ public class GradientDescentTrainer {
 			if (epoch % 101 == 0) {
 				System.out.println(weightVector);
 			}
+			System.out.println("I " + epoch);
 		}
 		return weightVector;
 	}
 	
-	private double MSE (WeightVector vector1, WeightVector vector2) {
-		List<Double> weights1 = vector1.getWeights();
-		List<Double> weights2 = vector2.getWeights();
-		double sum = 0.0;
-		
-		for (int i = 0; i < weights1.size(); i++) {
-			sum += Math.pow((weights1.get(i) - weights2.get(i)), 2);
-		}
-
-		return sum / (double) weights1.size();
-	}
 	private double getVectorLength(List<Double> vector) {
 		double length = 0;
 		for (Double d : vector) {

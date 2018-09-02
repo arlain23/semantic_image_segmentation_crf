@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import masters.Constants;
-import masters.superpixel.SuperPixelDTO;
 import masters.utils.Helper;
 
 public class ImageMask {

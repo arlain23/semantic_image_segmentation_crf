@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Currency;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,29 +12,23 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import javax.management.DescriptorRead;
 import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Logger;
 
-import masters.App;
 import masters.Constants;
 import masters.colors.ColorSpaceConverter;
 import masters.colors.ColorSpaceException;
-import masters.factorisation.Factor;
 import masters.factorisation.FactorGraphModel;
-import masters.features.BinaryMask;
 import masters.features.ContinousFeature;
 import masters.features.DiscreteFeature;
 import masters.features.Feature;
 import masters.features.FeatureContainer;
-import masters.features.ValueMask;
 import masters.features.VectorFeature;
 import masters.image.ImageDTO;
 import masters.image.ImageMask;
 import masters.image.PixelDTO;
 import masters.train.FeatureVector;
-import masters.train.WeightVector;
 import masters.utils.CRFUtils;
 import masters.utils.Helper;
 import masters.utils.ProbabilityContainer;

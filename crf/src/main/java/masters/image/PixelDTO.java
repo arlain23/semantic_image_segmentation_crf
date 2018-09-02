@@ -15,7 +15,7 @@ public class PixelDTO implements Cloneable, Serializable {
 	private int alpha;
 	private Integer label;
 	
-	private int superPixelIdex;
+	private int superPixelIndex;
 	private boolean isBorderPixel;
 	
 	public PixelDTO(int xIndex, int yIndex, int r, int g, int b, int alpha, Integer label) {
@@ -50,11 +50,11 @@ public class PixelDTO implements Cloneable, Serializable {
 	}
 
 	public int getSuperPixelIndex() {
-		return superPixelIdex;
+		return superPixelIndex;
 	}
 
 	public void setSuperPixelIndex(int superPixelIdex) {
-		this.superPixelIdex = superPixelIdex;
+		this.superPixelIndex = superPixelIdex;
 	}
 	public int getXIndex() {
 		return xIndex;

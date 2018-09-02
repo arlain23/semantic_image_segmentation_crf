@@ -15,8 +15,6 @@ import org.apache.log4j.Logger;
 
 import masters.Constants;
 import masters.colors.ColorSpaceException;
-import masters.factorisation.FactorGraphModel;
-import masters.factorisation.FeatureNode;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;

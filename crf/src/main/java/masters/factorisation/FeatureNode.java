@@ -7,7 +7,6 @@ import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Logger;
 
-import masters.Constants;
 import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
 import masters.train.WeightVector;

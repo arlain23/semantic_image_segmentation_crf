@@ -2,10 +2,12 @@ package masters.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
 public class SerializationUtil {
   
@@ -26,13 +28,17 @@ public class SerializationUtil {
     objectOutputStream.close();
   }
   public static Object readObjectFromFile(String fileName) throws IOException, ClassNotFoundException {
-    String path = workPath + File.separator + fileName;
-    FileInputStream  fileInputStream = new FileInputStream (new File(path));
-    ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-    Object obj = objectInputStream.readObject();
-    objectInputStream.close();
-    return obj;
-    
+	  try {
+	    String path = workPath + File.separator + fileName;
+	    FileInputStream  fileInputStream = new FileInputStream (new File(path));
+	    ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+	    Object obj = objectInputStream.readObject();
+	    objectInputStream.close();
+	    return obj;
+	  } catch(FileNotFoundException e) {
+		  return new HashMap<>();
+	  }
+	    
   }
   
 }

@@ -26,7 +26,6 @@ import masters.image.ImageMask;
 import masters.superpixel.SuperPixelDTO;
 import masters.train.FeatureVector;
 import masters.train.WeightVector;
-import masters.utils.Helper;
 import masters.utils.ProbabilityContainer;
 
 public class FactorGraphModel implements Serializable {
