@@ -13,6 +13,7 @@ import util.FileUtil;
 
 public class App 
 {
+
 	public static int IMAGE_WIDTH = GeneratorConstants.WIDTH;
 	public static int IMAGE_HEIGHT = GeneratorConstants.HEIGHT;
     public static void main( String[] args ) throws IOException {
@@ -39,7 +40,6 @@ public class App
         	ColourUtil.fillColour(testG2d, ColourUtil.getRandomColor());
         	ColourUtil.fillGraphicsWithRandomColours(testG2d, null);
         	ShapeDrawer.initDraw(testG2d, null);
-        	
         	FileUtil.saveImage(testImg, GeneratorConstants.TEST_PATH, (i + ".png"));
     	}
     }

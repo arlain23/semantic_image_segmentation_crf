@@ -3,122 +3,257 @@ package shapes;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.io.IOException;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 import generator.GeneratorConstants;
 
 public class ShapeDrawer {
 	
 	private static final int BASE_BLOCK_SIZE = GeneratorConstants.BLOCK_SIZE;
+	private static final Color FOREGROUND_COLOR = GeneratorConstants.FOREGROUND_COLOR;
+	private static final Color NEIGHBOUR_COLOR = GeneratorConstants.NEIGHBOUR_COLOR;
+	
 	public static void drawCircle(Graphics2D g2d, Color color, int x, int y, int radius) {
 	    g2d.setColor(color);
 	    g2d.fill(new Ellipse2D.Float(x, y, radius, radius));
 	}
+	
 	public static void initDraw(Graphics2D trainG2d, Graphics2D resultG2d) {
 		Random random = new Random();
-		int scale = random.nextInt(GeneratorConstants.MAX_SCALE) + 1;
-		int blockSize = scale * BASE_BLOCK_SIZE;
+		double scale = 0.5; //random.nextInt(GeneratorConstants.MAX_SCALE) + 1;
+		int blockSize = (int)(scale * BASE_BLOCK_SIZE);
 		
-		//get init position
-		int initX = random.nextInt(GeneratorConstants.WIDTH/2) + GeneratorConstants.WIDTH/4;
-		int initY = random.nextInt(GeneratorConstants.HEIGHT/2) + GeneratorConstants.HEIGHT/4;
-		Color foregroundColor = GeneratorConstants.FOREGROUND_COLOR;
-		Color neighbourColor = Color.GREEN;
+		int blockDivider = 1;
+		int buffer = GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL;
+
+		//draw H 
+		int figureSizeH = (int)(3 * scale);
 		
-		drawBaseShape(trainG2d, initX, initY, blockSize, foregroundColor);
-		drawBaseShapeNeighbourhood(trainG2d, initX, initY, blockSize, scale, neighbourColor);
+		int initH_XGridPos= random.nextInt(blockDivider * ((int)GeneratorConstants.WIDTH/BASE_BLOCK_SIZE - buffer - figureSizeH)) + blockDivider * buffer;
+		int initH_YGridPos = random.nextInt(blockDivider * ((int)GeneratorConstants.HEIGHT/BASE_BLOCK_SIZE - buffer - figureSizeH)) + blockDivider * buffer;
+		
+		int initH_X = (initH_XGridPos / blockDivider) * BASE_BLOCK_SIZE;
+		int initH_Y = (initH_YGridPos / blockDivider) * BASE_BLOCK_SIZE;
+		
+		//get boundaries
+		int xminH, xmaxH, yminH, ymaxH;
+		xminH = initH_X;
+		xmaxH = xminH + (buffer + figureSizeH + buffer) * blockSize;
+		yminH = initH_Y;
+		ymaxH = yminH + (buffer + figureSizeH + buffer) * blockSize; 
+		
+		
+		
+		
+		// draw other regions
+		int figureSize = (int)(2 * scale);
+		boolean isHidden = true;
+		
+		int initXGridPos = 0,initYGridPos = 0;
+		int xmin, xmax, ymin, ymax;
+		int initX = 0, initY = 0;
+		
+		
+		int counter = 0;
+		while(isHidden) {
+			initXGridPos = random.nextInt(blockDivider * ((int)GeneratorConstants.WIDTH/BASE_BLOCK_SIZE - buffer - figureSize)) + blockDivider * buffer;
+			initYGridPos = random.nextInt(blockDivider * ((int)GeneratorConstants.HEIGHT/BASE_BLOCK_SIZE - buffer - figureSize)) + blockDivider * buffer;
+
+			initX = (initXGridPos / blockDivider) * BASE_BLOCK_SIZE;
+			initY = (initYGridPos / blockDivider) * BASE_BLOCK_SIZE;
+			
+			// get boundaries
+			
+			xmin = initX;
+			xmax = xmin + (buffer + figureSize + buffer) * blockSize;
+			ymin = initY;
+			ymax = ymin + (buffer + figureSize + buffer) * blockSize; 
+			
+			if ((xmax < xminH || xmin > xmaxH) && (ymax < yminH || ymin > yminH)) {
+				isHidden = false;
+			}
+			if (++counter > 100) {
+				isHidden = false;
+			}
+		}
+
+		//draw figures
+		drawOtherRegions(trainG2d, resultG2d, initH_X, initH_Y, blockSize);
+		drawH(trainG2d, resultG2d, initX, initY, blockSize, scale);
+	}
+	public static void drawOtherRegions(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize) {
+		
+		Color foregroundColor = FOREGROUND_COLOR;
+		Color neighbourColor = NEIGHBOUR_COLOR;
+		
+		Color foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+				GeneratorConstants.COLOR_TO_LABEL_MAP.get(foregroundColor));
+		Color neighbourMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+				GeneratorConstants.COLOR_TO_LABEL_MAP.get(NEIGHBOUR_COLOR));
+		
+		drawOtherRegions(trainG2d, initX, initY, blockSize, neighbourColor, foregroundColor);
+		if (resultG2d != null) {
+			drawOtherRegions(resultG2d, initX, initY, blockSize, neighbourMarkup, foregroundMarkup);
+		}
+	}
+	
+	private static void drawOtherRegions(Graphics2D g2d, int initX, int initY, int blockSize, Color neighbourColor, Color foregroundColor) {
+		//first row
+		int tmpX, tmpY;
+		
+		tmpX = initX;
+		tmpY = initY;
+		for (int i = 0; i < 6; i++) {
+			drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+			tmpX += blockSize;
+		}
+		
+		//second row
+		tmpX = initX;
+		tmpY = initY + blockSize;
+		
+		for (int i = 0; i < 6; i++) {
+			drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+			tmpX += blockSize;
+		}
+		
+		//figure row 
+		tmpX = initX;
+		tmpY = initY + 2 * blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, foregroundColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, foregroundColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		
+		tmpX = initX;
+		tmpY = initY + 3 * blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, foregroundColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, foregroundColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+		tmpX += blockSize;
+		
+		//second last
+		tmpX = initX;
+		tmpY = initY + 4 * blockSize;
+		
+		for (int i = 0; i < 6; i++) {
+			drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+			tmpX += blockSize;
+		}
+		
+		//last
+		tmpX = initX;
+		tmpY = initY + 5 * blockSize;
+		
+		for (int i = 0; i < 6; i++) {
+			drawSquare(g2d, neighbourColor, tmpX, tmpY, blockSize);
+			tmpX += blockSize;
+		}
+	}
+	public static void drawH(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize, double scale) {
+		drawBaseShape(trainG2d, initX, initY, blockSize, FOREGROUND_COLOR);
+		drawBaseShapeNeighbourhood(trainG2d, initX, initY, blockSize, scale, NEIGHBOUR_COLOR);
 		
 		if (resultG2d != null){
 			Color foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(GeneratorConstants.COLOR_TO_LABEL_MAP.size());
 			Color neighbourMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
-					GeneratorConstants.COLOR_TO_LABEL_MAP.get(neighbourColor));
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(NEIGHBOUR_COLOR));
 			
 			drawBaseShape(resultG2d, initX, initY, blockSize, foregroundMarkup);
 			drawBaseShapeNeighbourhood(resultG2d, initX, initY, blockSize, scale, neighbourMarkup);
 		}
-	}
-	public static void drawBaseShapeNeighbourhood(Graphics2D g2d, int initX, int initY, int blockSize, int scale, Color color) {
-		int baseX = initX - GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL * BASE_BLOCK_SIZE;
-		int baseY = initY - GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL * BASE_BLOCK_SIZE;
 		
-		int topBorderY = initY + blockSize;
-		int bottomBorderY = initY + 2 * blockSize;
+	}
+	public static void drawBaseShapeNeighbourhood(Graphics2D g2d, int initX, int initY, int blockSize, double scale, Color color) {
+		int baseX = initX - GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL * blockSize;
+		int baseY = initY - GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL * blockSize;
 		
 		int y = baseY;
 		//first row
 		for (int x = 0; x < (4 + 3 * scale); x++) {
-			drawSquare(g2d, color, baseX + x * BASE_BLOCK_SIZE, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		//second row
-		y = baseY + BASE_BLOCK_SIZE;
+		y = baseY + blockSize;
 		for (int x = 0; x < (4 + 3 * scale); x++) {
-			drawSquare(g2d, color, baseX + x * BASE_BLOCK_SIZE, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		
 		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*BASE_BLOCK_SIZE;
+			y = baseY + (2+i)*blockSize;
 			int x = baseX;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE + blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize + blockSize;
 			for (int j = 0; j < scale; j++) {
-				drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-				x += BASE_BLOCK_SIZE;
+				drawSquare(g2d, color, x, y, blockSize);
+				x += blockSize;
 			}
 			x += blockSize;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
 		}
 		
 		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*BASE_BLOCK_SIZE + blockSize;
+			y = baseY + (2+i)*blockSize + blockSize;
 			int x = baseX;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
 			
-			x += BASE_BLOCK_SIZE + 3* blockSize;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
+			x += blockSize + 3* blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
 		}
 		
 		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*BASE_BLOCK_SIZE + 2*blockSize;
+			y = baseY + (2+i)*blockSize + 2*blockSize;
 			int x = baseX;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE + blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize + blockSize;
 			for (int j = 0; j < scale; j++) {
-				drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-				x += BASE_BLOCK_SIZE;
+				drawSquare(g2d, color, x, y, blockSize);
+				x += blockSize;
 			}
 			x += blockSize;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
-			x += BASE_BLOCK_SIZE;
-			drawSquare(g2d, color, x, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, x, y, blockSize);
+			x += blockSize;
+			drawSquare(g2d, color, x, y, blockSize);
 		}
 		
 		//second last row
-		y = baseY + 2 * BASE_BLOCK_SIZE + 3 * blockSize;
+		y = baseY + 2 * blockSize + 3 * blockSize;
 		for (int x = 0; x < (4 + 3 * scale); x++) {
-			drawSquare(g2d, color, baseX + x * BASE_BLOCK_SIZE, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		//last row
-		y = baseY + 3 * BASE_BLOCK_SIZE + 3 * blockSize;
+		y = baseY + 3 * blockSize + 3 * blockSize;
 		for (int x = 0; x < (4 + 3 * scale); x++) {
-			drawSquare(g2d, color, baseX + x * BASE_BLOCK_SIZE, y, BASE_BLOCK_SIZE);
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		
-		//first column
 	}
 	public static void drawBaseShape(Graphics2D g2d, int initX, int initY, int blockSize, Color color) {
 		int x,y;
