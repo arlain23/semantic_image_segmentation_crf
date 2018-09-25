@@ -36,7 +36,7 @@ public class SuperPixelHelper {
 			Map<SuperPixelDTO,SuperPixelDTO> createdSuperPixels = new HashMap<SuperPixelDTO, SuperPixelDTO>();
 			String s = null;
 			int rowIndex = 0;
-			PixelDTO[][] pixelData = imageDTO.pixelData;
+			PixelDTO[][] pixelData = imageDTO.getPixelData();
 			while ((s = stdInput.readLine()) != null) {
 				String [] rowData = s.split(" ");
 				for (int colIndex = 0; colIndex < rowData.length; colIndex++) {
@@ -66,9 +66,6 @@ public class SuperPixelHelper {
 		for (SuperPixelDTO superPixel : superPixels) {
 			superPixel.initMeanRGB();
 			superPixel.initNeighbours(imageDTO.getPixelData(), superPixels);
-		}
-		for (SuperPixelDTO superPixel : superPixels) {
-			superPixel.initFeatureVector();
 		}
 		return superPixels;
 	}

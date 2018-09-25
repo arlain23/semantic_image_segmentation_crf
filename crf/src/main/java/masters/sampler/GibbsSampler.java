@@ -13,12 +13,12 @@ import masters.train.FeatureVector;
 import masters.train.WeightVector;
 import masters.utils.CRFUtils;
 import masters.utils.DataHelper;
-import masters.utils.ProbabilityContainer;
+import masters.utils.ParametersContainer;
 
 public class GibbsSampler {
 
 	public static ImageMask getSample(FactorGraphModel factorGraph, WeightVector weightVector,
-			ImageMask previousMask, ProbabilityContainer probabilityContainer) {
+			ImageMask previousMask, ParametersContainer parameterContainer) {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
 		int numberOfLabels = Constants.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
@@ -51,7 +51,7 @@ public class GibbsSampler {
 			for (int label = 0; label < numberOfLabels; label++) {
 				ImageMask tmpMask = new ImageMask(joinLists(resultingMask, label, initMask));
 				// get probability for label
-				labelProbabilities.add(getSampleEnergy(factorGraph, tmpMask, weightVector, probabilityContainer));
+				labelProbabilities.add(getSampleEnergy(factorGraph, tmpMask, weightVector, parameterContainer));
 			}
 			labelProbabilities = calculateLabelProbabilities(labelProbabilities);
 			
@@ -103,8 +103,8 @@ public class GibbsSampler {
 		return 0;
 	}
 
-	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector, ProbabilityContainer probabilityContainer) {
-		FeatureVector featureVector = CRFUtils.calculateImageFi(weightVector, factorGraph, mask, probabilityContainer);
+	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector, ParametersContainer parameterContainer) {
+		FeatureVector featureVector = CRFUtils.calculateImageFi(weightVector, factorGraph, mask, parameterContainer);
 		return featureVector.calculateEnergy(weightVector);
 	}
 

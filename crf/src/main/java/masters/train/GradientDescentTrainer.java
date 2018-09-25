@@ -13,8 +13,9 @@ import masters.image.ImageDTO;
 import masters.image.ImageMask;
 import masters.sampler.GibbsSampler;
 import masters.utils.CRFUtils;
+import masters.utils.DataHelper;
 import masters.utils.Helper;
-import masters.utils.ProbabilityContainer;
+import masters.utils.ParametersContainer;
 
 public class GradientDescentTrainer {
 	private static int NUMBER_OF_ITERATIONS = Constants.NUMBER_OF_ITERATIONS;
@@ -28,16 +29,16 @@ public class GradientDescentTrainer {
 	private List<ImageDTO> imageList;
 	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
 	
-	private ProbabilityContainer probabiltyContainer;
+	private ParametersContainer parameterContainer;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ProbabilityContainer probabiltyContainer,
+	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer,
 			int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		
 		this.NUMBER_OF_LOCAL_FEATURES = numberOfLocalFeatures;
 		this.NUMBER_OF_PAIRWISE_FEATURES = numberOfPairwiseFeatures;
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
-		this.probabiltyContainer = probabiltyContainer;
+		this.parameterContainer = parameterContainer;
 	}
 	
 	public WeightVector train(WeightVector weightVector) {
@@ -60,16 +61,16 @@ public class GradientDescentTrainer {
 				if (imageToMaskMap.containsKey(trainingImage)) {
 					currentMask = imageToMaskMap.get(trainingImage);
 				}
-				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask, probabiltyContainer);
+				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask, parameterContainer);
 				imageToMaskMap.put(trainingImage, currentMask);
 				// calculate gradient
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
 				//fi for image
-				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask(), probabiltyContainer);
+				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask(), parameterContainer);
 				
 				//fi for sample
-				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, probabiltyContainer);
+				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, parameterContainer);
 				
 				for (int weightIndex = 0; weightIndex < numberOfWeights; weightIndex++) {
 					double regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
@@ -103,6 +104,8 @@ public class GradientDescentTrainer {
 				System.out.println(weightVector);
 			}
 			System.out.println("I " + epoch);
+			//save weights 
+			DataHelper.saveWeights(weightVector);
 		}
 		return weightVector;
 	}

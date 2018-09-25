@@ -26,7 +26,7 @@ import masters.image.ImageMask;
 import masters.superpixel.SuperPixelDTO;
 import masters.train.FeatureVector;
 import masters.train.WeightVector;
-import masters.utils.ProbabilityContainer;
+import masters.utils.ParametersContainer;
 
 public class FactorGraphModel implements Serializable {
   private static final long serialVersionUID = 531050692457565781L;
@@ -49,10 +49,10 @@ public class FactorGraphModel implements Serializable {
 	private Map<Feature, Double> betaMap;
 	
 	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
-	private ProbabilityContainer probabiltyContainer = null;
+	private ParametersContainer probabiltyContainer = null;
 	
 	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels,
-			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, WeightVector weightVector, ProbabilityContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, WeightVector weightVector, ParametersContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		this(currentImage, createdSuperPixels, weightVector,
 				probabiltyContainer, numberOfLocalFeatures, numberOfPairwiseFeatures);
 		this.trainingDataimageToFactorGraphMap = imageToFactorGraphMap;
@@ -60,7 +60,7 @@ public class FactorGraphModel implements Serializable {
 	}
 	
 
-	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ProbabilityContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ParametersContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		this.image = image;
 		this.superPixels = superPixels;
 		this.numberOfSuperPixels = superPixels.size();

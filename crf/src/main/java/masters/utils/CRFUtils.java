@@ -24,7 +24,7 @@ import masters.train.FeatureVector;
 import masters.train.WeightVector;
 
 public class CRFUtils {
-	public static FeatureVector calculateImageFi(WeightVector weightVector, FactorGraphModel factorGraph, ImageMask mask, ProbabilityContainer probabiltyContainer) {
+	public static FeatureVector calculateImageFi(WeightVector weightVector, FactorGraphModel factorGraph, ImageMask mask, ParametersContainer probabiltyContainer) {
 		FeatureVector imageFi = new FeatureVector(weightVector.getWeightSize());
 
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
@@ -53,7 +53,7 @@ public class CRFUtils {
    */
 
 	public static FeatureVector getLocalImageFi(int superPixelIndex, Integer objectLabel, ImageMask mask, FactorGraphModel factorGraph,
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer,
+			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ParametersContainer probabiltyContainer,
 			List<Feature> localFeatures, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		FeatureVector imageFi;
 		int featureIndex = 0;
@@ -162,7 +162,7 @@ public class CRFUtils {
 
 
 	public static double getFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, 
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
+			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ParametersContainer probabiltyContainer) {
 		if (feature instanceof DiscreteFeature) {
 			return getDiscreteFeatureProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap, probabiltyContainer);
 		} else if (feature instanceof ContinousFeature) {
@@ -171,7 +171,7 @@ public class CRFUtils {
 		throw new RuntimeException("Undefined feature type -> " + feature);
 	}
 
-	private static double getDiscreteFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
+	private static double getDiscreteFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ParametersContainer probabiltyContainer) {
 		if (trainingDataimageToFactorGraphMap == null) {
 			return getDiscreteFeatureProbabilityTraining(mask, factorGraph, objectLabel, feature, probabiltyContainer);
 		} else {
@@ -179,7 +179,7 @@ public class CRFUtils {
 		}
 	}
   
-	private static double getDisreteFeatureProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature, ProbabilityContainer probabiltyContainer) {
+	private static double getDisreteFeatureProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature, ParametersContainer probabiltyContainer) {
        
 		double probablityCurrentLabel = 0;
 		double probabilityFeatureCurrentLabel = 0;
@@ -217,7 +217,7 @@ public class CRFUtils {
 	}
 
 
-	private static double getDiscreteFeatureProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, ProbabilityContainer probabiltyContainer) {
+	private static double getDiscreteFeatureProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, ParametersContainer probabiltyContainer) {
 		BinaryMask labelMask = new BinaryMask(mask, objectLabel);
 	    BinaryMask featureMask = factorGraph.getDiscreteFeatureBinaryMask(feature);
 	    BinaryMask featureOnLabelMask = new BinaryMask(featureMask, labelMask);
@@ -244,7 +244,7 @@ public class CRFUtils {
 
   
 	private static double getContinuousFeatureProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel,
-			Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityContainer probabiltyContainer) {
+			Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ParametersContainer probabiltyContainer) {
 		if (trainingDataimageToFactorGraphMap == null) {
 			return getFeatureKernelProbabilityTraining(mask, factorGraph, objectLabel, feature, probabiltyContainer);
 		} else {
@@ -254,7 +254,7 @@ public class CRFUtils {
 
  
 	private static double getFeatureKernelProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature,
-			ProbabilityContainer probabiltyContainer) {
+			ParametersContainer probabiltyContainer) {
 		double probablityCurrentLabel = 0;
 		double probabilityFeatureCurrentLabel = 0;
 		double probabilityFeature = 0;
@@ -296,7 +296,7 @@ public class CRFUtils {
 	}
 
   
-	private static double getFeatureKernelProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, ProbabilityContainer probabiltyContainer) {
+	private static double getFeatureKernelProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, ParametersContainer probabiltyContainer) {
 
 		double probablityCurrentLabel = 0;
 		double probabilityFeatureCurrentLabel = 0;

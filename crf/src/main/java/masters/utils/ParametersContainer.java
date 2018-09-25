@@ -8,17 +8,14 @@ import java.util.Map;
 import masters.Constants;
 import masters.factorisation.FactorGraphModel;
 import masters.features.BinaryMask;
+import masters.grid.GridHelper;
 import masters.image.ImageDTO;
+import masters.superpixel.SuperPixelDTO;
 
-public class ProbabilityContainer implements Serializable{
-  private static final long serialVersionUID = -1023100465899785888L;
+public class ParametersContainer implements Serializable{
+	private static final long serialVersionUID = -1023100465899785888L;
   
-  List<Double> labelProbabilities;
-	
-	public ProbabilityContainer(Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
-		setLabelProbabilities(imageToFactorGraphMap);
-	}
-	
+	private List<Double> labelProbabilities;
 	public void setLabelProbabilities(Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap) {
 		labelProbabilities = new ArrayList<Double>();
 		for (int label = 0; label < Constants.NUMBER_OF_STATES; label ++) {

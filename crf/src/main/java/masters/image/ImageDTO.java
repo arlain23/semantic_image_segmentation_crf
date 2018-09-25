@@ -15,8 +15,8 @@ public class ImageDTO implements Cloneable, Serializable {
   	private String path;
 	private int width = 0;
 	private int height = 0;
-	public PixelDTO[][] pixelData;
-	public PixelDTO[][] segmentedData;
+	private PixelDTO[][] pixelData;
+	private PixelDTO[][] segmentedData;
 	transient private BufferedImage img;
 	
 	public ImageDTO(String path, int width, int height, PixelDTO[][] pixelData, BufferedImage img) {

@@ -4,13 +4,13 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,15 +24,16 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
-
 import masters.Constants;
+import masters.grid.GridPoint;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
+import masters.train.WeightVector;
 
 public class DataHelper {
 	private static List<String>	SEGMENTED_HEX_COLOURS = Constants.SEGMENTED_HEX_COLOURS;
@@ -67,7 +68,7 @@ public class DataHelper {
 			
 			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg);
 			PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
-			imageObj.pixelData = pixelData;
+			imageObj.setPixelData(pixelData);
 			
 			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImg, true);
 			updateLabelFromSegmentedImage(imageObj,segmentedPixelData);
@@ -92,7 +93,7 @@ public class DataHelper {
 			
 			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg);
 			PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
-			imageObj.pixelData = pixelData;
+			imageObj.setPixelData(pixelData);
 			
 			imageList.add(imageObj);
 		}
@@ -168,7 +169,7 @@ public class DataHelper {
 	}
 	
 	private static void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
-		PixelDTO[][] pixelData = imageObj.pixelData;
+		PixelDTO[][] pixelData = imageObj.getPixelData();
 		for (int i = 0; i < pixelData[0].length; i++) {
 			for (int j = 0; j < pixelData.length; j++) {
 				PixelDTO pixel = pixelData[j][i];
@@ -203,11 +204,11 @@ public class DataHelper {
         for (int x = 0; x < img.getWidth(); x++) {
             for (int y = 0; y < img.getHeight(); y++) {
             	try {
-            	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
+            	int value = LABEL_TO_COLOUR_MAP.get(image.getPixelData()[x][y].getLabel()).getRGB();
             	img.setRGB(x, y, value);
             	} catch (NullPointerException e) {
             		_log.error("null", e);
-                	System.out.println("image.pixelData[x][y].getLabel()" + image.pixelData[x][y].getLabel());
+                	System.out.println("image.pixelData[x][y].getLabel()" + image.getPixelData()[x][y].getLabel());
                 	throw new RuntimeErrorException(null);
             	}
             }
@@ -338,7 +339,7 @@ public class DataHelper {
 			
 	        for (int x = 0; x < img.getWidth(); x++) {
 	            for (int y = 0; y < img.getHeight(); y++) {
-	            	int value = LABEL_TO_COLOUR_MAP.get(image.pixelData[x][y].getLabel()).getRGB();
+	            	int value = LABEL_TO_COLOUR_MAP.get(image.getPixelData()[x][y].getLabel()).getRGB();
 	            	img.setRGB(x, y, value);
 	            }
 	        }
@@ -355,7 +356,7 @@ public class DataHelper {
 	        Graphics graphics = img.getGraphics();
 	        graphics.setFont(new Font("Arial Black", Font.BOLD, 20));
 	        for (SuperPixelDTO superPixel : superPixels) {
-	        	Point middle = superPixel.getSamplePixel();
+	        	GridPoint middle = superPixel.getSamplePixel();
 	        	Color myColor =  new Color(superPixel.getIdentifingColorRGB());
 	        	graphics.setColor(myColor);
 	        	graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
@@ -388,7 +389,7 @@ public class DataHelper {
 	                BufferedImage.TYPE_INT_RGB);
 	        for (int i = 0; i < width; i++) {
 	            for (int j = 0; j < height; j++) {
-	            	PixelDTO pixelDTO = imageObj.pixelData[i][j];
+	            	PixelDTO pixelDTO = imageObj.getPixelData()[i][j];
 	            	int value;
 	            	value = LABEL_TO_COLOUR_MAP.get(pixelDTO.getLabel()).getRGB();
 	                theImage.setRGB(i, j, value);
@@ -419,6 +420,25 @@ public class DataHelper {
 	  return hashColours;
   }
   
+	public static void saveWeights(WeightVector weightVector) {
+		String pathName = "resources/weights.txt";
+		File outputFile = new File(pathName);
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		for (double weight : weightVector.getWeights()) {
+			sb.append(weight);
+			sb.append(", ");
+		}
+		sb.append(")");
+		try {
+			FileUtils.writeStringToFile(outputFile, sb.toString(), Charset.defaultCharset(), false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
   
   private static Logger _log = Logger.getLogger(DataHelper.class);
+
+
 }
