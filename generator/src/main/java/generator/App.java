@@ -18,7 +18,7 @@ public class App
 	public static int IMAGE_HEIGHT = GeneratorConstants.HEIGHT;
     public static void main( String[] args ) throws IOException {
     	
-    	for (int i = 0; i < GeneratorConstants.NUMBER_OF_GENERATED_TRAIN_IMAGES; i++) {
+    	/*for (int i = 0; i < GeneratorConstants.NUMBER_OF_GENERATED_TRAIN_IMAGES; i++) {
     		BufferedImage trainImg = BufferedImageFactoryUtil.getImage();
         	Graphics2D trainG2d = GraphicsFactoryUtil.getGraphics(trainImg);
         	
@@ -32,7 +32,7 @@ public class App
         	
         	FileUtil.saveImage(trainImg, GeneratorConstants.TRAIN_PATH,  (i + "." + Constants.IMAGE_EXTENSION));
         	FileUtil.saveImage(resultImg, GeneratorConstants.RESULT_PATH, (i + Constants.RESULT_IMAGE_SUFFIX + "." + Constants.IMAGE_EXTENSION));
-    	}
+    	}*/
     	for (int i = 0; i < GeneratorConstants.NUMBER_OF_GENERATED_TEST_IMAGES; i++) {
     		BufferedImage testImg = BufferedImageFactoryUtil.getImage();
         	Graphics2D testG2d = GraphicsFactoryUtil.getGraphics(testImg);

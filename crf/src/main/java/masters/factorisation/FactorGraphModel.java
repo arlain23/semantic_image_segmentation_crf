@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.management.RuntimeErrorException;
 
@@ -51,16 +52,20 @@ public class FactorGraphModel implements Serializable {
 	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
 	private ParametersContainer probabiltyContainer = null;
 	
+	private String uuid;
+	
 	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels,
 			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, WeightVector weightVector, ParametersContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		this(currentImage, createdSuperPixels, weightVector,
 				probabiltyContainer, numberOfLocalFeatures, numberOfPairwiseFeatures);
 		this.trainingDataimageToFactorGraphMap = imageToFactorGraphMap;
 		// TODO Auto-generated constructor stub
+		this.uuid = UUID.randomUUID().toString();
 	}
-	
 
 	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ParametersContainer probabiltyContainer, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+		this.uuid = UUID.randomUUID().toString();
+		
 		this.image = image;
 		this.superPixels = superPixels;
 		this.numberOfSuperPixels = superPixels.size();
@@ -179,6 +184,16 @@ public class FactorGraphModel implements Serializable {
 	
 
 	public void computeFactorToVariableMessages() {
+		
+		
+		//label 0
+		Map<Integer, Map<SuperPixelDTO, FeatureVector>> labelToLocalImageFi = new HashMap<>();
+		for (int label = 0; label < NUMBER_OF_STATES; label++) {
+			labelToLocalImageFi.put(label, new HashMap<SuperPixelDTO, FeatureVector>());
+		}
+		
+		
+		
 		//for every factor
 		for (Factor factor : createdFactors) {
 			//for every label
@@ -208,6 +223,10 @@ public class FactorGraphModel implements Serializable {
 								this.getImageMask(), label, variableLabel, this);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
+						
+//						_log.info("PAIRWISE FI " + pairWiseImageFi.toString() );
+						
+						
 						double rightNodeVariableToFactorMsg = factorToRightNodeEdge.getVariableToFactorMsg().get(variableLabel);
 						double differenceValue = rightNodeVariableToFactorMsg - featureEnergy;
 						innerSumValues.add(differenceValue);
@@ -235,6 +254,8 @@ public class FactorGraphModel implements Serializable {
 								this.getImageMask(), label, variableLabel, this);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
+//						_log.info("PAIRWISE FI " + pairWiseImageFi.toString() );
+						
 						double leftNodeVariableToFactorMsg = factorToLeftNodeEdge.getVariableToFactorMsg().get(variableLabel);
 						double differenceValue = leftNodeVariableToFactorMsg - featureEnergy;
 						innerSumValues.add(differenceValue);
@@ -258,8 +279,16 @@ public class FactorGraphModel implements Serializable {
 					FactorEdgeKey factorToLeftNodeKey = new FactorEdgeKey(factor, leftNode);
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
-					FeatureVector localImageFi = rightNodeFeatureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, 
+					SuperPixelDTO superPixel = rightNodeFeatureNode.getSuperPixel();
+					FeatureVector localImageFi = superPixel.getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, 
 							this.probabiltyContainer);
+					
+//					_log.info("LOCAL FI " + localImageFi.toString() );
+					
+					
+					Map<SuperPixelDTO, FeatureVector> superpixelToFeatureVectorMap = labelToLocalImageFi.get(label);
+					superpixelToFeatureVectorMap.put(superPixel, localImageFi);
+					
 					double featureEnergy = localImageFi.calculateEnergy(this.weightVector);
 					
 					/*
@@ -269,6 +298,35 @@ public class FactorGraphModel implements Serializable {
 				}
 			}
 		}
+		
+		
+	/*	System.out.println("****************************************");
+		System.out.println();
+		for (SuperPixelDTO superPixel : superPixels) {
+			FeatureVector featureVector = superPixel.getLocalFeatureVector();
+			List<Feature> features = featureVector.getFeatures();
+			FeatureContainer featureContainer = (FeatureContainer) features.get(0);
+			List<Feature> subFeatures = featureContainer.getFeatures();
+			
+			System.out.print(superPixel.getSuperPixelIndex() + "  " );
+			for (Feature sf : subFeatures) {
+				System.out.print(sf.getValue() + " ");
+			}
+			System.out.println();
+		}
+		System.out.println();
+		System.out.println();
+		for (Integer label : labelToLocalImageFi.keySet()) {
+			System.out.println("LABEL " + label);
+			System.out.println();
+			Map<SuperPixelDTO, FeatureVector> map = labelToLocalImageFi.get(label);
+			for (SuperPixelDTO dto : map.keySet()) {
+				System.out.print(dto.getSuperPixelIndex() + "     ");
+				FeatureVector vector = map.get(dto);
+				System.out.println(vector);
+			}
+			System.out.println();
+		}*/
 	}
 	public void computeVariableToFactorMessages() {
 		for (OutputNode currentNode : factorisedSuperPixels) {
@@ -597,6 +655,10 @@ public class FactorGraphModel implements Serializable {
 	
 	public ValueMask getContinuousFeatureValueMask(Feature feature) {
 		return this.continuousFeatureMap.get(feature);
+	}
+	
+	public String getUuid() {
+		return uuid;
 	}
 	
 	private static transient Logger _log = Logger.getLogger(FactorGraphModel.class);

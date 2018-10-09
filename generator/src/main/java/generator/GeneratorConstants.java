@@ -18,7 +18,6 @@ public class GeneratorConstants {
 	public static Color FOREGROUND_COLOR = Color.RED;
 	public static Color NEIGHBOUR_COLOR = Color.GREEN;
 	public static int BLOCK_SIZE = 40;
-	public static int MAX_SCALE = 1;
 	
 	
 	public static int NEIGHBOURHOOD_GRID_MAX_LEVEL = 2; 
@@ -42,9 +41,9 @@ public class GeneratorConstants {
 	
 	
 	
-	public static int NUMBER_OF_GENERATED_TRAIN_IMAGES = 100;
-	public static int NUMBER_OF_GENERATED_TEST_IMAGES = 25;
-	public static String IMAGE_FOLDER = "generated1";
+	public static int NUMBER_OF_GENERATED_TRAIN_IMAGES = 200;
+	public static int NUMBER_OF_GENERATED_TEST_IMAGES = 50;
+	public static String IMAGE_FOLDER = "generated";
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + "/train/";
 	public static String RESULT_PATH = IMAGE_FOLDER + "/result/";

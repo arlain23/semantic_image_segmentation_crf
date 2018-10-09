@@ -7,7 +7,7 @@ public class PixelDTO implements Cloneable, Serializable {
 
   private static final long serialVersionUID = 221169649944657580L;
   
-  private int xIndex;
+  	private int xIndex;
 	private int yIndex;
 	private int R;
 	private int G;

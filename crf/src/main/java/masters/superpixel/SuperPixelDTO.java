@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.management.RuntimeErrorException;
+import javax.swing.text.html.CSS;
 
 import org.apache.log4j.Logger;
 
@@ -127,6 +128,32 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		return new double [] {meanR, meanG, meanB};
 	}
 	private double [] getMostPopularRGBValue () {
+		
+		if (Constants.USE_GRID_MODEL) {
+			Map<Color, Integer> colourCounter = new HashMap<Color, Integer>();
+			int previousValue;
+			for (PixelDTO pixel : pixels) {
+				int r = pixel.getR();
+				int g = pixel.getG();
+				int b = pixel.getB();
+				
+				Color colour = new Color(r, g, b);
+				if (!colourCounter.containsKey(colour)) {
+					colourCounter.put(colour, 0);
+				}
+				previousValue = colourCounter.get(colour);
+				colourCounter.put(colour, (++previousValue));
+			}
+			Color maxKey = new Color(0,0,0);
+			int maxValue = 0;
+			for (Color key : colourCounter.keySet()) {
+				if (colourCounter.get(key) > maxValue) {
+					maxKey = key;
+					maxValue = colourCounter.get(key);
+				}
+			}
+			return new double [] {maxKey.getRed(), maxKey.getGreen(), maxKey.getBlue()};
+		}
 		Map<Integer, Integer> redCounter = new HashMap<Integer, Integer>();
 		Map<Integer, Integer> greenCounter = new HashMap<Integer, Integer>();
 		Map<Integer, Integer> blueCounter = new HashMap<Integer, Integer>();

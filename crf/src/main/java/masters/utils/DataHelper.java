@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +29,8 @@ import javax.swing.JLabel;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 
 import masters.Constants;
 import masters.grid.GridPoint;
@@ -56,7 +60,7 @@ public class DataHelper {
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
 		for (String key : trainingFiles.keySet()) {
-			if (++i >= Constants.TRAIN_IMAGE_LIMIT) {
+			if (++i >= Constants.TRAIN_IMAGE_LIMIT + 1) {
 				return imageList;
 			}
 			
@@ -84,7 +88,7 @@ public class DataHelper {
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
 		for (String key : testFiles.keySet()) {
-			if (++i >= Constants.TEST_IMAGE_LIMIT) {
+			if (++i >= Constants.TEST_IMAGE_LIMIT + 1) {
 				break;
 			}
 			File trainFile = testFiles.get(key);
@@ -145,7 +149,24 @@ public class DataHelper {
 	}
 	
 	
-	private static Map<String,File> getFilesFromDirectory(String path) {
+	public static Map<String,File> getFilesFromDirectory(String fullpath, boolean flag) {
+		File folder;
+		folder = new File(fullpath);
+		File[] listOfFiles = folder.listFiles();
+		if (listOfFiles == null) {
+			_log.error("path " + folder.getAbsolutePath() + " has no files");
+			throw new RuntimeErrorException(null);
+		}
+		Map<String,File> result = new HashMap<String, File>();
+		
+		for (int i = 0; i < listOfFiles.length; i++) {
+			File file = listOfFiles[i];
+			result.put(FilenameUtils.removeExtension(file.getName()), file);
+		}
+		return result;
+		
+	}
+	public static Map<String,File> getFilesFromDirectory(String path) {
 		File folder;
 		try {
 			folder = new File(DataHelper.class.getClassLoader().getResource(path).toURI());
@@ -230,6 +251,7 @@ public class DataHelper {
 		}
 		viewImageSegmented(image, title);
 	}
+
 	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask) {
 		for (SuperPixelDTO superPixel : superPixels) {
 			superPixel.updatePixelLabels(mask);
@@ -290,6 +312,41 @@ public class DataHelper {
 	
 	/* savers */
 	
+	public static void saveImageSuperPixelIdentifingColor(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		try {
+			File outputfile = new File(path);
+			outputfile.getParentFile().mkdirs();
+			outputfile.createNewFile();
+			
+			/* change image pixel data */
+			BufferedImage img = image.getImage();
+			
+	        for (SuperPixelDTO superPixel : superPixels) {
+	            double rgb[] = superPixel.getMeanRGB();
+            	Color color = new Color((int)rgb[0], (int)rgb[1], (int)rgb[2]);
+            	int value = Constants.COLOR_TO_MARKING_COLOUR_MAP.get(color).getRGB();
+            	
+	            List<PixelDTO> pixels = superPixel.getPixels();
+	            for (PixelDTO pixel : pixels) {
+	            	img.setRGB(pixel.getXIndex(), pixel.getYIndex(), value);
+	            }
+			}
+	        /* update borders */
+	        for (SuperPixelDTO superPixel : superPixels) {
+	            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+	            List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+	            for (PixelDTO borderPixel : borderPixels) {
+	            	img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+	            }
+	        }
+	        
+			
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void saveImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
 		BufferedImage img = image.getImage();
 		for (SuperPixelDTO superPixel : superPixels) {
@@ -300,6 +357,7 @@ public class DataHelper {
 			}
 		}
 		File outputFile = new File(path);
+		outputFile.getParentFile().mkdirs();
 		try {
 			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
 		} catch (IOException e) {
@@ -326,6 +384,98 @@ public class DataHelper {
 		}
 	}
 	
+	public static void saveImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		for (SuperPixelDTO superPixel : superPixels) {
+			superPixel.updatePixelLabels();
+		}
+		saveImageSegmentedBySuperPixels(image, superPixels, path);
+	}
+	public static void saveImageSegmentedBySuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		try {
+			File outputfile = new File(path);
+			outputfile.getParentFile().mkdirs();
+			outputfile.createNewFile();
+			
+			/* change image pixel data */
+			BufferedImage img = image.getImage();
+			for (SuperPixelDTO superPixel : superPixels) {
+				List<PixelDTO> pixels = superPixel.getPixels();
+				for (PixelDTO pixel : pixels) {
+	            	int value = LABEL_TO_COLOUR_MAP.get(pixel.getLabel()).getRGB();
+	            	img.setRGB(pixel.getXIndex(), pixel.getYIndex(), value);
+	            }
+	        }
+	        /* update borders */
+	        for (SuperPixelDTO superPixel : superPixels) {
+	            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+				List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+				}
+			}
+	        
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public static void saveImageSegmented(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		try {
+			File outputfile = new File(path);
+			outputfile.getParentFile().mkdirs();
+			outputfile.createNewFile();
+			
+			/* change image pixel data */
+			BufferedImage img = image.getImage();
+			
+	        for (int x = 0; x < img.getWidth(); x++) {
+	            for (int y = 0; y < img.getHeight(); y++) {
+	            	int value = LABEL_TO_COLOUR_MAP.get(image.getPixelData()[x][y].getLabel()).getRGB();
+	            	img.setRGB(x, y, value);
+	            }
+	        }
+	        /* update borders */
+	        for (SuperPixelDTO superPixel : superPixels) {
+	            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+				List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+				}
+			}
+	        
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void saveImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String path) throws IOException {
+		File outputfile = new File(path);
+		outputfile.getParentFile().mkdirs();
+		outputfile.createNewFile();
+		BufferedImage img = image.getImage();
+		
+		/* update superpixel index */
+        Graphics graphics = img.getGraphics();
+        graphics.setFont(new Font("Arial Black", Font.BOLD, 16));
+        
+        /* update borders */
+        for (SuperPixelDTO superPixel : superPixels) {
+            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+			for (PixelDTO borderPixel : borderPixels) {
+				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			}
+		}
+        
+        for (SuperPixelDTO superPixel : superPixels) {
+        	GridPoint middle = superPixel.getSamplePixel();
+        	Color myColor =  new Color(superPixel.getIdentifingColorRGB());
+        	graphics.setColor(myColor);
+        	graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
+        }
+        ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+	}
 	public static void saveImageSegmentedWithMask(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask, String path) {
 		try {
 			File outputfile = new File(path);
@@ -369,6 +519,39 @@ public class DataHelper {
         
 	}
 	
+	
+	public static void saveTrainAndResult(ImageDTO imageObj) throws URISyntaxException, IOException {
+		String trainPath = imageObj.getPath();
+		File trainFile = new File(trainPath);
+		
+		System.out.println("TRAIN " + trainPath);
+		
+		String[] fileName = trainFile.getName().split(".png");
+		String resultPath = Constants.RESULT_PATH + fileName[0] + "_N." + Constants.IMAGE_EXTENSION;
+		File resultFile =  new File("E:\\Studia\\CSIT\\praca_magisterska\\repository\\crf\\target\\classes\\" + resultPath );
+		System.out.println("RES " + resultFile.getAbsolutePath());
+		
+		PixelDTO[][] pixels = imageObj.getPixelData();
+		int height = imageObj.getHeight();
+		int width = imageObj.getWidth();
+		
+		BufferedImage originalImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		BufferedImage segmentedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+            	PixelDTO pixelDTO = pixels[i][j];
+            	Color color = new Color(pixelDTO.getR(), pixelDTO.getG(), pixelDTO.getB());
+            	originalImage.setRGB(i, j, color.getRGB());
+            	int segmentedColor = LABEL_TO_COLOUR_MAP.get(pixelDTO.getLabel()).getRGB();
+            	segmentedImage.setRGB(i, j, segmentedColor);
+            }
+        }
+		
+		
+		ImageIO.write(originalImage, Constants.IMAGE_EXTENSION, trainFile);
+		ImageIO.write(segmentedImage, Constants.IMAGE_EXTENSION, resultFile);
+	}
+	
 	public static void saveImage(ImageDTO imageObj, String path){
 		try {
 			File outputfile = new File(path);
@@ -378,13 +561,8 @@ public class DataHelper {
 			
 			int width = originalImage.getWidth();
 	        int height = originalImage.getHeight();
-	        int[][] pixel = new int[width][height];
-	        Raster raster = originalImage.getData();
-	        for (int i = 0; i < width; i++) {
-	            for (int j = 0; j < height; j++) {
-	                pixel[i][j] = raster.getSample(i, j, 0);
-	            }
-	        }
+	        
+	        
 	        BufferedImage theImage = new BufferedImage(width, height,
 	                BufferedImage.TYPE_INT_RGB);
 	        for (int i = 0; i < width; i++) {
@@ -420,24 +598,34 @@ public class DataHelper {
 	  return hashColours;
   }
   
-	public static void saveWeights(WeightVector weightVector) {
-		String pathName = "resources/weights.txt";
+	public static void saveWeights(WeightVector weightVector, String currentDate, boolean append) {
+		String pathName = "resources/weights" + currentDate + ".txt";
+		String logPathName = "resources/weight_log" + currentDate + ".txt";
 		File outputFile = new File(pathName);
+		File logFile = new File(logPathName);
 		StringBuilder sb = new StringBuilder();
+		Date now = new Date();
+		sb.append(dateFormat.format(now));
+		sb.append("    ");
 		sb.append("(");
 		for (double weight : weightVector.getWeights()) {
 			sb.append(weight);
 			sb.append(", ");
 		}
 		sb.append(")");
+		sb.append(System.getProperty("line.separator"));
 		try {
-			FileUtils.writeStringToFile(outputFile, sb.toString(), Charset.defaultCharset(), false);
+			if (append) {
+				FileUtils.writeStringToFile(logFile, sb.toString(), Charset.defaultCharset(), true);
+			} else {
+				FileUtils.writeStringToFile(outputFile, sb.toString(), Charset.defaultCharset(), false);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-  
+  private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private static Logger _log = Logger.getLogger(DataHelper.class);
 
 

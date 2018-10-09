@@ -31,11 +31,10 @@ public class GradientDescentTrainer {
 	
 	private ParametersContainer parameterContainer;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer,
-			int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer) {
 		
-		this.NUMBER_OF_LOCAL_FEATURES = numberOfLocalFeatures;
-		this.NUMBER_OF_PAIRWISE_FEATURES = numberOfPairwiseFeatures;
+		this.NUMBER_OF_LOCAL_FEATURES = parameterContainer.getNumberOfLocalFeatures();
+		this.NUMBER_OF_PAIRWISE_FEATURES = parameterContainer.getNumberOfParwiseFeatures();
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
 		this.parameterContainer = parameterContainer;
@@ -53,22 +52,23 @@ public class GradientDescentTrainer {
 		System.out.println(weightVector);
 		for (int epoch = 0; epoch < NUMBER_OF_ITERATIONS; epoch++) {
 			// for each training image
+			int size = imageList.size();
+			int iterator = 0;
 			for (ImageDTO trainingImage : imageList) {
 				// get samples
 				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
-
 				ImageMask currentMask = null;
 				if (imageToMaskMap.containsKey(trainingImage)) {
 					currentMask = imageToMaskMap.get(trainingImage);
 				}
 				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask, parameterContainer);
+				
 				imageToMaskMap.put(trainingImage, currentMask);
 				// calculate gradient
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
 				//fi for image
 				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask(), parameterContainer);
-				
 				//fi for sample
 				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, parameterContainer);
 				
@@ -89,11 +89,13 @@ public class GradientDescentTrainer {
 					newWeights.add(newWeight);
 				}
 				WeightVector newWeightVetor = new WeightVector(newWeights);
-				if (epoch % 100 == 0) {
+				/*if (epoch % 100 == 0) {
 					double gradientLength = getVectorLength(gradients);
 					System.out.println("Gradient length: " + gradientLength);
-				}
+				}*/
 				weightVector = newWeightVetor;
+				DataHelper.saveWeights(weightVector, parameterContainer.getCurrentDate(), true);
+				
 			}
 			if (epoch % 100 == 0) {
 				System.out.println(weightVector);
@@ -105,8 +107,8 @@ public class GradientDescentTrainer {
 			}
 			System.out.println("I " + epoch);
 			//save weights 
-			DataHelper.saveWeights(weightVector);
-		}
+			DataHelper.saveWeights(weightVector, parameterContainer.getCurrentDate(), false);
+		}  
 		return weightVector;
 	}
 	

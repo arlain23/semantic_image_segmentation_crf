@@ -22,7 +22,6 @@ public class GibbsSampler {
 		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
 		int numberOfLabels = Constants.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
-		boolean save = false;
 
 		ImageMask singleSampling;
 		List<Integer> resultingMask = new ArrayList<Integer>();
@@ -39,12 +38,6 @@ public class GibbsSampler {
 			initMask = previousMask.getMask();
 		}
 
-		String path = "E:\\Studia\\CSIT\\praca_magisterska\\segmentacja\\";
-		String extension = ".png";
-
-		if (save)
-			DataHelper.saveImageSegmentedWithMask(factorGraph.getImage(), factorGraph.getSuperPixels(), initMask,
-					(path + "1" + extension));
 		for (int maskIndex = 0; maskIndex < maskSize; maskIndex++) {
 			List<Double> labelProbabilities = new ArrayList<Double>();
 
@@ -59,10 +52,6 @@ public class GibbsSampler {
 			int chosenLabel = getLabelFromProbability(labelProbabilities);
 			// set label
 			resultingMask.add(chosenLabel);
-			List<Integer> tmp = joinLists(resultingMask, initMask);
-			if (save)
-				DataHelper.saveImageSegmentedWithMask(factorGraph.getImage(), factorGraph.getSuperPixels(), tmp,
-						(path + (maskIndex + 2) + extension));
 		}
 		singleSampling.setMask(resultingMask);
 
@@ -79,6 +68,7 @@ public class GibbsSampler {
 					double probabilityDifference = labelProbabilities.get(i) - labelProbabilities.get(j);
 					sum += Math.exp(probabilityDifference);
 					if (Double.isNaN(sum)) {
+						System.out.println(labelProbabilities.get(i)  + " - " + labelProbabilities.get(j));
 						_log.error("Label probability is NaN: exp(" + probabilityDifference + ")");
 					}
 				}

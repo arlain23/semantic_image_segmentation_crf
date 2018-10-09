@@ -9,9 +9,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 
+import masters.Constants;
+
 public class SerializationUtil {
   
-  private static String workPath = System.getProperty("user.dir") + File.separator + "src" + File.separator + "work";
+  private static String workPath = Constants.WORK_PATH;
   
   public static void writeObjectToFile(Object object, String fileName) throws IOException {
     String path = workPath + File.separator + fileName;

@@ -21,13 +21,13 @@ public class ShapeDrawer {
 	
 	public static void initDraw(Graphics2D trainG2d, Graphics2D resultG2d) {
 		Random random = new Random();
-		double scale = 0.5; //random.nextInt(GeneratorConstants.MAX_SCALE) + 1;
+		double scale = 0.5;
 		int blockSize = (int)(scale * BASE_BLOCK_SIZE);
 		
 		int blockDivider = 1;
 		int buffer = GeneratorConstants.NEIGHBOURHOOD_GRID_MAX_LEVEL;
 
-		//draw H 
+		// base shape
 		int figureSizeH = (int)(3 * scale);
 		
 		int initH_XGridPos= random.nextInt(blockDivider * ((int)GeneratorConstants.WIDTH/BASE_BLOCK_SIZE - buffer - figureSizeH)) + blockDivider * buffer;
@@ -46,7 +46,7 @@ public class ShapeDrawer {
 		
 		
 		
-		// draw other regions
+		// other regions
 		int figureSize = (int)(2 * scale);
 		boolean isHidden = true;
 		
@@ -80,7 +80,7 @@ public class ShapeDrawer {
 
 		//draw figures
 		drawOtherRegions(trainG2d, resultG2d, initH_X, initH_Y, blockSize);
-		drawH(trainG2d, resultG2d, initX, initY, blockSize, scale);
+		drawMainShape(trainG2d, resultG2d, initX, initY, blockSize, scale);
 	}
 	public static void drawOtherRegions(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize) {
 		
@@ -167,7 +167,7 @@ public class ShapeDrawer {
 			tmpX += blockSize;
 		}
 	}
-	public static void drawH(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize, double scale) {
+	public static void drawMainShape(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize, double scale) {
 		drawBaseShape(trainG2d, initX, initY, blockSize, FOREGROUND_COLOR);
 		drawBaseShapeNeighbourhood(trainG2d, initX, initY, blockSize, scale, NEIGHBOUR_COLOR);
 		
@@ -187,70 +187,46 @@ public class ShapeDrawer {
 		
 		int y = baseY;
 		//first row
-		for (int x = 0; x < (4 + 3 * scale); x++) {
+		for (int x = 0; x < 7; x++) {
 			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		//second row
 		y = baseY + blockSize;
-		for (int x = 0; x < (4 + 3 * scale); x++) {
+		for (int x = 0; x < 7; x++) {
 			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
-		
-		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*blockSize;
-			int x = baseX;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize + blockSize;
-			for (int j = 0; j < scale; j++) {
-				drawSquare(g2d, color, x, y, blockSize);
-				x += blockSize;
-			}
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
+		//third row
+		y = baseY + 2 * blockSize;
+		for (int x = 0; x < 2; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
-		
-		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*blockSize + blockSize;
-			int x = baseX;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			
-			x += blockSize + 3* blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
+		for (int x = 3; x < 7; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
-		
-		for (int i = 0; i < scale; i++) {
-			y = baseY + (2+i)*blockSize + 2*blockSize;
-			int x = baseX;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize + blockSize;
-			for (int j = 0; j < scale; j++) {
-				drawSquare(g2d, color, x, y, blockSize);
-				x += blockSize;
-			}
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
-			x += blockSize;
-			drawSquare(g2d, color, x, y, blockSize);
+		// 4th row
+		y = baseY + 3 * blockSize;
+		for (int x = 0; x < 2; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
-		
+		for (int x = 4; x < 7; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
+		}
+		//5th row 
+		y = baseY + 4 * blockSize;
+		for (int x = 0; x < 2; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
+		}
+		for (int x = 5; x < 7; x++) {
+			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
+		}
 		//second last row
 		y = baseY + 2 * blockSize + 3 * blockSize;
-		for (int x = 0; x < (4 + 3 * scale); x++) {
+		for (int x = 0; x < 7; x++) {
 			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		//last row
 		y = baseY + 3 * blockSize + 3 * blockSize;
-		for (int x = 0; x < (4 + 3 * scale); x++) {
+		for (int x = 0; x < 7; x++) {
 			drawSquare(g2d, color, baseX + x * blockSize, y, blockSize);
 		}
 		
@@ -260,19 +236,16 @@ public class ShapeDrawer {
 		x = initX;
 		y = initY;
 		drawSquare(g2d, color, x, y, blockSize);
-		x = initX + 2 * blockSize;
-		y = initY;
-		drawSquare(g2d, color, x, y, blockSize);
 		x = initX;
 		y = initY + blockSize;
 		drawSquare(g2d, color, x, y, blockSize);
 		x = initX + blockSize;
 		y = initY + blockSize;
 		drawSquare(g2d, color, x, y, blockSize);
-		x = initX + 2 * blockSize;
-		y = initY + blockSize;
-		drawSquare(g2d, color, x, y, blockSize);
 		x = initX;
+		y = initY + 2 * blockSize;
+		drawSquare(g2d, color, x, y, blockSize);
+		x = initX + blockSize;
 		y = initY + 2 * blockSize;
 		drawSquare(g2d, color, x, y, blockSize);
 		x = initX + 2 * blockSize;

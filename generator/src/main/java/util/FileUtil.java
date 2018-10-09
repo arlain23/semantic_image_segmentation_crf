@@ -16,7 +16,6 @@ public class FileUtil {
 			File outputfile = new File(FileUtil.class.getClassLoader().getResource(path).getPath() + "/" + fileName);
 			outputfile.getParentFile().mkdirs();
 			outputfile.createNewFile();
-			
 	        ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
 		} catch (IOException e) {
 			e.printStackTrace();

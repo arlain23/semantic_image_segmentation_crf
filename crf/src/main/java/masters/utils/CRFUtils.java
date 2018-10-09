@@ -60,6 +60,7 @@ public class CRFUtils {
 		if (objectLabel == null) {
 			objectLabel = mask.getMask().get(superPixelIndex);
 		}
+//		System.out.print("L/SP " + objectLabel + "   " + superPixelIndex + "  ");
 		if (Constants.USE_NON_LINEAR_MODEL) {
 			imageFi = new FeatureVector(numberOfLocalFeatures + (numberOfPairwiseFeatures + 1));
 			for (Feature feature : localFeatures) {
@@ -68,6 +69,7 @@ public class CRFUtils {
 					double featureSum = 0;
 					for (Feature singleFeature : featureContainer.getFeatures()) {
 						double featureValue = CRFUtils.getFeatureProbability(mask, factorGraph, objectLabel, singleFeature, trainingDataimageToFactorGraphMap, probabiltyContainer);
+//						System.out.print(featureValue + " ");
 						featureValue = -Math.log(featureValue);
 						featureSum += featureValue;
 					}
@@ -78,6 +80,7 @@ public class CRFUtils {
 					imageFi.setFeatureValue(featureIndex++, featureValue);
 				}
 			}
+//			System.out.println();
 		} else {
 			imageFi = new FeatureVector(Constants.NUMBER_OF_STATES * numberOfLocalFeatures + 2);
 			for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {

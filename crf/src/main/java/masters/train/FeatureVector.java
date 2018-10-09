@@ -97,6 +97,16 @@ public class FeatureVector implements Serializable {
 		}
 		return this.featureToValueMap.get(feature);
 	}
+
+	@Override
+	public String toString() {
+		
+		String a = "";
+		for (Feature f : this.features) {
+			a += f.getValue() + " ";
+		}
+		return a;
+	}
 	
 	
 }

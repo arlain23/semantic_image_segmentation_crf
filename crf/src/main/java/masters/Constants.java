@@ -52,17 +52,17 @@ public class Constants {
 	public static String TRAIN_PATH = IMAGE_FOLDER + File.separator + "train" + File.separator ;
 	public static String RESULT_PATH = IMAGE_FOLDER + File.separator + "result" + File.separator ;
 	public static String TEST_PATH = IMAGE_FOLDER + File.separator + "test" + File.separator;
-	
+	public static String WORK_PATH = System.getProperty("user.dir") + File.separator + "src" + File.separator + "work" + File.separator; 
 	public static String RESULT_IMAGE_SUFFIX = "_N";
 	public static String IMAGE_EXTENSION= "png";
 	
-	public static int TRAIN_IMAGE_LIMIT = 8;
-	public static int TEST_IMAGE_LIMIT = 2;
+	public static int TRAIN_IMAGE_LIMIT = 200;
+	public static int TEST_IMAGE_LIMIT = 5;
 	
 	public static double KERNEL_BANDWIDTH = 0.15; 
 	
 	// training
-	public static int NUMBER_OF_ITERATIONS = 500;
+	public static int NUMBER_OF_ITERATIONS = 5000;
 	public static double REGULARIZATION_FACTOR = 10000;
 	public static double TRAINING_STEP = 0.0000001;
 	
@@ -76,6 +76,7 @@ public class Constants {
 	public static Set<Color> AVAILABLE_COLOURS_SET = new HashSet<Color>(AVAILABLE_COLOURS);
 	
 	public static List<String>	SEGMENTED_HEX_COLOURS = Arrays.asList(new String [] {"#000000","#ffffff","#7f7f7f", "#7f007f"});
+	public static Map<Color,Color> COLOR_TO_MARKING_COLOUR_MAP = new HashMap<Color, Color>();
 	public static Map<Integer,Color> LABEL_TO_COLOUR_MAP = new HashMap<Integer,Color>();
 	static {
         Color label0Colour =  new Color(0, 0, 0); 		// Colour black
@@ -86,16 +87,21 @@ public class Constants {
         LABEL_TO_COLOUR_MAP.put(1, label1Colour);
         LABEL_TO_COLOUR_MAP.put(2, label2Colour);
         LABEL_TO_COLOUR_MAP.put(3, label3Colour);
+        
+        COLOR_TO_MARKING_COLOUR_MAP.put(Color.RED, label0Colour);
+        COLOR_TO_MARKING_COLOUR_MAP.put(Color.GREEN, label1Colour);
+        COLOR_TO_MARKING_COLOUR_MAP.put(Color.BLUE, label2Colour);
 	}
 	
 	//superpixels 
-	public static int NUMBER_OF_SUPERPIXELS = 200;
-	public static double RIGIDNESS = 5;
+	public static int NUMBER_OF_SUPERPIXELS = 60;
+	public static double RIGIDNESS = 0.000001;
 	
 	 /* serialization */
   
-	public static boolean CLEAR_CACHE = true;
-	public static String IMAGE_TO_FACTOR_GRAPH_FILE_NAME = "image_to_factor_graph";
+	public static boolean CLEAR_CACHE = false;
+	public static String IMAGE_TO_FACTOR_GRAPH_TRAIN_FILE_NAME = "image_to_factor_graph";
+	public static String IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME = "image_to_factor_graph_test";
 	
 	/* grid */
 	public static int GRID_SIZE = 1;
