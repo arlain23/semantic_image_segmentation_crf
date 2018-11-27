@@ -24,8 +24,8 @@ public class InferenceHelper {
 			  }
 			  System.out.println("inference image " + imageCounter);
 			  imageCounter++;
-			  FactorGraphModel templateGraph = testimageToFactorGraphMap.get(currentImage);
-			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, templateGraph.getSuperPixels(), trainimageToFactorGraphMap, weights, parameterContainer, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfParwiseFeatures());
+			  FactorGraphModel factorGraph = testimageToFactorGraphMap.get(currentImage);
+			  factorGraph.setWeightVector(weights);
 			  
 			  DataHelper.saveImageWithSuperPixelsIndex(currentImage, factorGraph.getSuperPixels(), baseImagePath + "images\\"+imageCounter + ".png");
 			  List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
@@ -35,7 +35,6 @@ public class InferenceHelper {
 			  
 			  
 			  // inference 
-			  ImageDTO processedImage = factorGraph.getImage();
 			  for (int t = 0; t < 20; t++) {
 				  System.out.println("iteration " + t);
 				  factorGraph.computeFactorToVariableMessages();
@@ -47,7 +46,7 @@ public class InferenceHelper {
 				  boolean shown = false;
 				  if (t%5 == 0) {
 					  shown = true;
-					  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveProgressPath + t + ".png");
+					  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveProgressPath + t + ".png");
 						
 		
 				  }
@@ -55,13 +54,13 @@ public class InferenceHelper {
 					  System.out.println("converged");
 					  factorGraph.updatePixelData();
 					  if (!shown) {
-						  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveProgressPath + t + ".png");
+						  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveProgressPath + t + ".png");
 					  }
 					  break;
 				  }
 			  }
 			  factorGraph.computeLabeling();
-			  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveFinalPath);
+			  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveFinalPath);
 			  System.out.println("finished for image " + imageCounter);
 		  }
 	}

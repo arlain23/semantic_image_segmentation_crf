@@ -14,7 +14,6 @@ import masters.train.WeightVector;
 public class FeatureNode implements Node {
   private static final long serialVersionUID = -8681526956284931559L;
   
-  private PixelDTO pixel = null;
 	private SuperPixelDTO superPixel = null;
 	
 	private List<Double> maxBeliefs;
@@ -45,33 +44,30 @@ public class FeatureNode implements Node {
 		this.maxBeliefs.set(index, value);
 	}
 	public void setPixelLabel(int label) {
-		if (superPixel != null) {
-			superPixel.setLabel(label);
-			if (label == -1) {
-				_log.error("set pixel label -1" );
-				throw new RuntimeErrorException(null);
-			}
-			return;
+		superPixel.setLabel(label);
+		if (label == -1) {
+			_log.error("set pixel label -1" );
+			throw new RuntimeErrorException(null);
 		}
-		pixel.setLabel(label);
 	}
 	public int getPixelLabel() {
-		if (superPixel != null) return superPixel.getLabel();
-		return pixel.getLabel();
+		return superPixel.getLabel();
 	}
 
 	public SuperPixelDTO getSuperPixel() {
 		return superPixel;
 	}
 
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((pixel == null) ? 0 : pixel.hashCode());
-		result = prime * result + ((superPixel == null) ? 0 : superPixel.hashCode());
+		result = prime * result
+				+ ((superPixel == null) ? 0 : superPixel.hashCode());
 		return result;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -81,20 +77,17 @@ public class FeatureNode implements Node {
 		if (getClass() != obj.getClass())
 			return false;
 		FeatureNode other = (FeatureNode) obj;
-		if (superPixel != null && other.superPixel != null) {
-			return superPixel.equals(other.superPixel);
-		}
-		if (pixel == null) {
-			if (other.pixel != null)
+		if (superPixel == null) {
+			if (other.superPixel != null)
 				return false;
-			
-		} else if (!pixel.equals(other.pixel))
+		} else if (!superPixel.equals(other.superPixel))
 			return false;
 		return true;
 	}
+
 	@Override
 	public String toString() {
-		return ("p: " + pixel + " | sp " + superPixel);
+		return (" sp " + superPixel);
 	}
 	
 	private static transient Logger _log = Logger.getLogger(FeatureNode.class);

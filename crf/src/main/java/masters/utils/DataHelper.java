@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
+import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +31,6 @@ import javax.swing.JLabel;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
-
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 
 import masters.Constants;
 import masters.grid.GridPoint;
@@ -310,6 +310,14 @@ public class DataHelper {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
+	
+	public static String getFileNameFromImageDTO(ImageDTO image) {
+		File imageFile = new File(image.getPath());
+		String name = imageFile.getName();
+		name = name.replaceAll("." + Constants.IMAGE_EXTENSION, "");
+		return name;
+	}
+	
 	/* savers */
 	
 	public static void saveImageSuperPixelIdentifingColor(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
@@ -397,7 +405,7 @@ public class DataHelper {
 			outputfile.createNewFile();
 			
 			/* change image pixel data */
-			BufferedImage img = image.getImage();
+			BufferedImage img = cloneBufferedImage(image.getImage());
 			for (SuperPixelDTO superPixel : superPixels) {
 				List<PixelDTO> pixels = superPixel.getPixels();
 				for (PixelDTO pixel : pixels) {
@@ -419,6 +427,42 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
+	public static void saveImageFi1Probabilities(ImageDTO image, List<SuperPixelDTO> superPixels,
+			String basePath, int objectLabel,
+			List<Double> superPixelProbs) {
+
+			String filePath = basePath + "label_" + objectLabel + "." + Constants.IMAGE_EXTENSION;
+			File outputfile = new File(filePath);
+			outputfile.getParentFile().mkdirs();
+			try {
+				outputfile.createNewFile();
+				BufferedImage initImg = cloneBufferedImage(image.getImage());
+				BufferedImage img = new BufferedImage(initImg.getWidth(), initImg.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+				for (SuperPixelDTO superPixel : superPixels) {
+					double labelProbability = superPixelProbs.get(superPixel.getSuperPixelIndex());
+					int colour = (int)Math.round(labelProbability * 255);
+					colour = (colour << 16) + (colour << 8) + colour;
+					List<PixelDTO> pixels = superPixel.getPixels();
+					for (PixelDTO pixel : pixels) {
+						img.setRGB(pixel.getXIndex(), pixel.getYIndex(), colour);
+						
+						
+					}
+				}
+				
+				 /* update borders */
+		        for (SuperPixelDTO superPixel : superPixels) {
+		            int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+					List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+					for (PixelDTO borderPixel : borderPixels) {
+						img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+					}
+				}
+		        
+				ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+			} catch (IOException e) {
+			}
+	}
 	public static void saveImageSegmented(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
 		try {
 			File outputfile = new File(path);
@@ -426,7 +470,7 @@ public class DataHelper {
 			outputfile.createNewFile();
 			
 			/* change image pixel data */
-			BufferedImage img = image.getImage();
+			BufferedImage img = cloneBufferedImage(image.getImage());
 			
 	        for (int x = 0; x < img.getWidth(); x++) {
 	            for (int y = 0; y < img.getHeight(); y++) {
@@ -449,11 +493,43 @@ public class DataHelper {
 		}
 	}
 	
+	
+	public static void saveImageBySuperPixelsPixelData(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		try {
+			File outputfile = new File(path);
+			outputfile.getParentFile().mkdirs();
+			outputfile.createNewFile();
+			
+			/* change image pixel data */
+			BufferedImage img = cloneBufferedImage(image.getImage());
+			
+			for (SuperPixelDTO superPixel : superPixels) {
+				List<PixelDTO> pixels = superPixel.getPixels();
+				for (PixelDTO pixel : pixels) {
+					int x = pixel.getXIndex();
+					int y = pixel.getYIndex();
+					
+					int r = pixel.getR();
+					int g = pixel.getG();
+					int b = pixel.getB();
+					
+					Color color = new Color(r,g,b);
+					
+					img.setRGB(x, y, color.getRGB());
+				}
+			}
+			
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void saveImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String path) throws IOException {
 		File outputfile = new File(path);
 		outputfile.getParentFile().mkdirs();
 		outputfile.createNewFile();
-		BufferedImage img = image.getImage();
+		BufferedImage img = cloneBufferedImage(image.getImage());
 		
 		/* update superpixel index */
         Graphics graphics = img.getGraphics();
@@ -625,8 +701,54 @@ public class DataHelper {
 		}
 	}
 	
+	
+	private static BufferedImage cloneBufferedImage(BufferedImage bi) {
+		 ColorModel cm = bi.getColorModel();
+		 boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+		 WritableRaster raster = bi.copyData(null);
+		 return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+		}
+	
   private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
   private static Logger _log = Logger.getLogger(DataHelper.class);
 
+	public static void saveImageWithGrid(List<GridPoint> grid, SuperPixelDTO sp, ImageDTO image,
+			List<SuperPixelDTO> superPixels, String path) {
+		
+		Color color1 = Color.BLACK;
+		BufferedImage img = cloneBufferedImage(image.getImage());
+		
+		for (SuperPixelDTO superPixel : superPixels) {
+	        int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+			for (PixelDTO borderPixel : borderPixels) {
+				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			}
+			
+			if (superPixel.equals(sp)) {
+				List<PixelDTO> pixels = sp.getPixels();
+				for (PixelDTO pixel : pixels) {
+					img.setRGB(pixel.getXIndex(), pixel.getYIndex(), color1.getRGB());
+				}
+			}
+		}
+		
+		Graphics2D g2d = img.createGraphics();
+		Color color = Color.PINK;
+		for (GridPoint point : grid) {
+			 g2d.setColor(color);
+			 g2d.fill(new Ellipse2D.Float(point.x, point.y, 5, 5));
+			
+		}
+		
+		File outputFile = new File(path);
+		outputFile.getParentFile().mkdirs();
+		try {
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 
 }

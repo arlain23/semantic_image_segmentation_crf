@@ -1,35 +1,29 @@
 package masters;
 
-import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.sun.jndi.url.corbaname.corbanameURLContextFactory;
+import org.apache.log4j.Logger;
 
 import masters.colors.ColorSpaceException;
-import masters.concurency.JCudaUtil;
 import masters.factorisation.FactorGraphModel;
-import masters.grid.GridHelper;
+import masters.features.Feature;
+import masters.features.FeatureContainer;
+import masters.gmm.ProbabilityEstimator;
+import masters.gmm.ProbabilityEstimatorHelper;
 import masters.image.ImageDTO;
-import masters.image.PixelDTO;
-import masters.inference.InferenceHelper;
 import masters.superpixel.SuperPixelDTO;
-import masters.train.GradientDescentTrainer;
+import masters.train.TrainHelper;
 import masters.train.WeightVector;
-import masters.utils.CacheUtils;
-import masters.utils.DataFixer;
+import masters.utils.CRFUtils;
 import masters.utils.DataHelper;
+import masters.utils.InputHelper;
 import masters.utils.ParametersContainer;
-import masters.utils.SerializationUtil;
-import masters.utils.SuperPixelHelper;
 
 public class App {
 	public static boolean PRINT = false;
@@ -41,312 +35,193 @@ public class App {
 	public static boolean GENERATE_TEST_SAMPLES = false;
 	public static boolean ONLY_INFERENCE = true;
 	
-  @SuppressWarnings("unchecked")
+	private static Logger _log = Logger.getLogger(App.class);
+	
   public static void main( String[] args ) throws ColorSpaceException, ClassNotFoundException, IOException, URISyntaxException {
-	 
+	  System.out.println("༼ つ ◕_◕ ༽つ");
+	  
+	  // prepare input
 	  ParametersContainer parameterContainer = new ParametersContainer();
-	  
 	  List<ImageDTO> imageList = DataHelper.getTrainingDataTestSegmented();
-    
-	  Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-	  
-	  if (GENERATE_TEST_SAMPLES) {
-		  Map<ImageDTO, FactorGraphModel> testMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  
-		  List<Double> initWeightList = Arrays.asList(new Double[] {
-				  0.0240453880751775, 3.544197728746141E-19, 7.100818535250691E-19 
-		  });
-		
-		  WeightVector weightsw = new WeightVector(initWeightList);
-		  
-		  // get test image
-		  List<ImageDTO> testImageList = DataHelper.getTestData();
-		  int imageCounter = 0;
-		  int testDataSize = testImageList.size();
-		  int fileCounter = 1;
-		  for (ImageDTO currentImage : testImageList) {
-			  System.out.println("IMAGE " + (++imageCounter) + "/" + testDataSize);
-			  List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
-			  // set feature vectors
-			  int meanDistance = GridHelper.getMeanSuperPixelDistance(createdSuperPixels);
-			  for (SuperPixelDTO superPixel : createdSuperPixels) {
-				  superPixel.initFeatureVector(meanDistance, createdSuperPixels, currentImage);
-			  }
-			  
-			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, createdSuperPixels, imageToFactorGraphMap, weightsw, parameterContainer, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfParwiseFeatures());
-			  testMap.put(currentImage, factorGraph);
-			  
-			  DataHelper.saveImageSuperPixelIdentifingColor(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\crf_data_test\\" + fileCounter + "\\" +  factorGraph.getUuid()  + ".png");
-
-			  if (imageCounter % 20 == 0) {
-				  SerializationUtil.writeObjectToFile(testMap, Constants.IMAGE_FOLDER + File.separator + Constants.IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME + fileCounter);
-				  testMap = new HashMap<>();
-				  fileCounter++;
-			  }
-			  
-		  }
-		  if (testMap.keySet().size() != 0) {
-			  SerializationUtil.writeObjectToFile(testMap, Constants.IMAGE_FOLDER + File.separator + Constants.IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME + fileCounter);
-		  }
-		
-
-	  }
-	  if (CLEAR_MAPPING_DATA) {
-		  // clearning unused images
-		  DataFixer.clearUnusedTestImages();
-		  if (!CLEAR_TEST_ONLY) {
-			  DataFixer.clearUnusedImages();
-		  } else {
-			  return;
-		  }
-		  return;
-	  }
-	  
-	  // factorisation
-	  if (Constants.CLEAR_CACHE) {
-		  imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-	  } else {
-		  try {
-			  if (JOIN_MAPPINGS) {
-				  DataFixer.getCachedFactorisationModels(imageToFactorGraphMap);
-			  } else {
-				  imageToFactorGraphMap = (Map<ImageDTO, FactorGraphModel>) SerializationUtil.readObjectFromFile(Constants.IMAGE_FOLDER +File.separator  + Constants.IMAGE_TO_FACTOR_GRAPH_TRAIN_FILE_NAME);
-			  }
-			  System.out.println("read from cache");
-			  System.out.println("TOTAL number of files " + imageToFactorGraphMap.keySet().size());
-		  } catch (ClassNotFoundException e) {
-			  e.printStackTrace();
-			  imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  } catch (EOFException exception) {
-			  imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  } catch (IOException e) {
-			  e.printStackTrace();
-			  imageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  }
-	  } 
-	  
-	  
-	  /*
-	   * NEW CACHING
-	   */
-	  
-	  
-	  for (ImageDTO image : imageToFactorGraphMap.keySet()) {
-		  CacheUtils.saveSuperPixelDivision(image, "train");
-	  }
-	  
-	  int iterator = 0;
-	  int total = imageList.size();
-	  
-	  
-	  int mappingIndex = 1;
-	  int numberOfLocalFeatures = 0;
-	  int numberOfParwiseFeatures = 0;
-	  
-	  Map<ImageDTO, FactorGraphModel> tmpMap = new HashMap<ImageDTO, FactorGraphModel>();
-	  for (ImageDTO currentImage : imageList) {
-		  iterator++;
-		  if (imageToFactorGraphMap.containsKey(currentImage)) {
-			  FactorGraphModel factorGraph = imageToFactorGraphMap.get(currentImage);
-			  numberOfLocalFeatures = factorGraph.getSuperPixels().get(0).numberOfLocalFeatures;
-			  numberOfParwiseFeatures = factorGraph.getSuperPixels().get(0).numberOfPairwiseFeatures;
-			  
-			  String uuid = factorGraph.getUuid();
-			  System.out.println(iterator + "/" + total + " factorisation read from cache " + currentImage.getPath());
-		  } else {
-//			  DataHelper.viewImageSegmented(currentImage);
-			  List<SuperPixelDTO> createdSuperPixels = SuperPixelHelper.getSuperPixel(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS);
-			
-			  // set feature vectors
-			  int meanDistance = GridHelper.getMeanSuperPixelDistance(createdSuperPixels);
-			  for (SuperPixelDTO superPixel : createdSuperPixels) {
-				  superPixel.initFeatureVector(meanDistance, createdSuperPixels, currentImage);
-			  }
-			  
-			  WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, numberOfLocalFeatures, numberOfParwiseFeatures);
-			
-			  SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
-			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector, null, numberOfLocalFeatures, numberOfParwiseFeatures);
-
-			  imageToFactorGraphMap.put(currentImage, factorGraph);
-			  tmpMap.put(currentImage, factorGraph);
-
-//			  DataHelper.viewImageSuperpixelBordersOnly(currentImage, createdSuperPixels, "train " + (iterator) + " borders");
-//			  DataHelper.viewImageSuperpixelMeanData(currentImage, createdSuperPixels, "train " + (iterator) + " mean");
-//			  DataHelper.viewImageSegmentedSuperPixels(currentImage, createdSuperPixels, "train " + (iterator) + " segmented");
-			
-			 // DataHelper.saveImageSegmented(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\crf_data\\" + mappingIndex + "\\" +  factorGraph.getUuid()  + ".png");
-//			  DataHelper.saveImageSuperpixelMeanData(currentImage, createdSuperPixels, "C:\\Users\\anean\\Desktop\\hoho\\hoho_b_" + iterator + ".png");
-			  System.out.println(iterator + "/" + total + " factorisation generated");
-		  }  
-	  }
-	  
-	  //Data holders
-	  parameterContainer.setLabelProbabilities(imageToFactorGraphMap);
-	  parameterContainer.setNumberOfLocalFeatures(numberOfLocalFeatures);
-	  parameterContainer.setNumberOfParwiseFeatures(numberOfParwiseFeatures);
-	  parameterContainer.setCurrentDate();
-		  
-	  
-	  
-	  WeightVector weights;
-	  WeightVector weightsUniform = null;
-	  WeightVector weightsTest1 = null;
-	  WeightVector weightsTest2 = null;
-	  WeightVector weightsTest3 = null;
-	  WeightVector weightsTest4 = null;
-	  WeightVector weightsTest5 = null;
-	  if (!ONLY_INFERENCE) {
-		  // training
-		  List<Double> initWeightList = Arrays.asList(new Double[] {
-				  0.28241759728286414, 0.3508325823707616, 0.6699042630821298 
-		  });
-		
-		  WeightVector pretrainedWeights = new WeightVector(initWeightList);
-
-		  GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, parameterContainer);
-//		  WeightVector weights = pretrainedWeights;
-		  weights = trainer.train(null);
-		  System.out.println("final weights");
-		  System.out.println(weights);
-	  } else {
-		  List<Double> initWeightList = Arrays.asList(new Double[] {
-				  0.0240453880751775, 3.544197728746141E-19, 7.100818535250691E-19
-		  });
-		
-		  weights = new WeightVector(initWeightList);
-		  
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.8, 0.8, 0.002
-		  });
-		  
-		  weightsUniform = new WeightVector(initWeightList);
-		  
-		  // TESTING VALUES
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.98, 0.00002, 0.00002
-		  });
-		  
-		  weightsTest1 = new WeightVector(initWeightList);
-		
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.0, 1.0,0.0
-		  });
-		  weightsTest2 = new WeightVector(initWeightList);
-			
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.0002, 0.98, 0.98
-		  });
-		  weightsTest3 = new WeightVector(initWeightList);
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.0002, 0.002, 0.98
-		  });
-		  weightsTest4 = new WeightVector(initWeightList);
-		  initWeightList = Arrays.asList(new Double[] {
-				  0.98, 0.002, 0.98
-		  });
-		  weightsTest5 = new WeightVector(initWeightList);
-	  }
-	  
-	  
-	  // TESTING
-	  System.out.println("Performing testing");
 	  List<ImageDTO> testImageList = DataHelper.getTestData();
 	  
-	  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap;
-	  if (Constants.CLEAR_CACHE) {
-		  testimageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-	  } else {
-		  try {
-			  if (JOIN_MAPPINGS) {
-				  testimageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-				  DataFixer.getCachedTestFactorisationModels(testimageToFactorGraphMap);
-			  } else {
-				  testimageToFactorGraphMap = (Map<ImageDTO, FactorGraphModel>) SerializationUtil.readObjectFromFile(Constants.IMAGE_FOLDER +File.separator  + Constants.IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME);
-			  }
-			  System.out.println("read from cache");
-			  System.out.println("TOTAL number of files " + testimageToFactorGraphMap.keySet().size());
-		  } catch (ClassNotFoundException e) {
-			  e.printStackTrace();
-			  testimageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  } catch (EOFException exception) {
-			  testimageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  } catch (IOException e) {
-			  e.printStackTrace();
-			  testimageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
-		  }
-	  }
-	  
-	  
-	  for (ImageDTO image : testimageToFactorGraphMap.keySet()) {
-		  CacheUtils.saveSuperPixelDivision(image, "test");
-	  }
-	  
-	  // update parameters 
-	  
-	  int imageCounter = 0;
-
-	  String baseImagePath = "C:\\Users\\anean\\Desktop\\inference_data\\";
-	  /*
-	  System.out.println("");
-	  System.out.println("INFERENCE");
-	  System.out.println();
-	  for (ImageDTO currentImage : testImageList) {
-		  if (!testimageToFactorGraphMap.containsKey(currentImage)){
-			  System.out.println("IMAGE " + currentImage.getPath() + " not mapped");
-			  return;
-		  }
-		  System.out.println("inference image " + imageCounter);
-		  imageCounter++;
-		  FactorGraphModel templateGraph = testimageToFactorGraphMap.get(currentImage);
-		  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, templateGraph.getSuperPixels(), imageToFactorGraphMap, weights, parameterContainer, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfParwiseFeatures());
-		  
-		  List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
-		  
-		  String saveProgressPath = baseImagePath + "normal\\progress\\" + imageCounter + "\\";
-		  String saveFinalPath = baseImagePath + "normal\\final\\" + imageCounter + ".png";
-		  // inference 
-		  ImageDTO processedImage = factorGraph.getImage();
-		  for (int t = 0; t < 20; t++) {
-			  System.out.println("iteration " + t);
-			  factorGraph.computeFactorToVariableMessages();
-			  factorGraph.computeVariableToFactorMessages();
-
-			  factorGraph.updatePixelData();
-			  factorGraph.computeLabeling();
-
-			  boolean shown = false;
-			  if (t%5 == 0) {
-				  shown = true;
-				  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveProgressPath + t + ".png");
-					
+	  // prepare training data
+	  _log.info("TRAINING: factorisation");
+	  Constants.State state = Constants.State.TRAIN;
+	  Map<ImageDTO, FactorGraphModel> trainingImageToFactorGraphMap = new HashMap<ImageDTO, FactorGraphModel>();
+	  InputHelper.prepareTrainingData(parameterContainer, imageList,
+				trainingImageToFactorGraphMap, state);
 	
-			  }
-			  if (factorGraph.checkIfConverged()) {
-				  System.out.println("converged");
-				  factorGraph.updatePixelData();
-				  if (!shown) {
-					  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveProgressPath + t + ".png");
-				  }
-			  }
-		  }
-		  factorGraph.computeLabeling();
-		  DataHelper.saveImageSegmentedSuperPixels(processedImage, superPixels, saveFinalPath);
-		  System.out.println("finished for image " + imageCounter);
+	  // training
+	  _log.info("TRAINING: training");
+	  WeightVector weights = null;
+	  if (!ONLY_INFERENCE) {
+		  weights = TrainHelper.train(null, imageList, trainingImageToFactorGraphMap, parameterContainer);
+	  } else {
+		  List<Double> initWeightList = Arrays.asList(new Double[] {
+				  1.0, 1.0, 1.0 
+		  });
+		  weights = new WeightVector(initWeightList);
 	  }
-	  */
 	  
-	  System.out.println();
-	  System.out.println("INFERENCE");
-	  System.out.println();
 	  
-//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "normal2", parameterContainer, weights);
-//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "uniform2", parameterContainer, weightsUniform);
-	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "test1", parameterContainer, weightsTest1);
-	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "test2", parameterContainer, weightsTest2);
-	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "test3", parameterContainer, weightsTest3);
-	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "test4", parameterContainer, weightsTest4);
-	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, imageToFactorGraphMap, baseImagePath, "test5", parameterContainer, weightsTest5);
+	  // prepare training data
+	  _log.info("TESTING: factorisation");
+	  state = Constants.State.TEST;
+	  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = new HashMap<>();
+	  InputHelper.prepareTestData(parameterContainer, state, weights, testImageList,
+			testimageToFactorGraphMap);
 	  
+	  
+//	  _log.info("TESTING: inference");
+//	  String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
+//	  
+//	  Constants.KERNEL_BANDWIDTH = 0.1;
+//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, trainingImageToFactorGraphMap, baseImagePath, "kernel0_1", parameterContainer, weights);
+//	  Constants.KERNEL_BANDWIDTH = 0.2;
+//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, trainingImageToFactorGraphMap, baseImagePath, "kernel0_2", parameterContainer, weights);
+//	  Constants.KERNEL_BANDWIDTH = 0.15;
+//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, trainingImageToFactorGraphMap, baseImagePath, "kernel0_15", parameterContainer, weights);
+//	  Constants.KERNEL_BANDWIDTH = 15;
+//	  InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, trainingImageToFactorGraphMap, baseImagePath, "kernel15", parameterContainer, weights);
+//	 
+	 
+	  
+	  _log.info("TESTING: Probability estimation");
+	  
+	  // prepare probability estimation data
+	  ImageDTO testImage = testImageList.get(0);
+	  FactorGraphModel testGraph = testimageToFactorGraphMap.get(testImage);
+	  List<SuperPixelDTO> superPixels = testGraph.getSuperPixels();
+	  SuperPixelDTO testSuperPixel = superPixels.get(0);
+	  Feature testFeature = testSuperPixel.getLocalFeatureVector().getFeatures().get(0);
+	  
+	  Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution = new HashMap<>();
+	  if (Constants.USE_GMM_ESTIMATION || Constants.USE_HISTOGRAM_ESTIMATION) {
+		  ProbabilityEstimatorHelper.getProbabilityEstimationDistribution(trainingImageToFactorGraphMap,
+				testFeature, probabilityEstimationDistribution);
+	  } else {
+		  probabilityEstimationDistribution = null;
+	  }
+	  
+	  System.out.println("Gaussian models generated");
+	  
+	  analyseProbabilityDistribution(parameterContainer, testImageList,
+			trainingImageToFactorGraphMap, testimageToFactorGraphMap,
+			probabilityEstimationDistribution);
   }
+
+private static void analyseProbabilityDistribution(
+		ParametersContainer parameterContainer, List<ImageDTO> testImageList,
+		Map<ImageDTO, FactorGraphModel> trainingImageToFactorGraphMap,
+		Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap,
+		Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution) {
+	
+	
+	  List<Double> kernelBandwidth = Arrays.asList(new Double[] {0.005});
+	  String baseProbabilityImagePath = "C:\\Users\\anean\\Desktop\\CRF\\probability_data_grid_large_hist_c_" + Constants.GRID_SIZE + "_ns_" + Constants.NEIGHBOURHOOD_SIZE + "\\";
+	  for (Double h : kernelBandwidth) {
+		  Constants.KERNEL_BANDWIDTH = h;
+		  Map<ImageDTO, List<List<Double>>> imageProbabilityMap = new HashMap<>();
+		  
+		  for (ImageDTO currentImage : testImageList) {
+			  List<List<Double>> labelProbablity = new ArrayList<List<Double>>();
+			  imageProbabilityMap.put(currentImage, labelProbablity);
+		  }
+		  
+		  
+		  for (ImageDTO currentImage : testImageList) {
+			  FactorGraphModel factorGraph = testimageToFactorGraphMap.get(currentImage);
+			  List<SuperPixelDTO> superpixels = factorGraph.getSuperPixels();
+			  
+			  List<List<Double>> labelProbabilities = new ArrayList<>();
+			  for (int objectLabel = 0; objectLabel < Constants.NUMBER_OF_STATES; objectLabel++) {
+				  List<Double> superPixelProbs = new ArrayList<Double>();
+				  int i = 0;
+				  for (SuperPixelDTO superPixel : superpixels) {
+					  i++;
+					  	Feature feature = superPixel.getLocalFeatureVector().getFeatures().get(0);
+						//  p(f1|l)* p(f2|l) * .... * p(fn|l)
+						double featureOnLabelConditionalProbability = 1;
+						
+						// log p(l)
+						double labelProbability = 0;
+						
+						//log p(f)
+						double featureProbability = 0;
+						
+						boolean isCurrentProbabilityZero = false;
+						for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
+							// p(f1|l)* p(f2|l) * .... * p(fn|l)
+							boolean isProbabilityZero = true;
+							double currentFeatureOnLabelConditionalProbability = 1;
+							
+							if (feature instanceof FeatureContainer) {
+								FeatureContainer featureContainer = (FeatureContainer) feature;
+								for (Feature singleFeature : featureContainer.getFeatures()) {
+									ProbabilityEstimator currentProbabilityEstimator = null;
+									boolean hasAllZeros = false;
+									if (probabilityEstimationDistribution.containsKey(singleFeature)) {
+										currentProbabilityEstimator = probabilityEstimationDistribution.get(singleFeature).get(label);
+										hasAllZeros = currentProbabilityEstimator.getAllZerosOnInput();
+									}
+									if (!hasAllZeros) {
+										double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(null, factorGraph, label, singleFeature, trainingImageToFactorGraphMap, currentProbabilityEstimator);
+										currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+										isProbabilityZero = false;
+									} else {
+										isProbabilityZero = true;
+									}
+								}
+							} else {
+								ProbabilityEstimator currentGMM = probabilityEstimationDistribution.get(feature).get(label);
+								if (currentGMM != null) {
+									double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(null, factorGraph, label, feature, trainingImageToFactorGraphMap, currentGMM);
+									currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+									isProbabilityZero = false;
+								}
+							}
+								
+							// log p(l)
+							double currentLabelProbability = parameterContainer.getLabelProbability(objectLabel);
+								
+							featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
+								
+							if (label == objectLabel) {
+								featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
+								labelProbability = currentLabelProbability;
+								isCurrentProbabilityZero = isProbabilityZero;
+							}
+						}
+						double finalProbability;
+						if (isCurrentProbabilityZero) {
+							finalProbability = 0;
+						} else {
+							finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
+							if (featureOnLabelConditionalProbability == 0) {
+								finalProbability = 1.0 / Constants.NUMBER_OF_STATES;
+							}
+						}
+						
+						superPixelProbs.add(finalProbability);
+				  }
+				  labelProbabilities.add(superPixelProbs);
+				  
+				  // save image probabilities
+				  String imageName = DataHelper.getFileNameFromImageDTO(currentImage);
+				  String basePath = baseProbabilityImagePath + imageName + "\\" + "h_" + Constants.KERNEL_BANDWIDTH + "\\";
+						  
+				  DataHelper.saveImageFi1Probabilities(currentImage, superpixels,  basePath, objectLabel, superPixelProbs);
+					
+				  DataHelper.saveImageSuperpixelBordersOnly(currentImage, superpixels, basePath +  "image.png");
+				  
+			  }
+			  imageProbabilityMap.put(currentImage, labelProbabilities);
+		  }
+//		  XLSHelper.saveProbabilityInformation(baseImagePath + "probabilities.xls", imageProbabilityMap);
+	  }
 }
+
+
+}
+

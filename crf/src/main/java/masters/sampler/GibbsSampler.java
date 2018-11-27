@@ -12,7 +12,6 @@ import masters.superpixel.SuperPixelDTO;
 import masters.train.FeatureVector;
 import masters.train.WeightVector;
 import masters.utils.CRFUtils;
-import masters.utils.DataHelper;
 import masters.utils.ParametersContainer;
 
 public class GibbsSampler {

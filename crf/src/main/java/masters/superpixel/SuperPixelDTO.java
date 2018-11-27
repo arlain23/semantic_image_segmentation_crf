@@ -1,7 +1,6 @@
 package masters.superpixel;
 
 import java.awt.Color;
-import java.awt.Point;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,11 +12,8 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.management.RuntimeErrorException;
-import javax.swing.text.html.CSS;
 
 import org.apache.log4j.Logger;
-
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 
 import masters.Constants;
 import masters.colors.ColorSpaceConverter;
@@ -45,8 +41,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
   	private FeatureVector localFeatureVector = null;
 	private FeatureVector pairwiseFeatureVector = null;
 	private double[] meanRGB;	
-	public int numberOfLocalFeatures;
-	public int numberOfPairwiseFeatures;
 	private int label;
 	
 	private int identifingColorRGB;
@@ -93,8 +87,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		} else {
 			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
 		}
-		numberOfLocalFeatures = localFeatures.size();
-		numberOfPairwiseFeatures = pairwiseFeatures.size();
 		this.localFeatureVector = new FeatureVector(localFeatures, true);
 		this.pairwiseFeatureVector = new FeatureVector(pairwiseFeatures, true);
 		
@@ -228,6 +220,9 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		List<Feature> features = new ArrayList<Feature> ();
 		if (Constants.USE_GRID_MODEL) {
 			features.addAll(getNeighbourPercentageFeatures(rgb, features.size(), meanSuperPixelDistance, superPixels, image));
+			if (Constants.ADD_COLOUR_LOCAL_FEATURE) {
+				features.add(getDiscreteColourFeature());
+			}
 		} else {
 			features.addAll(getColourFeatures(rgb, features.size()));
 			features.add(getNeighbourBayesColourFeature());
@@ -240,6 +235,12 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		List<Feature> features = new ArrayList<Feature> ();
 		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
 		return features;
+	}
+	
+	private Feature getDiscreteColourFeature() { 
+		String baseHex = String.format("#%02x%02x%02x", (int)this.meanRGB[0], (int)this.meanRGB[1], (int)this.meanRGB[2]);
+		return new DiscreteFeature(baseHex);
+
 	}
 	private Feature getNeighbourBayesColourFeature() { 
 		//most popular colour of neigbours
@@ -306,7 +307,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		return features;
 		
 	}
-	
+
 	private List<Feature> getNeighbourPercentageFeatures(double [] rgb, int startingIndex, int meanSuperPixelDistance, List<SuperPixelDTO> superPixelList, ImageDTO image) throws ColorSpaceException {
 		List<Feature> features = new ArrayList<Feature> ();
 		
@@ -319,12 +320,16 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 			
 			try {
 				int gridIndex = GridHelper.getGridPointSuperPixelIndex(point, pixelData); 
-				SuperPixelDTO superPixel = superPixelList.get(gridIndex);
+				List<SuperPixelDTO> superPixelNeighbours = Arrays.asList(new SuperPixelDTO[]{superPixelList.get(gridIndex)});
 				
-				List<SuperPixelDTO> neigbours = superPixel.getNeigbouringSuperPixels();
-				int numberOfNeighbours = neigbours.size();
+				for (int level = 0; level < Constants.NEIGHBOURHOOD_SIZE; level++) {
+					superPixelNeighbours = SuperPixelHelper.getListNeighbours(superPixelNeighbours);
+				}
+				Set<SuperPixelDTO> neigbouringPixelSet = new HashSet<SuperPixelDTO>();
+				neigbouringPixelSet.addAll(superPixelNeighbours);
+				int numberOfNeighbours = neigbouringPixelSet.size();
 				
-				for (SuperPixelDTO neighbour : neigbours) {
+				for (SuperPixelDTO neighbour : neigbouringPixelSet) {
 					double[] meanRGB = neighbour.getMeanRGB();
 					Color color = new Color((int)meanRGB[0], (int)meanRGB[1], (int)meanRGB[2]);
 					if (!colorMap.containsKey(color)) {
@@ -514,14 +519,14 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		
 	public FeatureVector getLocalImageFi(Integer objectLabel, ImageMask imageMask, FactorGraphModel factorGraphModel,
 			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap,
-			ParametersContainer probabiltyContainer) {
+			ParametersContainer parameterContainer) {
 		
 		return CRFUtils.getLocalImageFi(this.superPixelIndex, objectLabel, imageMask, factorGraphModel, trainingDataimageToFactorGraphMap,
-				probabiltyContainer, this.localFeatureVector.getFeatures(), this.numberOfLocalFeatures, this.numberOfPairwiseFeatures);
+				parameterContainer, this.localFeatureVector.getFeatures());
 	}
 	
-	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel, FactorGraphModel factorGraph){
-		return CRFUtils.getPairwiseImageFi(this.superPixelIndex, superPixel, mask, label, variableLabel, factorGraph, this.pairwiseFeatureVector.getFeatures(), this.numberOfLocalFeatures, this.numberOfPairwiseFeatures);
+	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel, FactorGraphModel factorGraph, ParametersContainer parametersContainer){
+		return CRFUtils.getPairwiseImageFi(this.superPixelIndex, superPixel, mask, label, variableLabel, factorGraph, this.pairwiseFeatureVector.getFeatures(), parametersContainer);
 			
 	}
 	

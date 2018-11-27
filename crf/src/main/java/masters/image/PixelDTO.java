@@ -75,6 +75,18 @@ public class PixelDTO implements Cloneable, Serializable {
 	public int getB() {
 		return B;
 	}
+	
+	public void setR(int r) {
+		R = r;
+	}
+
+	public void setG(int g) {
+		G = g;
+	}
+
+	public void setB(int b) {
+		B = b;
+	}
 
 	public Integer getLabel() {
 		return label;

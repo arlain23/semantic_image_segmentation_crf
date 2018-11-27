@@ -17,7 +17,7 @@ public class Constants {
 
 	public static boolean USE_NON_LINEAR_MODEL = true;
 	public static boolean USE_GRID_MODEL = true;
-
+	public static boolean ADD_COLOUR_LOCAL_FEATURE = true;
 	
 	public static enum ColorSpace {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
@@ -28,6 +28,10 @@ public class Constants {
 //	public static ColorSpace colorSpace = ColorSpace.HSV; 
 	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
 //	public static ColorSpace colorSpace = ColorSpace.HISTOGRAM;
+	
+	public static enum State {
+	    TRAIN, TEST
+	}
 	
 	public static enum ColorAverageMethod {
 	    MEAN, POPULARITY
@@ -40,14 +44,17 @@ public class Constants {
 	//image path
 	
 	public static enum ImageFolder {
-	    cow, horse, paint, pig, paint_neighbours, generated
+	    cow, horse, paint, pig, paint_neighbours, generated, generated2, generated_large, generated_large_noise
 	}
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.cow;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.pig;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated2;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large_noise;
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + File.separator + "train" + File.separator ;
 	public static String RESULT_PATH = IMAGE_FOLDER + File.separator + "result" + File.separator ;
@@ -56,10 +63,8 @@ public class Constants {
 	public static String RESULT_IMAGE_SUFFIX = "_N";
 	public static String IMAGE_EXTENSION= "png";
 	
-	public static int TRAIN_IMAGE_LIMIT = 200;
-	public static int TEST_IMAGE_LIMIT = 5;
-	
-	public static double KERNEL_BANDWIDTH = 0.15; 
+	public static int TRAIN_IMAGE_LIMIT = 30;
+	public static int TEST_IMAGE_LIMIT = 2;
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 5000;
@@ -94,8 +99,8 @@ public class Constants {
 	}
 	
 	//superpixels 
-	public static int NUMBER_OF_SUPERPIXELS = 60;
-	public static double RIGIDNESS = 0.000001;
+	public static int NUMBER_OF_SUPERPIXELS = 500;
+	public static double RIGIDNESS = 3;
 	
 	 /* serialization */
   
@@ -103,8 +108,13 @@ public class Constants {
 	public static String IMAGE_TO_FACTOR_GRAPH_TRAIN_FILE_NAME = "image_to_factor_graph";
 	public static String IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME = "image_to_factor_graph_test";
 	
-	/* grid */
-	public static int GRID_SIZE = 1;
+	/* parzen */
+	public static int GRID_SIZE = 5;
+	public static int NEIGHBOURHOOD_SIZE = 2;
+	public static double KERNEL_BANDWIDTH = 0.03; 
   
-  
+	
+	public static int NUMBER_OF_DIVISIONS_GMM = 5;
+	public static boolean USE_GMM_ESTIMATION = false;
+	public static boolean USE_HISTOGRAM_ESTIMATION = true;
 }

@@ -1,13 +1,16 @@
 package masters.utils;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
+import java.util.stream.Collectors;
 
 import masters.Constants;
 import masters.image.ImageDTO;
@@ -17,13 +20,38 @@ public class CacheUtils {
 	private static String SEPARATOR = ",";
 	private static String NEW_LINE = System.getProperty("line.separator");
 	
-	public static void saveSuperPixelDivision(ImageDTO image, String prefix) {
+	
+	public static List<List<Integer>> getSuperPixelDivision(ImageDTO image, String prefix) throws IOException {
 		
 		File imageFile = new File(image.getPath());
 		String name = imageFile.getName();
 		name = name.replaceAll("." + Constants.IMAGE_EXTENSION, "");
 		String fileName = prefix + "_" + name;
 		String path = Constants.WORK_PATH + Constants.IMAGE_FOLDER + File.separator + fileName + ".txt";
+		
+		List<List<Integer>> superPixels = new ArrayList<List<Integer>>();
+		
+		BufferedReader br = new BufferedReader(new FileReader(path)); 
+		String st; 
+		while ((st = br.readLine()) != null) {
+			List<Integer> row = Arrays.asList(st.split(SEPARATOR)).stream()
+                    .map(Integer::valueOf)
+                    .collect(Collectors.toList());
+			superPixels.add(row);
+			
+		}
+		br.close();
+		return superPixels;
+	}
+	public static void saveSuperPixelDivision(ImageDTO image, String prefix) throws IOException {
+		
+		String name = DataHelper.getFileNameFromImageDTO(image);
+		String fileName = prefix + "_" + name;
+		String path = Constants.WORK_PATH + Constants.IMAGE_FOLDER + File.separator + fileName + ".txt";
+		
+		File file = new File(path);
+		file.getParentFile().mkdirs();
+		file.createNewFile();
 		
 		StringBuilder content = new StringBuilder();
 		PixelDTO[][] pixelData = image.getPixelData();
