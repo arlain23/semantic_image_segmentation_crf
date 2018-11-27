@@ -28,4 +28,4 @@ RemoteSystemsTempFiles/*
 *.classpath
 *.project
 */src/work
-
+**/resources/*
