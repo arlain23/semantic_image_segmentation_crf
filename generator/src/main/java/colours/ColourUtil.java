@@ -2,60 +2,131 @@ package colours;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import generator.GeneratorConstants;
+import generator.GeneratorConstants.Direction;
 import shapes.ShapeDrawer;
 
 public class ColourUtil {
-	public static void fillColour(Graphics2D g2d, Color color) {
-		g2d.setColor(color);
-        g2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+	public static void fillColour(Graphics2D trainG2d, Graphics2D resultG2d, Color color) {
+		trainG2d.setColor(color);
+		trainG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
 	}
+	
 	public static Color getRandomColor() {
 		Random random = new Random();
 		int index = random.nextInt(GeneratorConstants.AVAILABLE_COLOURS.size());
 		return GeneratorConstants.AVAILABLE_COLOURS.get(index);
 	}
-	public static void fillGraphicsWithRandomColours(Graphics2D trainG2d, Graphics2D resultG2d) {
+	public static void fillGraphicsWithRandomColours(Graphics2D trainG2d, Graphics2D resultG2d, Color baseColour) {
+		int step =  GeneratorConstants.WIDTH / GeneratorConstants.BLOCK_SIZE;
 		Random random = new Random();
-		int blockSize = 1 * GeneratorConstants.BLOCK_SIZE;
-		int numberOfXBlocks = GeneratorConstants.WIDTH / blockSize;
-		int numberOfYBlocks = GeneratorConstants.HEIGHT / blockSize;
+		int numberOfBlocks = random.nextInt(2) +  3;
+		int imageWidth = GeneratorConstants.WIDTH;
+		int imageHeight = GeneratorConstants.HEIGHT;
 		
-		Color previousColor = null;
-		for (int y = 0; y < numberOfXBlocks; y++) {
-			for (int x = 0; x < numberOfYBlocks; x++) {
-				
-				
-				int r = random.nextInt(100);
-				Color color;
-				if (r > 50) color =  Color.BLUE;
-				else if (r > 20) color = Color.RED;
+		Set<Direction> directionTaken = new HashSet<>();
+		boolean wasBaseColourRepainted = false;
+		for (int i = 0; i < numberOfBlocks; i++ ) {
+			
+			random = new Random();	
+			Color color = null;
+			do {
+				int colorR = random.nextInt(100);
+				if (colorR > 50) color =  Color.RED;
 				else color = Color.GREEN;
 				
-//				Color color = GeneratorConstants.AVAILABLE_COLOURS.get(
-//						random.nextInt(GeneratorConstants.AVAILABLE_COLOURS.size()));
-				
-				if (random.nextInt(100) > 60  && previousColor != null) {
-					color = previousColor;
+				if (!color.equals(baseColour)) {
+					wasBaseColourRepainted = true;
 				}
+			} while (!wasBaseColourRepainted);
+			int cornerX = 0;
+			int cornerY = 0;
+			int width = 0;
+			int height = 0;
 
-				ShapeDrawer.drawSquare(trainG2d, color, x*blockSize, y*blockSize, blockSize);
+			//get direction
+			int middlePointX = imageWidth / 2;
+			int middlePointY = imageHeight / 2;
+			int x = 0,y = 0;
+			Direction direction = null;
+			boolean isDirectionUnique = false;
+			
+			while(!isDirectionUnique) {
+
+				random = new Random();
+				// get random pivot point
+				x = (random.nextInt(step - 6) + 3) * GeneratorConstants.BLOCK_SIZE;
+				y = (random.nextInt(step - 6) + 3) * GeneratorConstants.BLOCK_SIZE;
 				
-				Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
-						GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
-				
-				if (resultG2d != null) {
-					ShapeDrawer.drawSquare(resultG2d, markupColor, x*blockSize, y*blockSize, blockSize);
+				if (x >= middlePointX && y <= middlePointY) {
+					direction = Direction.UP_RIGHT;
+				} else if (x >= middlePointX && y > middlePointY) {
+					direction = Direction.DOWN_RIGHT;
+				} else if (x < middlePointX && y <= middlePointY) {
+					direction = Direction.UP_LEFT;
+				} else {
+					direction = Direction.DOWN_LEFT;
 				}
+				if (!directionTaken.contains(direction)) {
+					directionTaken.add(direction);
+					isDirectionUnique = true;
+				}
+			}
+			
+			switch (direction) {
+				case DOWN_RIGHT: 
+					cornerX = x;
+					cornerY = y;
+					
+					width = imageWidth - x;
+					height = imageHeight - y;
+					
+					break;
+				case DOWN_LEFT:
+					cornerX = 0;
+					cornerY = y;
+					
+					width = x;
+					height = y;
+					
+					break;
+				case UP_LEFT: 
+					cornerX = 0;
+					cornerY = 0;
+					
+					width = x;
+					height = y;
+	
+					break;
+				case UP_RIGHT:  
+					cornerY = 0;
+					cornerX = x;
+					
+					width = imageWidth - x;
+					height = y;
+					break;
+			}
+			
+			ShapeDrawer.drawRectangle(trainG2d, color, cornerX, cornerY, width, height);
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+			
+			if (resultG2d != null) {
+				ShapeDrawer.drawRectangle(resultG2d, markupColor, cornerX, cornerY, width, height);
 				
-				
-				previousColor = color;
 			}
 		}
-		
-		
 		
 	}
 }

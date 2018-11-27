@@ -13,7 +13,8 @@ public class FileUtil {
 	public static void saveImage(BufferedImage img, String path, String fileName){
 		try {
 			
-			File outputfile = new File(FileUtil.class.getClassLoader().getResource(path).getPath() + "/" + fileName);
+			File outputfile = new File("src/main/resources/" + path + "/" + fileName);
+			System.out.println(outputfile.getAbsolutePath());
 			outputfile.getParentFile().mkdirs();
 			outputfile.createNewFile();
 	        ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
