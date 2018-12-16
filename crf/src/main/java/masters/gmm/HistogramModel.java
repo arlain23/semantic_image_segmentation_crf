@@ -1,9 +1,19 @@
 package masters.gmm;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.statistics.HistogramDataset;
+
 import smile.math.Math;
 
 public class HistogramModel implements ProbabilityEstimator{
 
+	static int divisions;
+	static final double minVal = 0.0;
+	static final double maxVal = 1.0;
+	static double step; 
+	
 	private double [] dataArr;
 	
 	private int [] histogram;
@@ -11,7 +21,9 @@ public class HistogramModel implements ProbabilityEstimator{
 	
 
 	
-	public HistogramModel (double [] dataArr) {
+	public HistogramModel (double [] dataArr, int numberOfHistogramDivision) {
+		divisions = numberOfHistogramDivision;
+		step = maxVal / divisions;
 		this.dataArr = dataArr;
 		
 		
@@ -41,7 +53,6 @@ public class HistogramModel implements ProbabilityEstimator{
 	@Override
 	public double getProbabilityEstimation(double featureValue) {
 		int dataIndex = getHistogramBlock(featureValue, minVal, maxVal, step);
-		
 		return this.normalisedHistogram[dataIndex];
 	}
 
@@ -57,20 +68,22 @@ public class HistogramModel implements ProbabilityEstimator{
 	}
 	
 	
+	public double[] getNormalisedHistogram() {
+		return normalisedHistogram;
+	}
+
 	private int getHistogramBlock(double featureValue, double minVal, double maxVal, double step) {
-		boolean divisionFound = false;
 		int dataIndex = 0;
-		double border = minVal;
-		while (!divisionFound && border < maxVal) {
+		double border = minVal + step;
+		while (border < maxVal) {
 			if (featureValue < border) {
-				divisionFound = true;
-				return dataIndex - 1;
+				return dataIndex;
 			}
 			border += step;
 			border = round(border, 2);
 			dataIndex++;
 		}
-		return dataIndex - 1;		
+		return this.histogram.length - 1;		
 	}
 	private static double round(double value, int places) {
 	    if (places < 0) throw new IllegalArgumentException();

@@ -36,85 +36,38 @@ public class FactorGraphModel implements Serializable {
 	public static double CONVERGENCE_TOLERANCE = Constants.CONVERGENCE_TOLERANCE;
 	
 	private ImageDTO image;
-	private List<SuperPixelDTO> superPixels;
 	private List<OutputNode> factorisedSuperPixels;
 	private Set<Factor> createdFactors;
 	private WeightVector weightVector;
 	private Map<FactorEdgeKey, Edge> factorVariableToEdgeMap = new HashMap<FactorEdgeKey, Edge>();
 	
-	private int numberOfSuperPixels;
-	private Map<Feature, BinaryMask> descreteFeatureMap;
-	private Map<Feature, ValueMask> continuousFeatureMap;
-	private Map<Integer, BinaryMask> labelMap;
-	
-	private Map<Feature, Double> betaMap;
-	
-	private Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap = null;
+	private List<ImageDTO> trainImageList = null;
 	private ParametersContainer parametersContainer = null;
 	
 	private String uuid;
 	
-	public FactorGraphModel(ImageDTO currentImage, List<SuperPixelDTO> createdSuperPixels,
-			Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, WeightVector weightVector, ParametersContainer parameterContainer) {
-		this(currentImage, createdSuperPixels, weightVector,
+	public FactorGraphModel(ImageDTO currentImage, List<ImageDTO> trainImageList,
+			WeightVector weightVector, ParametersContainer parameterContainer) {
+		this(currentImage, weightVector,
 				parameterContainer);
-		this.trainingDataimageToFactorGraphMap = imageToFactorGraphMap;
+		this.trainImageList = trainImageList;
 		this.uuid = UUID.randomUUID().toString();
 	}
 
-	public FactorGraphModel(ImageDTO image, List<SuperPixelDTO> superPixels, WeightVector weightVector, ParametersContainer parameterContainer) {
+	public FactorGraphModel(ImageDTO image, WeightVector weightVector, ParametersContainer parameterContainer) {
 		this.uuid = UUID.randomUUID().toString();
 		
 		this.image = image;
-		this.superPixels = superPixels;
-		this.numberOfSuperPixels = superPixels.size();
 		this.factorisedSuperPixels = new ArrayList<OutputNode>();
 		this.createdFactors = new HashSet<Factor>();
 		this.weightVector = weightVector;
 		
-		// prepare binary masks for features and labels
-		this.descreteFeatureMap = new HashMap<Feature, BinaryMask>();
-		this.continuousFeatureMap = new HashMap<Feature, ValueMask>();
-		this.betaMap = new HashMap<Feature, Double>();
-		this.labelMap = initLabelToBinaryMaskMap(numberOfSuperPixels);
+		List<SuperPixelDTO> superPixels = this.image.getSuperPixels();
+
 		this.parametersContainer = parameterContainer;
-		
 		
 		//create factors and edges
 		for (SuperPixelDTO superPixel : superPixels) {
-			// prepare label map
-			BinaryMask labelMask = labelMap.get(superPixel.getLabel());
-			labelMask.switchOnByte(superPixel.getSuperPixelIndex());
-			
-			if (Constants.USE_NON_LINEAR_MODEL) {
-				//prepare feature masks
-				List<Feature> nonLinearFeatures = superPixel.getLocalFeatureVector().getFeatures();
-        
-				List<Feature> features = new ArrayList<Feature>();
-				for (Feature feature : nonLinearFeatures) {
-					if (feature instanceof FeatureContainer) {
-						features.addAll(((FeatureContainer)feature).getFeatures());
-					} else {
-						features.add(feature);
-					}
-				}
-				
-				for (Feature feature : features) {
-					if (feature instanceof DiscreteFeature){
-						if (!descreteFeatureMap.containsKey(feature)) {
-							descreteFeatureMap.put(feature, new BinaryMask(numberOfSuperPixels));
-						}
-						BinaryMask featureMask = descreteFeatureMap.get(feature);
-						featureMask.switchOnByte(superPixel.getSuperPixelIndex());
-					} else if (feature instanceof ContinousFeature) {
-						if (!continuousFeatureMap.containsKey(feature)) {
-							continuousFeatureMap.put(feature, new ValueMask(numberOfSuperPixels));
-						}
-						ValueMask featureMask = continuousFeatureMap.get(feature);
-						featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)feature.getValue());
-					}
-				}
-			}
 			
 			FeatureNode featureNode = new FeatureNode(superPixel, weightVector);
 			OutputNode outputNode = new OutputNode(weightVector, featureNode);
@@ -198,9 +151,8 @@ public class FactorGraphModel implements Serializable {
 					for (int variableLabel = 0; variableLabel < NUMBER_OF_STATES; variableLabel++) {
 						
 						FeatureVector pairWiseImageFi = leftNode.getFeatureNode().getSuperPixel().getPairwiseImageFi(rightNodeCast.getFeatureNode().getSuperPixel(), 
-								this.getImageMask(), label, variableLabel, this, this.parametersContainer);
+								this.image.getImageMask(), label, variableLabel, this.image, this.parametersContainer);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
-						
 						
 //						_log.info("PAIRWISE FI " + pairWiseImageFi.toString() );
 						
@@ -229,7 +181,7 @@ public class FactorGraphModel implements Serializable {
 					for (int variableLabel = 0; variableLabel < NUMBER_OF_STATES; variableLabel++) {
 						
 						FeatureVector pairWiseImageFi = rightNodeCast.getFeatureNode().getSuperPixel().getPairwiseImageFi(leftNode.getFeatureNode().getSuperPixel(), 
-								this.getImageMask(), label, variableLabel, this, this.parametersContainer);
+								this.image.getImageMask(), label, variableLabel, this.image, this.parametersContainer);
 						double featureEnergy = pairWiseImageFi.calculateEnergy(this.weightVector);
 						
 //						_log.info("PAIRWISE FI " + pairWiseImageFi.toString() );
@@ -258,7 +210,7 @@ public class FactorGraphModel implements Serializable {
 					Edge factorToLeftNodeEdge = factorVariableToEdgeMap.get(factorToLeftNodeKey);
 					
 					SuperPixelDTO superPixel = rightNodeFeatureNode.getSuperPixel();
-					FeatureVector localImageFi = superPixel.getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, 
+					FeatureVector localImageFi = superPixel.getLocalImageFi(label, this.image.getImageMask(), this.image, this.trainImageList, 
 							this.parametersContainer);
 					
 //					_log.info("LOCAL FI " + localImageFi.toString() );
@@ -270,41 +222,16 @@ public class FactorGraphModel implements Serializable {
 					double featureEnergy = localImageFi.calculateEnergy(this.weightVector);
 					
 					/*
+					 * 			ENERGIA
+					 */
+					
+					/*
 					 * ZDRADZIECKI MINUS
 					 */
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, -featureEnergy);
 				}
 			}
 		}
-		
-		
-	/*	System.out.println("****************************************");
-		System.out.println();
-		for (SuperPixelDTO superPixel : superPixels) {
-			FeatureVector featureVector = superPixel.getLocalFeatureVector();
-			List<Feature> features = featureVector.getFeatures();
-			FeatureContainer featureContainer = (FeatureContainer) features.get(0);
-			List<Feature> subFeatures = featureContainer.getFeatures();
-			
-			System.out.print(superPixel.getSuperPixelIndex() + "  " );
-			for (Feature sf : subFeatures) {
-				System.out.print(sf.getValue() + " ");
-			}
-			System.out.println();
-		}
-		System.out.println();
-		System.out.println();
-		for (Integer label : labelToLocalImageFi.keySet()) {
-			System.out.println("LABEL " + label);
-			System.out.println();
-			Map<SuperPixelDTO, FeatureVector> map = labelToLocalImageFi.get(label);
-			for (SuperPixelDTO dto : map.keySet()) {
-				System.out.print(dto.getSuperPixelIndex() + "     ");
-				FeatureVector vector = map.get(dto);
-				System.out.println(vector);
-			}
-			System.out.println();
-		}*/
 	}
 	public void computeVariableToFactorMessages() {
 		for (OutputNode currentNode : factorisedSuperPixels) {
@@ -414,6 +341,7 @@ public class FactorGraphModel implements Serializable {
 			}
 			currentNode.setMaxBeliefs(newMaxBeliefs);
 		}
+		System.out.println("factor belief " + maxFactorBefiefChange + " variable belief " + maxVariableBefiefChange);
 		return maxFactorBefiefChange <= CONVERGENCE_TOLERANCE && maxVariableBefiefChange <= CONVERGENCE_TOLERANCE; 
 	}
 	private List<Double> computeFactorBeliefs(Factor factor) {
@@ -429,7 +357,7 @@ public class FactorGraphModel implements Serializable {
 			
 			double maxFactorBeliefValue = 0;
 			for (int label = 0; label < NUMBER_OF_STATES; label++) {
-				FeatureVector localImageFi = featureNode.getSuperPixel().getLocalImageFi(label, this.getImageMask(), this, this.trainingDataimageToFactorGraphMap, parametersContainer);
+				FeatureVector localImageFi = featureNode.getSuperPixel().getLocalImageFi(label, this.image.getImageMask(), this.image, this.trainImageList, parametersContainer);
 				double energy = localImageFi.calculateEnergy(this.weightVector);
 				double variableToFactorMsg = factorToNodeEdge.getVariableToFactorMsg().get(label);
 				
@@ -469,7 +397,7 @@ public class FactorGraphModel implements Serializable {
 			for (int label1 = 0; label1 < NUMBER_OF_STATES; label1++) {
 				for (int label2 = 0; label2 < NUMBER_OF_STATES; label2++) {
 					FeatureVector pairWiseImageFi = leftNode.getFeatureNode().getSuperPixel().getPairwiseImageFi(rightNode.getFeatureNode().getSuperPixel(), 
-							this.getImageMask(), label1, label2, this, this.parametersContainer);
+							this.image.getImageMask(), label1, label2, this.image, this.parametersContainer);
 					double energy = pairWiseImageFi.calculateEnergy(this.weightVector);
 					double variableToFactorMsg = leftMsgs.get(label1) + rightMsgs.get(label2);
 					double newFactorBelief = variableToFactorMsg - energy;
@@ -550,33 +478,6 @@ public class FactorGraphModel implements Serializable {
 		System.out.println("***************");
 	}
 	
-	public Double getBeta(Feature feature) {
-		Double beta = this.betaMap.get(feature);
-		return (beta == null) ? getBetaImageValue(feature) : beta;
-	}
-	
-	private Double getBetaImageValue(Feature feature) {
-		int featureIndex = feature.getFeatureIndex();
-		double betaSum = 0;
-		int numberOfPairs = 0;
-		for(Factor factor : createdFactors) {
-			if (!factor.isFeatureFactor) {
-				SuperPixelDTO leftSuperPixel = this.superPixels.get(factor.getLeftSuperPixelIndex());
-				SuperPixelDTO rightSuperPixel = this.superPixels.get(factor.getRightSuperPixelIndex());
-				
-				betaSum += Math.pow(leftSuperPixel.getPairwiseFeatureVector().getFeatures().get(featureIndex).getDifference(
-						rightSuperPixel.getPairwiseFeatureVector().getFeatures().get(featureIndex)), 2);
-				numberOfPairs++;
-			}
-		}
-		double betaValue = betaSum / numberOfPairs;
-		betaValue *= 2.0;
-		if (betaValue == 0) betaValue = 1;
-		else betaValue = 1.0 / betaValue;
-		this.betaMap.put(feature, betaValue);
-		return betaValue;
-	}
-
 	
 	public void setWeightVector(WeightVector weightVector) {
 		this.weightVector = weightVector;
@@ -586,57 +487,12 @@ public class FactorGraphModel implements Serializable {
 		return image;
 	}
 
-	public List<SuperPixelDTO> getSuperPixels() {
-		return superPixels;
-	}
-
-	public int getNumberOfSuperPixels() {
-		return numberOfSuperPixels;
-	}
-
 	public List<OutputNode> getFactorisedSuperPixels() {
 		return factorisedSuperPixels;
 	}
 
 	public Set<Factor> getCreatedFactors() {
 		return createdFactors;
-	}
-	public ImageMask getImageMask() {
-		List<Integer> mask = new ArrayList<Integer>();
-		for (SuperPixelDTO superPixel : superPixels) {
-			mask.add(superPixel.getLabel());
-		}
-		return new ImageMask(mask);
-	}
-	
-	public Map<Integer, BinaryMask> initLabelToBinaryMaskMap(int numberOfSuperPixels) {
-		Map<Integer, BinaryMask> map = new HashMap<Integer, BinaryMask> ();
-		for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
-			map.put(label, new BinaryMask(numberOfSuperPixels));
-		}
-		return map;
-	}
-
-	public Map<Feature, BinaryMask> getFeatureMap() {
-		return descreteFeatureMap;
-	}
-
-	public Map<Feature, ValueMask> getContinuousFeatureMap() {
-		return continuousFeatureMap;
-	}
-
-	public Map<Integer, BinaryMask> getLabelMap() {
-		return labelMap;
-	}
-	public BinaryMask getLabelBinaryMask(Integer label) {
-		return this.labelMap.get(label);
-	}
-	public BinaryMask getDiscreteFeatureBinaryMask(Feature feature) {
-		return this.descreteFeatureMap.get(feature);
-	}
-	
-	public ValueMask getContinuousFeatureValueMask(Feature feature) {
-		return this.continuousFeatureMap.get(feature);
 	}
 	
 	public String getUuid() {

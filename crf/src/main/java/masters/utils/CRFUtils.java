@@ -31,7 +31,7 @@ public class CRFUtils {
 			ParametersContainer parametersContainer) {
 		FeatureVector imageFi = new FeatureVector(weightVector.getWeightSize());
 
-		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
+		List<SuperPixelDTO> superPixels = factorGraph.getImage().getSuperPixels();
 		Set<Factor> createdFactors = factorGraph.getCreatedFactors();
 		for (Factor factor : createdFactors) {
 			int leftSuperPixelIndex = factor.getLeftSuperPixelIndex();
@@ -39,12 +39,12 @@ public class CRFUtils {
 			int rightSuperPixelIndex = factor.getRightSuperPixelIndex();
 			if (rightSuperPixelIndex < 0) {
 				// feature node - local model (R label*feature size)
-				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph, null, parametersContainer);
+				FeatureVector localModel = leftSuperPixel.getLocalImageFi(null, mask, factorGraph.getImage(), null, parametersContainer);
 				imageFi.add(localModel);
 			} else {
 				// output node - pairwise model (R2)
 				SuperPixelDTO rightSuperPixel = superPixels.get(rightSuperPixelIndex);
-				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null, factorGraph, parametersContainer);
+				FeatureVector pairWiseModel = leftSuperPixel.getPairwiseImageFi(rightSuperPixel, mask, null, null, factorGraph.getImage(), parametersContainer);
 				imageFi.add(pairWiseModel);
 			}
 		}
@@ -56,9 +56,14 @@ public class CRFUtils {
    * 	LOCAL IMAGE FI
    */
 
-	public static FeatureVector getLocalImageFi(int superPixelIndex, Integer objectLabel, ImageMask mask, FactorGraphModel factorGraph,
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ParametersContainer parameterContainer,
+	public static FeatureVector getLocalImageFi(int superPixelIndex, Integer objectLabel, ImageMask mask, ImageDTO trainImage,
+			List<ImageDTO> trainImageList, ParametersContainer parameterContainer,
 			List<Feature> localFeatures) {
+		
+		Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution = 
+				parameterContainer.getProbabilityEstimationDistribution();
+		
+		
 		FeatureVector imageFi;
 		int featureIndex = 0;
 		if (objectLabel == null) {
@@ -83,35 +88,72 @@ public class CRFUtils {
 				
 				//log p(f)
 				double featureProbability = 0;
-				
+
+				boolean isCurrentProbabilityZero = false;
 				for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 					// p(f1|l)* p(f2|l) * .... * p(fn|l)
-					double currentFeatureOnLabelConditionalProbability = 1;
+					boolean isProbabilityZero = true;
+					double currentFeatureOnLabelConditionalProbability = 1.0;
 					
 					if (feature instanceof FeatureContainer) {
 						FeatureContainer featureContainer = (FeatureContainer) feature;
 						for (Feature singleFeature : featureContainer.getFeatures()) {
-							double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, factorGraph, label, singleFeature, trainingDataimageToFactorGraphMap, null);
-							currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+							ProbabilityEstimator currentProbabilityEstimator = null;
+							if (probabilityEstimationDistribution.containsKey(singleFeature)) {
+								currentProbabilityEstimator = probabilityEstimationDistribution.get(singleFeature).get(label);
+								isProbabilityZero = currentProbabilityEstimator.getAllZerosOnInput();
+								
+								if (!isProbabilityZero) {
+									double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
+									currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+								} 
+							} else {
+								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
+								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+							}
+							
 						}
 					} else {
-						double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, factorGraph, label, feature, trainingDataimageToFactorGraphMap, null);
-						currentFeatureOnLabelConditionalProbability = probabilityFeatureLabel;
+						ProbabilityEstimator currentProbabilityEstimator = null;
+						if (probabilityEstimationDistribution.containsKey(feature)) {
+							currentProbabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
+							double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
+							currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+							isProbabilityZero = false;
+							
+						} else {
+							double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
+							currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+						}
 					}
 					
 					// log p(l)
 					double currentLabelProbability = parameterContainer.getLabelProbability(objectLabel);
-					
+						
 					featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
+						
 					
 					if (label == objectLabel) {
 						featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
 						labelProbability = currentLabelProbability;
+						isCurrentProbabilityZero = isProbabilityZero;
 					}
 				}
 				
-				double finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
-				finalProbability = -Math.log(finalProbability);
+				double finalProbability;
+				if (isCurrentProbabilityZero) {
+					finalProbability = 0.0;
+					_log.error("Final probability is 0");
+					throw new RuntimeException();
+				} else {
+					finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
+					if (featureOnLabelConditionalProbability == 0) {
+						finalProbability = 1.0 / Constants.NUMBER_OF_STATES;
+					}
+					
+					finalProbability = -Math.log(finalProbability);
+				}
+				
 				imageFi.setFeatureValue(featureIndex++, finalProbability);
 
 				
@@ -141,20 +183,23 @@ public class CRFUtils {
    */
 
 	public static FeatureVector getPairwiseImageFi(int superPixelIndex, SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel,
-			FactorGraphModel factorGraph, List<Feature> pairwiseFeatures, ParametersContainer parameterContainer){
+			ImageDTO image, List<Feature> pairwiseFeatures, ParametersContainer parameterContainer){
 		if (Constants.USE_NON_LINEAR_MODEL) {
-			return getPairwiseImageFiNonLinear(superPixel, factorGraph, pairwiseFeatures, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfParwiseFeatures());
+			return getPairwiseImageFiNonLinear(superPixel, label, variableLabel, image, pairwiseFeatures, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfParwiseFeatures());
 		} else {
 			return getPairwiseImageFiLinear(superPixel, mask, label, variableLabel, superPixelIndex, parameterContainer.getNumberOfParwiseFeatures());
 		}
 	}
 
-	public static FeatureVector getPairwiseImageFiNonLinear(SuperPixelDTO superPixel, FactorGraphModel factorGraph, List<Feature> pairwiseFeatures, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+	public static FeatureVector getPairwiseImageFiNonLinear(SuperPixelDTO superPixel, Integer label, Integer variableLabel, ImageDTO image, List<Feature> pairwiseFeatures, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		FeatureVector imageFi = new FeatureVector(numberOfLocalFeatures + (numberOfPairwiseFeatures + 1));
 		int featureIndex = numberOfLocalFeatures;
 		for (int i = 0; i < numberOfPairwiseFeatures; i++) {
-			double featureValue = getPairWiseFeatureTerm(pairwiseFeatures.get(i), 
-					superPixel.getPairwiseFeatureVector().getFeatures().get(i), factorGraph);
+			double featureValue = 0; 
+			if (label != variableLabel) {
+				featureValue = getPairWiseFeatureTerm(pairwiseFeatures.get(i), 
+						superPixel.getPairwiseFeatureVector().getFeatures().get(i), image);
+			}
 			imageFi.setFeatureValue(featureIndex++, featureValue);
 		}
 		imageFi.setFeatureValue(featureIndex++, 1);
@@ -162,8 +207,8 @@ public class CRFUtils {
 		return imageFi;
 	}
 
-	private static double getPairWiseFeatureTerm(Feature thisFeature, Feature otherFeature, FactorGraphModel factorGraph) {
-		double beta = factorGraph.getBeta(thisFeature);
+	private static double getPairWiseFeatureTerm(Feature thisFeature, Feature otherFeature, ImageDTO image) {
+		double beta = image.getBeta(thisFeature);
 		double featureDifference = thisFeature.getDifference(otherFeature);
 		double featureValue = Math.exp(-beta * Math.pow(Math.abs(featureDifference), 2));
 		return featureValue;
@@ -200,34 +245,33 @@ public class CRFUtils {
    */
 
 
-	public static double getFeatureOnLabelProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature, 
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityEstimator currentProbabilityEstimator) {
+	public static double getFeatureOnLabelProbability(ImageMask mask, ImageDTO trainImage, int objectLabel, Feature feature, 
+			List<ImageDTO> trainImageList, ProbabilityEstimator currentProbabilityEstimator) {
 		if (feature instanceof DiscreteFeature) {
-			return getDiscreteFeatureOnLabelProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap);
+			return getDiscreteFeatureOnLabelProbability(mask, trainImage, objectLabel, feature, trainImageList);
 		} else if (feature instanceof ContinousFeature) {
-			return getContinuousFeatureOnLabelProbability(mask, factorGraph, objectLabel, feature, trainingDataimageToFactorGraphMap, currentProbabilityEstimator);
+			return getContinuousFeatureOnLabelProbability(mask, trainImage, objectLabel, feature, trainImageList, currentProbabilityEstimator);
 		}
 		throw new RuntimeException("Undefined feature type -> " + feature);
 	}
 
-	private static double getDiscreteFeatureOnLabelProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature,
-			Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap) {
-		if (trainingDataimageToFactorGraphMap == null) {
-			return getDiscreteFeatureOnLabelProbabilityTraining(mask, factorGraph, objectLabel, feature);
+	private static double getDiscreteFeatureOnLabelProbability(ImageMask mask, ImageDTO trainImage, int objectLabel, Feature feature,
+			List<ImageDTO> trainImageList) {
+		if (trainImageList == null) {
+			return getDiscreteFeatureOnLabelProbabilityTraining(mask, trainImage, objectLabel, feature);
 		} else {
-			return getDisreteFeatureOnLabelProbabilityInference(trainingDataimageToFactorGraphMap, objectLabel, feature);
+			return getDisreteFeatureOnLabelProbabilityInference(trainImageList, objectLabel, feature);
 		}
 	}
   
-	private static double getDisreteFeatureOnLabelProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, int objectLabel, Feature feature) {
+	private static double getDisreteFeatureOnLabelProbabilityInference(List<ImageDTO> trainImageList, int objectLabel, Feature feature) {
        
 		int numberOfFeatureOnLabel = 0;
 		int featureOnLabelMaskTotalSize = 0;
 		
-		for (ImageDTO trainingImage : trainingDataimageToFactorGraphMap.keySet()) {
-			FactorGraphModel trainingFactorGraph = trainingDataimageToFactorGraphMap.get(trainingImage);
-			BinaryMask labelMask = new BinaryMask(trainingFactorGraph.getImageMask(), objectLabel);
-			BinaryMask featureMask = trainingFactorGraph.getDiscreteFeatureBinaryMask(feature);
+		for (ImageDTO trainingImage : trainImageList) {
+			BinaryMask labelMask = new BinaryMask(trainingImage.getImageMask(), objectLabel);
+			BinaryMask featureMask = trainingImage.getDiscreteFeatureBinaryMask(feature);
 			if (featureMask != null) {
 				BinaryMask featureOnLabelMask = new BinaryMask(featureMask, labelMask);
 				numberOfFeatureOnLabel += featureOnLabelMask.getNumberOfOnBytes();
@@ -242,9 +286,9 @@ public class CRFUtils {
 	}
 
 
-	private static double getDiscreteFeatureOnLabelProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature) {
+	private static double getDiscreteFeatureOnLabelProbabilityTraining(ImageMask mask, ImageDTO image, int objectLabel, Feature feature) {
 		BinaryMask labelMask = new BinaryMask(mask, objectLabel);
-	    BinaryMask featureMask = factorGraph.getDiscreteFeatureBinaryMask(feature);
+	    BinaryMask featureMask = image.getDiscreteFeatureBinaryMask(feature);
 	    BinaryMask featureOnLabelMask = new BinaryMask(featureMask, labelMask);
 	    
 	    double probabilityFeatureLabel = Double.valueOf(featureOnLabelMask.getNumberOfOnBytes()) / Double.valueOf(featureOnLabelMask.getListSize());
@@ -253,17 +297,18 @@ public class CRFUtils {
 	}
 
   
-	private static double getContinuousFeatureOnLabelProbability(ImageMask mask, FactorGraphModel factorGraph, int objectLabel,
-			Feature feature, Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, ProbabilityEstimator currentProbabilityEstimator) {
-		if (trainingDataimageToFactorGraphMap == null) {
-			return getFeatureOnLabelKernelProbabilityTraining(mask, factorGraph, objectLabel, feature);
+	private static double getContinuousFeatureOnLabelProbability(ImageMask mask, ImageDTO trainImage, int objectLabel,
+			Feature feature, List<ImageDTO> trainImageList, ProbabilityEstimator currentProbabilityEstimator) {
+		
+		if (trainImageList == null) {
+			return getFeatureOnLabelKernelProbabilityTraining(mask, trainImage, objectLabel, feature, currentProbabilityEstimator);
 		} else {
-			return getFeatureOnLabelKernelProbabilityInference(trainingDataimageToFactorGraphMap, objectLabel, feature, currentProbabilityEstimator);
+			return getFeatureOnLabelKernelProbabilityInference(trainImageList, objectLabel, feature, currentProbabilityEstimator);
 		}
 	}
 
  
-	private static double getFeatureOnLabelKernelProbabilityInference(Map<ImageDTO, FactorGraphModel> trainingDataimageToFactorGraphMap, 
+	private static double getFeatureOnLabelKernelProbabilityInference(List<ImageDTO> trainImageList, 
 			int objectLabel, Feature feature,ProbabilityEstimator currentProbabilityEstimator) {
   
 		double probabilityFeatureLabel;
@@ -273,10 +318,9 @@ public class CRFUtils {
 			probabilityFeatureLabel = currentProbabilityEstimator.getProbabilityEstimation(featureValue);
 		} else {
 			List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>();
-			for (ImageDTO trainingImage : trainingDataimageToFactorGraphMap.keySet()) {
-				FactorGraphModel trainingFactorGraph = trainingDataimageToFactorGraphMap.get(trainingImage);
-				BinaryMask labelMask = new BinaryMask(trainingFactorGraph.getImageMask(), objectLabel);
-				ValueMask featureMask = trainingFactorGraph.getContinuousFeatureValueMask(feature);
+			for (ImageDTO trainingImage : trainImageList) {
+				BinaryMask labelMask = new BinaryMask(trainingImage.getImageMask(), objectLabel);
+				ValueMask featureMask = trainingImage.getContinuousFeatureValueMask(feature);
 				ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);	
 				
 				featureOnLabelMasks.add(featureOnLabelMask);
@@ -296,26 +340,32 @@ public class CRFUtils {
 	}
 
   
-	private static double getFeatureOnLabelKernelProbabilityTraining(ImageMask mask, FactorGraphModel factorGraph, int objectLabel, Feature feature) {
-
-		
-		List<ValueMask> featureMasks = new ArrayList<ValueMask>();
-		List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>();
- 
-		BinaryMask labelMask = new BinaryMask(factorGraph.getImageMask(), objectLabel);
-		ValueMask featureMask = factorGraph.getContinuousFeatureValueMask(feature);
-		ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);	
-
-		featureMasks.add(featureMask);
-		featureOnLabelMasks.add(featureOnLabelMask);
+	private static double getFeatureOnLabelKernelProbabilityTraining(ImageMask mask, ImageDTO image, int objectLabel, Feature feature,
+			ProbabilityEstimator currentProbabilityEstimator) {
 
 		double probabilityFeatureLabel;
-		try {
-			probabilityFeatureLabel = getParzenKernelEstimate(feature, featureOnLabelMasks);
-		} catch (LabelException e) {
-			probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
+		
+		if (currentProbabilityEstimator != null) {
+			Double featureValue = (Double)feature.getValue();
+			probabilityFeatureLabel = currentProbabilityEstimator.getProbabilityEstimation(featureValue);
+		} else {
+			List<ValueMask> featureMasks = new ArrayList<ValueMask>();
+			List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>();
+	 
+			BinaryMask labelMask = new BinaryMask(image.getImageMask(), objectLabel);
+			ValueMask featureMask = image.getContinuousFeatureValueMask(feature);
+			ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);	
+	
+			featureMasks.add(featureMask);
+			featureOnLabelMasks.add(featureOnLabelMask);
+	
+			try {
+				probabilityFeatureLabel = getParzenKernelEstimate(feature, featureOnLabelMasks);
+			} catch (LabelException e) {
+				probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
+			}
+	      
 		}
-      
 
 		return probabilityFeatureLabel;
 	}

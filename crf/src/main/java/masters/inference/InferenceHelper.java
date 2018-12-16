@@ -12,8 +12,8 @@ import masters.utils.DataHelper;
 import masters.utils.ParametersContainer;
 
 public class InferenceHelper {
-	public static void runInference(List<ImageDTO>  testImageList,  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap, 
-			Map<ImageDTO, FactorGraphModel> trainimageToFactorGraphMap, String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) throws IOException {
+	public static void runInference(List<ImageDTO>  testImageList,  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap
+			, String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) throws IOException {
 		
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {
@@ -27,8 +27,8 @@ public class InferenceHelper {
 			  FactorGraphModel factorGraph = testimageToFactorGraphMap.get(currentImage);
 			  factorGraph.setWeightVector(weights);
 			  
-			  DataHelper.saveImageWithSuperPixelsIndex(currentImage, factorGraph.getSuperPixels(), baseImagePath + "images\\"+imageCounter + ".png");
-			  List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
+			  DataHelper.saveImageWithSuperPixelsIndex(currentImage, currentImage.getSuperPixels(), baseImagePath + "images\\"+imageCounter + ".png");
+			  List<SuperPixelDTO> superPixels = currentImage.getSuperPixels();
 			  
 			  String saveProgressPath = baseImagePath + typeFolderName + "\\progress\\" + imageCounter + "\\";
 			  String saveFinalPath = baseImagePath + typeFolderName + "\\final\\" + imageCounter + ".png";
@@ -44,12 +44,12 @@ public class InferenceHelper {
 				  factorGraph.computeLabeling();
 
 				  boolean shown = false;
-				  if (t%5 == 0) {
-					  shown = true;
-					  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveProgressPath + t + ".png");
+//				  if (t%5 == 0) {
+				  shown = true;
+				  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveProgressPath + t + ".png");
 						
 		
-				  }
+//				  }
 				  if (factorGraph.checkIfConverged()) {
 					  System.out.println("converged");
 					  factorGraph.updatePixelData();

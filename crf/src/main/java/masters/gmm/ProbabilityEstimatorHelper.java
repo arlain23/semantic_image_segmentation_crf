@@ -21,9 +21,10 @@ public class ProbabilityEstimatorHelper {
 	
 	
 	public static void getProbabilityEstimationDistribution(
-			Map<ImageDTO, FactorGraphModel> trainingImageToFactorGraphMap,
+			List<ImageDTO> trainImageList,
 			Feature testFeature,
-			Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution) {
+			Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution,
+			int hist) {
 		
 		
 		if (testFeature instanceof FeatureContainer) {
@@ -35,10 +36,9 @@ public class ProbabilityEstimatorHelper {
 							
 							List<Double> data = new ArrayList<>();
 							List<ValueMask> featureOnLabelMasks = new ArrayList<ValueMask>(); 
-							for (ImageDTO trainingImage : trainingImageToFactorGraphMap.keySet()) {
-								FactorGraphModel trainingFactorGraph = trainingImageToFactorGraphMap.get(trainingImage);
-								BinaryMask labelMask = new BinaryMask(trainingFactorGraph.getImageMask(), label);
-								ValueMask featureMask = trainingFactorGraph.getContinuousFeatureValueMask(singleFeature);
+							for (ImageDTO trainingImage : trainImageList) {
+								BinaryMask labelMask = new BinaryMask(trainingImage.getImageMask(), label);
+								ValueMask featureMask = trainingImage.getContinuousFeatureValueMask(singleFeature);
 								ValueMask featureOnLabelMask = new ValueMask(featureMask, labelMask);
 								
 								featureOnLabelMasks.add(featureOnLabelMask);
@@ -60,19 +60,19 @@ public class ProbabilityEstimatorHelper {
 									allzeros = false;
 								}
 							}
-							if (allzeros) {
-								labelDistribution.put(label, new ZeroProbabilityModel());
-							} else {
-								if (Constants.USE_GMM_ESTIMATION) {
+							if (Constants.USE_GMM_ESTIMATION) {
+								if (allzeros) {
+									labelDistribution.put(label, new ZeroProbabilityModel());
+								} else {
 									GaussianMixtureModel gmm = new GaussianMixtureModel(dataArr);
 									labelDistribution.put(label, gmm);
-								} else if (Constants.USE_HISTOGRAM_ESTIMATION) {
-									HistogramModel gmm = new HistogramModel(dataArr);
-									labelDistribution.put(label, gmm);
-								} else {
-									_log.error("Choose estimation mode: histogram or gmm! ");
-									throw new RuntimeException();
 								}
+							} else if (Constants.USE_HISTOGRAM_ESTIMATION) {
+								HistogramModel gmm = new HistogramModel(dataArr, hist);
+								labelDistribution.put(label, gmm);
+							} else {
+								_log.error("Choose estimation mode: histogram or gmm! ");
+								throw new RuntimeException();
 							}
 						}
 						probabilityEstimationDistribution.put(singleFeature, labelDistribution);

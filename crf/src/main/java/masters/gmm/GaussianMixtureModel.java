@@ -11,6 +11,11 @@ public class GaussianMixtureModel implements ProbabilityEstimator{
 	private GaussianMixture gmm;
 	private double [] dataArr;
 	
+	static final int divisions = Constants.NUMBER_OF_HISTOGRAM_DIVISIONS;
+	static final double minVal = 0.0;
+	static final double maxVal = 1.0;
+	static final double step = maxVal / divisions; 
+	
 	public GaussianMixtureModel (double [] dataArr) {
 		this.dataArr = dataArr;
 		this.gmm = new GaussianMixture(dataArr);

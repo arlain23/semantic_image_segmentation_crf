@@ -33,19 +33,16 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 
 import masters.Constants;
+import masters.Constants.State;
 import masters.grid.GridPoint;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
+import masters.superpixel.SuperPixelHelper;
 import masters.train.WeightVector;
 
 public class DataHelper {
-	private static List<String>	SEGMENTED_HEX_COLOURS = Constants.SEGMENTED_HEX_COLOURS;
 	private static Map<Integer,Color> LABEL_TO_COLOUR_MAP = Constants.LABEL_TO_COLOUR_MAP;
-	
-	public static String TEST_TEST_SET = Constants.TEST_PATH;
-	public static String TEST_TRAIN_SET = Constants.TRAIN_PATH;
-	public static String TEST_SEGMENTATION_RESULTS = Constants.RESULT_PATH;
 	
 	public static String IMAGE_EXTENSION = Constants.IMAGE_EXTENSION;
 	public static String RESULT_IMAGE_SUFFIX = Constants.RESULT_IMAGE_SUFFIX;
@@ -53,37 +50,48 @@ public class DataHelper {
 	/* getters */ 
 
 	
-	public static List<ImageDTO> getTrainingDataTestSegmented() {
-		Map<String, File> trainingFiles = getFilesFromDirectory(TEST_TRAIN_SET);
-		Map<String, File> resultFiles = getFilesFromDirectory(TEST_SEGMENTATION_RESULTS);
+	public static List<ImageDTO> getValidationDataSegmented() {
+		Map<String, File> validationFiles = getFilesFromDirectory(Constants.VALIDATION_PATH);
+		Map<String, File> resultFiles = getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
 		
+		return getDataSegmented(validationFiles, resultFiles, State.VALIDATION);
+	}
+
+	public static List<ImageDTO> getTrainingDataSegmented() {
+		Map<String, File> trainingFiles = getFilesFromDirectory(Constants.TRAIN_PATH);
+		Map<String, File> resultFiles = getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
+		
+		return getDataSegmented(trainingFiles, resultFiles, State.TRAIN);
+	}
+	
+	private static List<ImageDTO> getDataSegmented(
+			Map<String, File> files, Map<String, File> resultFiles, State state) {
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
-		for (String key : trainingFiles.keySet()) {
+		for (String key : files.keySet()) {
 			if (++i >= Constants.TRAIN_IMAGE_LIMIT + 1) {
 				return imageList;
 			}
 			
-			File trainFile = trainingFiles.get(key);
+			File trainFile = files.get(key);
 			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
 			
 			BufferedImage trainImg = openImage(trainFile.getPath());
 			BufferedImage segmentedImg = openImage(segmentedFile.getPath());
 			
-			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg);
-			PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
-			imageObj.setPixelData(pixelData);
+			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, state);
 			
-			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImg, true);
-			updateLabelFromSegmentedImage(imageObj,segmentedPixelData);
 			
 			imageList.add(imageObj);
 		}
 		return imageList;
 	}
 
+	
+	
+
 	public static List<ImageDTO> getTestData() {
-		Map<String, File> testFiles = getFilesFromDirectory(TEST_TEST_SET);
+		Map<String, File> testFiles = getFilesFromDirectory(Constants.TEST_PATH);
 		
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
@@ -95,59 +103,12 @@ public class DataHelper {
 			
 			BufferedImage trainImg = openImage(trainFile.getPath());
 			
-			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg);
-			PixelDTO[][] pixelData = getPixelDTOs(trainImg, false);
-			imageObj.setPixelData(pixelData);
+			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, State.TEST);
 			
 			imageList.add(imageObj);
 		}
 		return imageList;
 	}
-	
-	public static PixelDTO[][] getPixelDTOs (BufferedImage image, boolean isSegmented) {
-		Set<String> col = new HashSet<String>();
-		int[] tmpArray = null;
-		WritableRaster rasterImage = image.getRaster();
-		int width = image.getWidth();
-		int height = image.getHeight();
-		PixelDTO[][] pixelArray = new PixelDTO[width][height];
-		for (int y = 0; y < height; y++) {
-			  for (int x = 0; x < width; x++ ) {
-				  int[] pixelData = rasterImage.getPixel(x, y, tmpArray);
-				  
-				  int  r = pixelData[0];
-				  int  g = pixelData[1];
-				  int  b = pixelData[2];
-				  int alpha = 0;
-				  PixelDTO pixel;
-				  if (isSegmented) {
-					  int label = -1;
-					  String hexColor = String.format("#%02x%02x%02x", r, g, b);
-					  if (!col.contains(hexColor)) {
-						  col.add(hexColor);
-					  }
-					  for (int i = 0; i < SEGMENTED_HEX_COLOURS.size(); i++) {
-						  String segmentedHexColour = SEGMENTED_HEX_COLOURS.get(i);
-						  if (hexColor.equals(segmentedHexColour)) {
-							  label = i;
-							  break;
-						  }
-					  }
-					  if (label == -1) {
-						  _log.error("getPixelDTOs: chosen label -1 for hex colour " + hexColor);
-						  throw new RuntimeErrorException(null);
-					  }
-					  pixel = new PixelDTO(x, y, r, g, b, alpha, label);
-				  } else {
-					  pixel = new PixelDTO(x, y, r, g, b, alpha, null);
-				  }
-				  
-				  pixelArray[x][y] = pixel;
-			  }
-		  }
-		return pixelArray;
-	}
-	
 	
 	public static Map<String,File> getFilesFromDirectory(String fullpath, boolean flag) {
 		File folder;
@@ -189,17 +150,6 @@ public class DataHelper {
 		
 	}
 	
-	private static void updateLabelFromSegmentedImage(ImageDTO imageObj, PixelDTO[][] segmentedPixelData) {
-		PixelDTO[][] pixelData = imageObj.getPixelData();
-		for (int i = 0; i < pixelData[0].length; i++) {
-			for (int j = 0; j < pixelData.length; j++) {
-				PixelDTO pixel = pixelData[j][i];
-				PixelDTO segmentedPixel = segmentedPixelData[j][i];
-				int label = segmentedPixel.getLabel();
-				pixel.setLabel(label);
-			}
-		}
-	}
 	public static BufferedImage openImage(String path) {
 		BufferedImage img;
 		try {
@@ -603,7 +553,7 @@ public class DataHelper {
 		System.out.println("TRAIN " + trainPath);
 		
 		String[] fileName = trainFile.getName().split(".png");
-		String resultPath = Constants.RESULT_PATH + fileName[0] + "_N." + Constants.IMAGE_EXTENSION;
+		String resultPath = Constants.TRAIN_RESULT_PATH + fileName[0] + "_N." + Constants.IMAGE_EXTENSION;
 		File resultFile =  new File("E:\\Studia\\CSIT\\praca_magisterska\\repository\\crf\\target\\classes\\" + resultPath );
 		System.out.println("RES " + resultFile.getAbsolutePath());
 		

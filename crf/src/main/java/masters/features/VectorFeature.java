@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import masters.Constants;
+import masters.utils.Helper;
 
 public class VectorFeature implements Feature {
 
@@ -20,6 +21,10 @@ public class VectorFeature implements Feature {
 		this.vectorLength = getVectorLength();
 	}
 	
+	public List<Double> getValues() {
+		return values;
+	}
+
 	public Object getValue() {
 		return vectorLength;
 	}
@@ -30,9 +35,23 @@ public class VectorFeature implements Feature {
 	public void setValue(Object value) {
 		values = (List<Double>) value;
 	}
-
+	
+	@Override
 	public double getDifference(Feature otherFeature) {
-		return (Double)getValue() - (Double)otherFeature.getValue();
+		// if vector values are the same - return 0
+		// if vector values are different - return 1
+		
+		
+		List<Double> otherValues = ((VectorFeature)otherFeature).getValues();
+		boolean areValuesTheSame = true;
+		for (int i = 0; i < values.size(); i++) {
+			if (!Helper.equals(this.values.get(i), otherValues.get(i))) {
+				areValuesTheSame = false;
+			}
+		}
+		return areValuesTheSame ? 0 : 1;
+		
+		// return (Double)getValue() - (Double)otherFeature.getValue();
 	}
 	private double getVectorLength() {
 		double result = 0;
@@ -48,7 +67,7 @@ public class VectorFeature implements Feature {
 		for (Double val : values) {
 			sb.append(val + ",");
 		}
-		return "Feature [" + featureIndex + "->"  + sb.toString() + "]";
+		return "Vector Feature [" + featureIndex + "->"  + sb.toString() + "]";
 	}
 
 	
@@ -93,7 +112,6 @@ public class VectorFeature implements Feature {
 			return true;
 		}
 	}
-	
 	
 	private static transient Logger _log = Logger.getLogger(VectorFeature.class);
 

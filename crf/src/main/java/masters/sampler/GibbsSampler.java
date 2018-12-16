@@ -18,7 +18,7 @@ public class GibbsSampler {
 
 	public static ImageMask getSample(FactorGraphModel factorGraph, WeightVector weightVector,
 			ImageMask previousMask, ParametersContainer parameterContainer) {
-		List<SuperPixelDTO> superPixels = factorGraph.getSuperPixels();
+		List<SuperPixelDTO> superPixels = factorGraph.getImage().getSuperPixels();
 		int numberOfLabels = Constants.NUMBER_OF_STATES;
 		int maskSize = superPixels.size();
 

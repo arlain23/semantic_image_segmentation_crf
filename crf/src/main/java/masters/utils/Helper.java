@@ -16,6 +16,13 @@ import masters.features.Feature;
 
 
 public class Helper {
+	
+	public static boolean equals(double a, double b) {
+		  	double eps = 0.0000001;
+			if (a==b) return true;
+			return Math.abs(a - b) < eps;
+	}
+	 
 	public static List<Double> initFixedSizedListDouble(int listSize) {
 		List<Double> result = new ArrayList<Double>();
 		for (int i = 0; i < listSize; i++) {

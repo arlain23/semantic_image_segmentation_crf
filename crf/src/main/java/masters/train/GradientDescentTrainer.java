@@ -55,6 +55,8 @@ public class GradientDescentTrainer {
 			int size = imageList.size();
 			int iterator = 0;
 			for (ImageDTO trainingImage : imageList) {
+				iterator++;
+				if (iterator % 50 == 0) System.out.println(iterator);
 				// get samples
 				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
 				ImageMask currentMask = null;
@@ -68,7 +70,7 @@ public class GradientDescentTrainer {
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
 				//fi for image
-				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImageMask(), parameterContainer);
+				FeatureVector imageFi = CRFUtils.calculateImageFi(weightVector, factorGraph, factorGraph.getImage().getImageMask(), parameterContainer);
 				//fi for sample
 				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, parameterContainer);
 				

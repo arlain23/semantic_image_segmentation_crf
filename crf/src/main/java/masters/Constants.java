@@ -23,14 +23,14 @@ public class Constants {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
 	}
 	
-//	public static ColorSpace colorSpace = ColorSpace.RGB; 
+	public static ColorSpace colorSpace = ColorSpace.RGB; 
 //	public static ColorSpace colorSpace = ColorSpace.HSL; 
 //	public static ColorSpace colorSpace = ColorSpace.HSV; 
-	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
+//	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
 //	public static ColorSpace colorSpace = ColorSpace.HISTOGRAM;
 	
 	public static enum State {
-	    TRAIN, TEST
+	    TRAIN, TEST, VALIDATION
 	}
 	
 	public static enum ColorAverageMethod {
@@ -39,41 +39,59 @@ public class Constants {
 	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
 //	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
 	
-	public static int NUMBER_OF_HISTOGRAM_DIVISIONS = 16;
+	public static int COLOR_FEATURE_HISTOGRAM_DIVISIONS = 16;
 	
 	//image path
 	
 	public static enum ImageFolder {
-	    cow, horse, paint, pig, paint_neighbours, generated, generated2, generated_large, generated_large_noise
+	    cow, horse, paint, pig, paint_neighbours, generated, generated2, generated_large, generated_large_noise,
+	    generated_large_noise_0, generated_large_noise_1, generated_large_noise_2, generated_large_noise_3,
+	    generated_large_noise_4, generated_large_noise_5, generated_large_noise_6, generated_large_noise_7,
+	    generated_large_noise_8, generated_large_noise_9, generated_large_noise_10, generated_large_noise_11,
+	    generated_large_noise_12, generated_large_noise_13, generated_large_noise_14, generated_large_noise_15,
+	    generated_large_noise_16, generated_large_noise_17, generated_large_noise_18, generated_large_noise_19,
+	    generated_large_noise_20, generated_equal,
+	    generated_equals_noise_0, generated_equals_noise_1, generated_equals_noise_2, generated_equals_noise_3,
+	    generated_equals_noise_4, generated_equals_noise_5, generated_equals_noise_6, generated_equals_noise_7,
+	    generated_equals_noise_8, generated_equals_noise_9, generated_equals_noise_10, generated_equals_noise_11,
+	    generated_equals_noise_12, generated_equals_noise_13, generated_equals_noise_14, generated_equals_noise_15,
+	    generated_equals_noise_16, generated_equals_noise_17, generated_equals_noise_18, generated_equals_noise_19,
+	    generated_equals_noise_20
 	}
-//	public static ImageFolder IMAGE_FOLDER = ImageFolder.cow;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_equal;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.pig;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.paint_neighbours;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated2;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large_noise;
 	
+	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_equal;
+	
+	
 	public static String TRAIN_PATH = IMAGE_FOLDER + File.separator + "train" + File.separator ;
-	public static String RESULT_PATH = IMAGE_FOLDER + File.separator + "result" + File.separator ;
+	public static String TRAIN_RESULT_PATH = IMAGE_FOLDER + File.separator + "result" + File.separator ;
+	public static String VALIDATION_PATH = IMAGE_FOLDER + File.separator + "validation" + File.separator ;
+	public static String VALIDATION_RESULT_PATH = IMAGE_FOLDER + File.separator + "validation_result" + File.separator ;
+	
 	public static String TEST_PATH = IMAGE_FOLDER + File.separator + "test" + File.separator;
 	public static String WORK_PATH = System.getProperty("user.dir") + File.separator + "src" + File.separator + "work" + File.separator; 
 	public static String RESULT_IMAGE_SUFFIX = "_N";
 	public static String IMAGE_EXTENSION= "png";
 	
-	public static int TRAIN_IMAGE_LIMIT = 30;
-	public static int TEST_IMAGE_LIMIT = 2;
+	public static int TRAIN_IMAGE_LIMIT = 100;
+	public static int TEST_IMAGE_LIMIT = 5;
 	
 	// training
-	public static int NUMBER_OF_ITERATIONS = 5000;
-	public static double REGULARIZATION_FACTOR = 10000;
-	public static double TRAINING_STEP = 0.0000001;
+	public static int NUMBER_OF_ITERATIONS = 100;
+	public static double REGULARIZATION_FACTOR = 1000;
+	public static double TRAINING_STEP = 0.0001;
 	
 	//factorisation
-	public static int NUMBER_OF_STATES = 4;
-	public static double CONVERGENCE_TOLERANCE = 0.000001;
+	public static int NUMBER_OF_STATES = 3;
+	public static double CONVERGENCE_TOLERANCE = 0.3;
 	
 	// image input
 	
@@ -108,13 +126,13 @@ public class Constants {
 	public static String IMAGE_TO_FACTOR_GRAPH_TRAIN_FILE_NAME = "image_to_factor_graph";
 	public static String IMAGE_TO_FACTOR_GRAPH_TEST_FILE_NAME = "image_to_factor_graph_test";
 	
-	/* parzen */
+	/* Parzen */
 	public static int GRID_SIZE = 5;
 	public static int NEIGHBOURHOOD_SIZE = 2;
 	public static double KERNEL_BANDWIDTH = 0.03; 
   
 	
-	public static int NUMBER_OF_DIVISIONS_GMM = 5;
+	public static int NUMBER_OF_HISTOGRAM_DIVISIONS = 8;
 	public static boolean USE_GMM_ESTIMATION = false;
 	public static boolean USE_HISTOGRAM_ESTIMATION = true;
 }

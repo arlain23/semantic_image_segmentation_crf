@@ -1,92 +1,55 @@
 package masters.utils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import masters.Constants;
 import masters.colors.ColorSpaceException;
 import masters.factorisation.FactorGraphModel;
-import masters.grid.GridHelper;
 import masters.image.ImageDTO;
-import masters.superpixel.SuperPixelDTO;
-import masters.superpixel.SuperPixelHelper;
 import masters.train.WeightVector;
 
 public class InputHelper {
-	public static void prepareTestData(ParametersContainer parameterContainer,
-			Constants.State state, WeightVector weights,
-			List<ImageDTO> testImageList,
-			Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap)
+	public static Map<ImageDTO, FactorGraphModel> prepareTestData(ParametersContainer parameterContainer,WeightVector weights,
+			List<ImageDTO> testImageList, List<ImageDTO> trainImageList)
 			throws IOException, ColorSpaceException {
-		int totalNumerOfImages = testImageList.size();
-		int counter = 0;
-		for (ImageDTO currentImage : testImageList) {
-			System.out.println("image " + (++counter) + "/" + totalNumerOfImages);
-			List<SuperPixelDTO> createdSuperPixels ;
-			if (Constants.CLEAR_CACHE) {
-				createdSuperPixels = SuperPixelHelper.getNewSuperPixels(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, state.toString(), false);
-			} else {
-				createdSuperPixels = SuperPixelHelper.getSuperPixelsCached(currentImage, state.toString());
-			}
-				
-			// set feature vectors
-			int meanDistance = GridHelper.getMeanSuperPixelDistance(createdSuperPixels);
-			for (SuperPixelDTO superPixel : createdSuperPixels) {
-				superPixel.initFeatureVector(meanDistance, createdSuperPixels, currentImage);
-			}
-			FactorGraphModel factorGraph = new FactorGraphModel(currentImage, createdSuperPixels, null, weights, parameterContainer);
+		
+		Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = new HashMap<>();
 
+		for (ImageDTO currentImage : testImageList) {
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage, trainImageList, weights, parameterContainer);
 			testimageToFactorGraphMap.put(currentImage, factorGraph);
 		}
+		return testimageToFactorGraphMap;
+	}
+	
+	public static Map<ImageDTO, FactorGraphModel> prepareValidationData(ParametersContainer parameterContainer, WeightVector weights,
+			List<ImageDTO> validationImageList, List<ImageDTO> trainImageList)
+			throws IOException, ColorSpaceException {
+		
+		Map<ImageDTO, FactorGraphModel> validationImageToFactorGraphMap = new HashMap<>();
+		for (ImageDTO currentImage : validationImageList) {
+			FactorGraphModel factorGraph = new FactorGraphModel(currentImage, trainImageList, weights, parameterContainer);
+			validationImageToFactorGraphMap.put(currentImage, factorGraph);
+		}
+		return validationImageToFactorGraphMap;
 	}
 
-	public static void prepareTrainingData(
-			ParametersContainer parameterContainer, List<ImageDTO> imageList,
-			Map<ImageDTO, FactorGraphModel> trainingImageToFactorGraphMap,
-			Constants.State state) throws IOException, ColorSpaceException {
+	public static Map<ImageDTO, FactorGraphModel> prepareTrainingData(
+			ParametersContainer parameterContainer, List<ImageDTO> imageList) throws IOException, ColorSpaceException {
 		
+		Map<ImageDTO, FactorGraphModel> trainingImageToFactorGraphMap = new HashMap<>();
 		
-		int totalNumerOfImages = imageList.size();
-		int counter = 0;
 		int numberOfLocalFeatures = 0;
 		int numberOfParwiseFeatures = 0;
 		for (ImageDTO currentImage : imageList) {
-			System.out.println("image " + (++counter) + "/" + totalNumerOfImages);
-			List<SuperPixelDTO> createdSuperPixels = null;
-			  
-			if (Constants.CLEAR_CACHE) {
-				createdSuperPixels = SuperPixelHelper.getNewSuperPixels(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, state.toString(), true);
-			} else {
-				try {
-					createdSuperPixels = SuperPixelHelper.getSuperPixelsCached(currentImage, state.toString());
-				} catch (Exception e) {
-					createdSuperPixels = SuperPixelHelper.getNewSuperPixels(currentImage, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, state.toString(), true);
-				}
-			}
-			// set feature vectors
-			int meanDistance = GridHelper.getMeanSuperPixelDistance(createdSuperPixels);
-			for (SuperPixelDTO superPixel : createdSuperPixels) {
-				  superPixel.initFeatureVector(meanDistance, createdSuperPixels, currentImage);
-				  numberOfLocalFeatures = superPixel.getLocalFeatureVector().getFeatures().size();
-				  numberOfParwiseFeatures = superPixel.getPairwiseFeatureVector().getFeatures().size();
-			  }
-			  
 			  WeightVector randomWeightVector = new WeightVector(Constants.NUMBER_OF_STATES, numberOfLocalFeatures, numberOfParwiseFeatures);
-			
-			  parameterContainer.setNumberOfLocalFeatures(numberOfLocalFeatures);
-			  parameterContainer.setNumberOfParwiseFeatures(numberOfParwiseFeatures);
-			  
-			  SuperPixelHelper.updateSuperPixelLabels(createdSuperPixels);
-			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage,createdSuperPixels, randomWeightVector, parameterContainer);
+			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, randomWeightVector, parameterContainer);
 
 			  trainingImageToFactorGraphMap.put(currentImage, factorGraph);
 		  }
-		  
-		  //Data holders
-		  parameterContainer.setLabelProbabilities(trainingImageToFactorGraphMap);
-		  parameterContainer.setNumberOfLocalFeatures(numberOfLocalFeatures);
-		  parameterContainer.setNumberOfParwiseFeatures(numberOfParwiseFeatures);
-		  parameterContainer.setCurrentDate();
+		return trainingImageToFactorGraphMap;
 	}
 }

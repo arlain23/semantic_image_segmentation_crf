@@ -8,8 +8,6 @@ import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
 
 public class GridHelper {
-	private static final int GRID_SIZE = Constants.GRID_SIZE;
-	
 	
 	public static Integer getMeanSuperPixelDistance(List<SuperPixelDTO> superPixels) {
 		double distance = 0.0;
@@ -34,13 +32,14 @@ public class GridHelper {
 		return pixelData[gridPoint.x][gridPoint.y].getSuperPixelIndex();
 	}
 	public static List<GridPoint> getGrid (SuperPixelDTO superPixel, int meanSuperPixelDistance) {
+		int gridSize = Constants.GRID_SIZE;
 		
 		List<GridPoint> pointList = new ArrayList<GridPoint> ();
 		GridPoint middlePoint = superPixel.getSamplePixel();
-		int startingX = middlePoint.x - GRID_SIZE * meanSuperPixelDistance;
-		int startingY = middlePoint.y - GRID_SIZE * meanSuperPixelDistance;
-		for (int i = 0; i < (GRID_SIZE * 2 + 1); i++) {
-			for (int j = 0; j < (GRID_SIZE * 2 + 1); j++) {
+		int startingX = middlePoint.x - gridSize * meanSuperPixelDistance;
+		int startingY = middlePoint.y - gridSize * meanSuperPixelDistance;
+		for (int i = 0; i < (gridSize * 2 + 1); i++) {
+			for (int j = 0; j < (gridSize * 2 + 1); j++) {
 				int x = startingX + j * meanSuperPixelDistance;
 				int y = startingY + i * meanSuperPixelDistance;
 				pointList.add(new GridPoint(x, y));

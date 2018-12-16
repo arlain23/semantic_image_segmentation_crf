@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
+
 import masters.Constants;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
@@ -21,27 +23,31 @@ public class CacheUtils {
 	private static String NEW_LINE = System.getProperty("line.separator");
 	
 	
-	public static List<List<Integer>> getSuperPixelDivision(ImageDTO image, String prefix) throws IOException {
+	public static List<List<Integer>> getSuperPixelDivision(ImageDTO image, String prefix) {
 		
-		File imageFile = new File(image.getPath());
-		String name = imageFile.getName();
-		name = name.replaceAll("." + Constants.IMAGE_EXTENSION, "");
-		String fileName = prefix + "_" + name;
-		String path = Constants.WORK_PATH + Constants.IMAGE_FOLDER + File.separator + fileName + ".txt";
-		
-		List<List<Integer>> superPixels = new ArrayList<List<Integer>>();
-		
-		BufferedReader br = new BufferedReader(new FileReader(path)); 
-		String st; 
-		while ((st = br.readLine()) != null) {
-			List<Integer> row = Arrays.asList(st.split(SEPARATOR)).stream()
-                    .map(Integer::valueOf)
-                    .collect(Collectors.toList());
-			superPixels.add(row);
+		try {
+			File imageFile = new File(image.getPath());
+			String name = imageFile.getName();
+			name = name.replaceAll("." + Constants.IMAGE_EXTENSION, "");
+			String fileName = prefix + "_" + name;
+			String path = Constants.WORK_PATH + Constants.SUPERPIXEL_IMAGE_FOLDER + File.separator + fileName + ".txt";
 			
+			List<List<Integer>> superPixels = new ArrayList<List<Integer>>();
+			
+			BufferedReader br = new BufferedReader(new FileReader(path)); 
+			String st; 
+			while ((st = br.readLine()) != null) {
+				List<Integer> row = Arrays.asList(st.split(SEPARATOR)).stream()
+	                    .map(Integer::valueOf)
+	                    .collect(Collectors.toList());
+				superPixels.add(row);
+				
+			}
+			br.close();
+			return superPixels;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		br.close();
-		return superPixels;
 	}
 	public static void saveSuperPixelDivision(ImageDTO image, String prefix) throws IOException {
 		

@@ -27,7 +27,7 @@ import masters.utils.DataHelper;
 
 public class SuperPixelHelper {
 	
-	public static List<SuperPixelDTO> getSuperPixels(ImageDTO imageDTO, List<List<Integer>> superPixelDivision) throws ColorSpaceException {
+	public static List<SuperPixelDTO> getSuperPixels(ImageDTO imageDTO, List<List<Integer>> superPixelDivision) {
 		List <SuperPixelDTO> superPixels = new ArrayList<SuperPixelDTO>();
 		
 		// read the output from the command
@@ -61,40 +61,43 @@ public class SuperPixelHelper {
 		return superPixels;
 	}
 	
-	public static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) throws IOException, ColorSpaceException {
+	public static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) {
 		List<List<Integer>> superPixelDivision = CacheUtils.getSuperPixelDivision(imageDTO, prefix);
 		return getSuperPixels(imageDTO, superPixelDivision);
 		
 	}
-	public static  List<SuperPixelDTO> getNewSuperPixels(ImageDTO imageDTO, int expectedNumberOfSuperpixels, double rigidness, String prefix, boolean savePath) throws IOException, ColorSpaceException {
-		Runtime runtime = Runtime.getRuntime();
-		String jarPath = System.getProperty("user.dir") + "\\src\\superpixel.jar";
-		String command = "java -jar " + jarPath + " " + imageDTO.getPath() + " " + expectedNumberOfSuperpixels + " " + rigidness;
-		Process proc = runtime.exec(command);
-		
-		BufferedReader stdInput = new BufferedReader(new 
-			     InputStreamReader(proc.getInputStream()));
-		
-		List<List<Integer>> superPixelDivision = new ArrayList<>();
-		String s = null;
-		while ((s = stdInput.readLine()) != null) {
-			List<Integer> row = Arrays.asList(s.split(" ")).stream()
-                .map(Integer::valueOf)
-                .collect(Collectors.toList());
-			superPixelDivision.add(row);
-		}
-		
-		List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision);
-		CacheUtils.saveSuperPixelDivision(imageDTO, prefix);
-		
-		if (savePath) {
-			String name = DataHelper.getFileNameFromImageDTO(imageDTO);
-			name = name + "." + Constants.IMAGE_EXTENSION;
-			String path = Constants.WORK_PATH + "segmentation" + File.separator +  Constants.IMAGE_FOLDER + File.separator + prefix + "_" + name;
-			DataHelper.saveImageSegmentedBySuperPixels(imageDTO, superPixels, path);
-		}
-		return superPixels;
+	public static  List<SuperPixelDTO> getNewSuperPixels(ImageDTO imageDTO, int expectedNumberOfSuperpixels, double rigidness, String prefix, boolean savePath)  {
+		try {
+			Runtime runtime = Runtime.getRuntime();
+			String jarPath = System.getProperty("user.dir") + "\\src\\superpixel.jar";
+			String command = "java -jar " + jarPath + " " + imageDTO.getPath() + " " + expectedNumberOfSuperpixels + " " + rigidness;
+			Process proc = runtime.exec(command);
 			
+			BufferedReader stdInput = new BufferedReader(new 
+				     InputStreamReader(proc.getInputStream()));
+			
+			List<List<Integer>> superPixelDivision = new ArrayList<>();
+			String s = null;
+			while ((s = stdInput.readLine()) != null) {
+				List<Integer> row = Arrays.asList(s.split(" ")).stream()
+	                .map(Integer::valueOf)
+	                .collect(Collectors.toList());
+				superPixelDivision.add(row);
+			}
+			
+			List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision);
+			CacheUtils.saveSuperPixelDivision(imageDTO, prefix);
+			
+			if (savePath) {
+				String name = DataHelper.getFileNameFromImageDTO(imageDTO);
+				name = name + "." + Constants.IMAGE_EXTENSION;
+				String path = Constants.WORK_PATH + "segmentation" + File.separator +  Constants.SUPERPIXEL_IMAGE_FOLDER + File.separator + prefix + "_" + name;
+				DataHelper.saveImageSegmentedBySuperPixels(imageDTO, superPixels, path);
+			}
+			return superPixels;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static void initBorderData(ImageDTO image, List<SuperPixelDTO> superPixels) {
