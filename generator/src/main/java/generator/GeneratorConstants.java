@@ -3,6 +3,7 @@ package generator;
 import java.awt.Color;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,23 +41,36 @@ public class GeneratorConstants {
 		LABEL_TO_MARKUP_MAP.put(3, new Color(127, 0, 127));
 		
 		COLOR_TO_AVAILABLE_NOISE_MAP.put(Color.RED, Arrays.asList(new Color [] {Color.GREEN, Color.BLUE}));
-		COLOR_TO_AVAILABLE_NOISE_MAP.put(Color.GREEN, Arrays.asList(new Color [] {Color.RED, Color.BLUE}));
+		COLOR_TO_AVAILABLE_NOISE_MAP.put(Color.GREEN, Arrays.asList(new Color [] {Color.BLUE, Color.RED}));
 		COLOR_TO_AVAILABLE_NOISE_MAP.put(Color.BLUE, Arrays.asList(new Color [] {Color.GREEN, Color.RED}));
 	}
 	
 	
 	public static int NUMBER_OF_GENERATED_TRAIN_IMAGES = 100;
 	public static int NUMBER_OF_GENERATED_TEST_IMAGES = 30;
-	public static String IMAGE_FOLDER = "generated_large";
+	public static int NUMBER_OF_GENERATED_VALIDATION_IMAGES = 30;
+	public static String IMAGE_FOLDER = "generated_equals";
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + "/train/";
 	public static String RESULT_PATH = IMAGE_FOLDER + "/result/";
+	
+	public static String VALIDATION_PATH = IMAGE_FOLDER + "/validation/";
+	public static String VALIDATION_RESULT_PATH = IMAGE_FOLDER + "/validation_result/";
+	
+	
 	public static String TEST_PATH = IMAGE_FOLDER + "/test/";
 	
 
 	public static enum Direction {
 		UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT
 	}
+	
+	public static enum Shape {
+		SQUARE, CIRCLE, PENTAGON
+	}
+	
+	public static final List<Shape> availableShapes = Arrays.asList(Shape.values());
+	
 	
 	public static boolean ADD_NOISE = true;
 }

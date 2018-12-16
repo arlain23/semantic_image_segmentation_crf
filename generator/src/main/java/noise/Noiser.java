@@ -22,13 +22,16 @@ public class Noiser {
 	private static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) throws IOException, ColorSpaceException {
 		return SuperPixelHelper.getSuperPixelsCached(imageDTO, prefix);
 	}
-	public static void addNoiseToData(String baseImagePath) {
-		List<ImageDTO> trainingData = DataHelper.getTrainingDataTestSegmented();
+	public static void addNoiseToData(String baseImagePath, int noiseNumber) {
+		List<ImageDTO> trainingData = DataHelper.getTrainingDataSegmented();
 		List<ImageDTO> testData = DataHelper.getTestData();
-//		addNoiseToData(baseImagePath, "train", trainingData);
-		addNoiseToData(baseImagePath, "test", testData);
+		List<ImageDTO> validationData = DataHelper.getValidationDataSegmented();
+		
+		addNoiseToData(baseImagePath, "train", trainingData, noiseNumber);
+		addNoiseToData(baseImagePath, "test", testData, noiseNumber);
+		addNoiseToData(baseImagePath, "validation", validationData, noiseNumber);
 	}
-	private static void addNoiseToData(String baseImagePath, String phase, List<ImageDTO> data) {
+	private static void addNoiseToData(String baseImagePath, String phase, List<ImageDTO> data, int noiseNumberLimit) {
 		baseImagePath = "src/main/resources/" + baseImagePath + "/" + phase + "/";
 		Random rand = new Random();
 		int limit = 40;
@@ -41,22 +44,28 @@ public class Noiser {
 			try {
 				List<SuperPixelDTO> superPixels = getSuperPixelsCached(image, phase);
 				if (r > limit) {
-					int noiseNumber = rand.nextInt(20);
-					System.out.println(noiseNumber);
-					for (int i = 0; i < noiseNumber; i++) {
-						int noiseIndex = rand.nextInt(superPixels.size());
-						SuperPixelDTO noisedSuperPixel = superPixels.get(noiseIndex);
-						List<PixelDTO> pixels = noisedSuperPixel.getPixels();
-						double[] meanRGB = noisedSuperPixel.getMeanRGB();
-						Color meanColor = new Color((int)meanRGB[0], (int)meanRGB[1], (int)meanRGB[2]);
-						List<Color> availableColors = GeneratorConstants.COLOR_TO_AVAILABLE_NOISE_MAP.get(meanColor);
-						Collections.shuffle(availableColors);
-						Color noiseColor = availableColors.get(0);
-						
-						for (PixelDTO pixel : pixels) {
-							pixel.setR(noiseColor.getRed());
-							pixel.setG(noiseColor.getGreen());
-							pixel.setB(noiseColor.getBlue());
+					if (noiseNumberLimit > 0) {
+						int noiseNumber = rand.nextInt(noiseNumberLimit + 1);
+						for (int i = 0; i < noiseNumber; i++) {
+							int noiseIndex = rand.nextInt(superPixels.size());
+							SuperPixelDTO noisedSuperPixel = superPixels.get(noiseIndex);
+							List<PixelDTO> pixels = noisedSuperPixel.getPixels();
+							double[] meanRGB = noisedSuperPixel.getMeanRGB();
+							Color meanColor = new Color((int)meanRGB[0], (int)meanRGB[1], (int)meanRGB[2]);
+							
+							try {
+								List<Color> availableColors = GeneratorConstants.COLOR_TO_AVAILABLE_NOISE_MAP.get(meanColor);
+								Collections.shuffle(availableColors);
+								Color noiseColor = availableColors.get(0);
+								
+								for (PixelDTO pixel : pixels) {
+									pixel.setR(noiseColor.getRed());
+									pixel.setG(noiseColor.getGreen());
+									pixel.setB(noiseColor.getBlue());
+								}
+							} catch (NullPointerException e) {
+								
+							}
 						}
 					}
 				}
