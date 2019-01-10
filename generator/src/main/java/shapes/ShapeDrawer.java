@@ -11,6 +11,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import colours.ColourUtil;
 import generator.GeneratorConstants;
 import generator.GeneratorConstants.Shape;
 import masters.superpixel.SuperPixelHelper;
@@ -20,7 +21,58 @@ public class ShapeDrawer {
 	private static final int BASE_BLOCK_SIZE = GeneratorConstants.BLOCK_SIZE;
 	private static final Color FOREGROUND_COLOR = GeneratorConstants.FOREGROUND_COLOR;
 	private static final Color NEIGHBOUR_COLOR = GeneratorConstants.NEIGHBOUR_COLOR;
-	private static int SHAPE_SIZE = 3;
+	private static int SHAPE_SIZE = 4;
+	
+	
+	public static void initDrawVersion2(Graphics2D trainG2d,
+			Graphics2D resultG2d, Shape shape, boolean isPrimaryShape) {
+		
+		ColourUtil.fillColour(trainG2d, resultG2d, NEIGHBOUR_COLOR);
+		
+		Random random = new Random();
+		int blockSize = (int)(SHAPE_SIZE * BASE_BLOCK_SIZE);
+		int neighbourhoodSize = GeneratorConstants.NEIGHBOURHOOD_GRID;
+		int buffer = GeneratorConstants.BUFFER;
+		
+		
+		int numberOfBlocks = (int)GeneratorConstants.WIDTH / BASE_BLOCK_SIZE;
+		
+		int lowBound = buffer + neighbourhoodSize;
+		int highBound = (numberOfBlocks - buffer - neighbourhoodSize - SHAPE_SIZE) + 1;
+		
+		random = new Random();
+		int initShape_XGridPos = random.nextInt(highBound-lowBound) + lowBound;
+		random = new Random();
+		int initShape_YGridPos = random.nextInt(highBound-lowBound) + lowBound;
+		
+		
+		int initShape_X = (initShape_XGridPos) * BASE_BLOCK_SIZE;
+		int initShape_Y = (initShape_YGridPos) * BASE_BLOCK_SIZE;
+		
+		trainG2d.setColor(FOREGROUND_COLOR);
+		if (shape == Shape.SQUARE) {
+			drawSquare(trainG2d, initShape_X, initShape_Y, blockSize);
+		} else if (shape == Shape.CIRCLE) {
+			drawCircle(trainG2d, initShape_X, initShape_Y, blockSize);
+		}
+		if (resultG2d != null){
+			Color foregroundMarkup;
+			if (isPrimaryShape) {
+				foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get
+						(GeneratorConstants.COLOR_TO_LABEL_MAP.size());
+			} else {
+				foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+						GeneratorConstants.COLOR_TO_LABEL_MAP.get(FOREGROUND_COLOR));
+			}
+			resultG2d.setColor(foregroundMarkup);
+			if (shape == Shape.SQUARE) {
+				drawSquare(resultG2d, initShape_X, initShape_Y, blockSize);
+			} else if (shape == Shape.CIRCLE) {
+				drawCircle(resultG2d, initShape_X, initShape_Y, blockSize);
+			}
+		}
+		
+	}
 	
 	public static void initDrawH(Graphics2D trainG2d, Graphics2D resultG2d) {
 		Random random = new Random();
@@ -108,12 +160,13 @@ public class ShapeDrawer {
 	public static void drawBaseShapeNeighbourhood(Graphics2D g2d, int initX, int initY, Color color) {
 		int blockSize = GeneratorConstants.BLOCK_SIZE;
 		int neighbourhoodSize = GeneratorConstants.NEIGHBOURHOOD_GRID;
-		int neighbourSize = neighbourhoodSize * blockSize;
+		int neigbourBlockSize = GeneratorConstants.NEIGHBOURHOOD_BLOCK_SIZE;
+		int neighbourSize = neighbourhoodSize * neigbourBlockSize;
 		int baseX = initX - neighbourSize;
 		int baseY = initY - neighbourSize;
 		
-		int width = (neighbourhoodSize + SHAPE_SIZE + neighbourhoodSize) * blockSize;
-		int height = (neighbourhoodSize + SHAPE_SIZE + neighbourhoodSize) * blockSize;
+		int width = SHAPE_SIZE * blockSize + 2 * neighbourhoodSize * neigbourBlockSize;
+		int height = SHAPE_SIZE * blockSize + 2 * neighbourhoodSize * neigbourBlockSize;
 		drawRectangle(g2d, color, baseX, baseY, width, height);
 	}
 	public static void drawOtherShapeNeighbourhood(Graphics2D g2d, int initX, int initY, int shapeBlockSize, Color color) {
@@ -142,21 +195,32 @@ public class ShapeDrawer {
 		x = initX;
 		y = initY + 2 * blockSize;
 		drawSquare(g2d, x, y, blockSize);
+		x = initX;
+		y = initY + 3 * blockSize;
+		drawSquare(g2d, x, y, blockSize);
 		
 		
 		x = initX + blockSize;
-		y = initY + blockSize;
+		y = (int) Math.round(initY + 1.5 * blockSize);
+		drawSquare(g2d, x, y, blockSize);
+		
+		x = initX + 2 * blockSize;
+		y = (int) Math.round(initY + 1.5 * blockSize);
+		drawSquare(g2d, x, y, blockSize);
 		drawSquare(g2d, x, y, blockSize);
 		
 		
-		x = initX + 2 * blockSize;
+		x = initX + 3 * blockSize;
 		y = initY;
 		drawSquare(g2d, x, y, blockSize);
-		x = initX + 2 * blockSize;
+		x = initX + 3 * blockSize;
 		y = initY + blockSize;
 		drawSquare(g2d, x, y, blockSize);
-		x = initX + 2 * blockSize;
+		x = initX + 3 * blockSize;
 		y = initY + 2 * blockSize;
+		drawSquare(g2d, x, y, blockSize);
+		x = initX + 3 * blockSize;
+		y = initY + 3 * blockSize;
 		drawSquare(g2d, x, y, blockSize);
 	
 	}
@@ -210,4 +274,6 @@ public class ShapeDrawer {
 	}
 
 	private static Logger _log = Logger.getLogger(ShapeDrawer.class);
+
+	
 }
