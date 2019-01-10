@@ -11,7 +11,7 @@ public class VectorFeature implements Feature {
 
   private static final long serialVersionUID = -3526273600320990373L;
   
-  private List<Double> values;
+  	private List<Double> values;
 	private double vectorLength;
 	private int featureIndex;
 	
@@ -35,7 +35,10 @@ public class VectorFeature implements Feature {
 	public void setValue(Object value) {
 		values = (List<Double>) value;
 	}
-	
+	@Override
+	public boolean isOutOfBounds() {
+		return false;
+	}
 	@Override
 	public double getDifference(Feature otherFeature) {
 		// if vector values are the same - return 0

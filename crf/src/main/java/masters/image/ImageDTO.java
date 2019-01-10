@@ -22,11 +22,14 @@ import masters.Constants.State;
 import masters.factorisation.Factor;
 import masters.factorisation.FactorGraphModel;
 import masters.features.BinaryMask;
+import masters.features.Continous3DFeature;
 import masters.features.ContinousFeature;
 import masters.features.DiscreteFeature;
+import masters.features.DiscretePositionFeature;
 import masters.features.Feature;
 import masters.features.FeatureContainer;
-import masters.features.ValueMask;
+import masters.features.ValueDoubleMask;
+import masters.features.ValueStringMask;
 import masters.grid.GridHelper;
 import masters.superpixel.SuperPixelDTO;
 import masters.superpixel.SuperPixelHelper;
@@ -43,8 +46,9 @@ public class ImageDTO implements Cloneable, Serializable {
 	transient private BufferedImage img;
 	private ImageMask mask = null;
 	
-	private Map<Feature, BinaryMask> descreteFeatureMap;
-	private Map<Feature, ValueMask> continuousFeatureMap;
+	private Map<Feature, BinaryMask> discreteFeatureMap;
+	private Map<Feature, ValueDoubleMask> continuousFeatureMap;
+	private Map<Feature, ValueStringMask> discretePositionFeatureMap;
 	private Map<Integer, BinaryMask> labelMap;
 	
 	private Map<Feature, Double> betaMap;
@@ -95,14 +99,17 @@ public class ImageDTO implements Cloneable, Serializable {
 		for (SuperPixelDTO superPixel : this.superPixels) {
 			superPixel.initFeatureVector(meanDistance, this.superPixels, this);
 		}
-		SuperPixelHelper.updateSuperPixelLabels(this.superPixels);
+		if (state != State.TEST) {
+			SuperPixelHelper.updateSuperPixelLabels(this.superPixels);
+		}
 	}
 	private void prepareFeatureMasks() {
 		int numberOfSuperPixels = this.superPixels.size();
 
 		// prepare binary masks for features and labels
-		this.descreteFeatureMap = new HashMap<Feature, BinaryMask>();
-		this.continuousFeatureMap = new HashMap<Feature, ValueMask>();
+		this.discreteFeatureMap = new HashMap<Feature, BinaryMask>();
+		this.continuousFeatureMap = new HashMap<Feature, ValueDoubleMask>();
+		this.discretePositionFeatureMap = new HashMap<Feature, ValueStringMask>();
 		this.betaMap = new HashMap<Feature, Double>();
 		this.labelMap = initLabelToBinaryMaskMap(numberOfSuperPixels);
 		
@@ -127,17 +134,34 @@ public class ImageDTO implements Cloneable, Serializable {
 				
 				for (Feature feature : features) {
 					if (feature instanceof DiscreteFeature){
-						if (!descreteFeatureMap.containsKey(feature)) {
-							descreteFeatureMap.put(feature, new BinaryMask(numberOfSuperPixels));
+						if (!discreteFeatureMap.containsKey(feature)) {
+							discreteFeatureMap.put(feature, new BinaryMask(numberOfSuperPixels));
 						}
-						BinaryMask featureMask = descreteFeatureMap.get(feature);
+						BinaryMask featureMask = discreteFeatureMap.get(feature);
 						featureMask.switchOnByte(superPixel.getSuperPixelIndex());
+					} else if (feature instanceof DiscretePositionFeature) {
+						if (!discretePositionFeatureMap.containsKey(feature)) {
+							discretePositionFeatureMap.put(feature, new ValueStringMask(numberOfSuperPixels));
+						}
+						ValueStringMask featureMask = discretePositionFeatureMap.get(feature);
+						featureMask.setValue(superPixel.getSuperPixelIndex(), (String)feature.getValue());
 					} else if (feature instanceof ContinousFeature) {
 						if (!continuousFeatureMap.containsKey(feature)) {
-							continuousFeatureMap.put(feature, new ValueMask(numberOfSuperPixels));
+							continuousFeatureMap.put(feature, new ValueDoubleMask(numberOfSuperPixels));
 						}
-						ValueMask featureMask = continuousFeatureMap.get(feature);
+						ValueDoubleMask featureMask = continuousFeatureMap.get(feature);
 						featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)feature.getValue());
+					} else if(feature instanceof Continous3DFeature) {
+						Continous3DFeature feature3D = (Continous3DFeature) feature;
+						List<Feature> continuousFeatures = feature3D.getFeatures();
+						for (Feature continuousFeature : continuousFeatures) {
+							if (!continuousFeatureMap.containsKey(continuousFeature)) {
+								continuousFeatureMap.put(continuousFeature, new ValueDoubleMask(numberOfSuperPixels));
+							}
+							ValueDoubleMask featureMask = continuousFeatureMap.get(continuousFeature);
+							featureMask.setValue(superPixel.getSuperPixelIndex(), (Double)continuousFeature.getValue());
+						}
+						
 					}
 				}
 			}
@@ -314,10 +338,10 @@ public class ImageDTO implements Cloneable, Serializable {
 		}
 	}
 	public Map<Feature, BinaryMask> getFeatureMap() {
-		return descreteFeatureMap;
+		return discreteFeatureMap;
 	}
 
-	public Map<Feature, ValueMask> getContinuousFeatureMap() {
+	public Map<Feature, ValueDoubleMask> getContinuousFeatureMap() {
 		return continuousFeatureMap;
 	}
 
@@ -328,11 +352,15 @@ public class ImageDTO implements Cloneable, Serializable {
 		return this.labelMap.get(label);
 	}
 	public BinaryMask getDiscreteFeatureBinaryMask(Feature feature) {
-		return this.descreteFeatureMap.get(feature);
+		return this.discreteFeatureMap.get(feature);
 	}
 	
-	public ValueMask getContinuousFeatureValueMask(Feature feature) {
+	public ValueDoubleMask getContinuousFeatureValueMask(Feature feature) {
 		return this.continuousFeatureMap.get(feature);
+	}
+	
+	public ValueStringMask getDiscretePositionFeatureValueMask(Feature feature) {
+		return this.discretePositionFeatureMap.get(feature);
 	}
 	
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

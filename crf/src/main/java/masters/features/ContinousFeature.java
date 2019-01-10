@@ -28,7 +28,10 @@ public class ContinousFeature implements Feature {
 	public int getFeatureIndex() {
 		return featureIndex;
 	}
-	
+	@Override
+	public boolean isOutOfBounds() {
+		return this.value == null;
+	}
 	@Override
 	public String toString() {
 		return "Feature [" + featureIndex + "->"  + value + "]";

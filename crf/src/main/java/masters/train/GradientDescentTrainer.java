@@ -34,7 +34,7 @@ public class GradientDescentTrainer {
 	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer) {
 		
 		this.NUMBER_OF_LOCAL_FEATURES = parameterContainer.getNumberOfLocalFeatures();
-		this.NUMBER_OF_PAIRWISE_FEATURES = parameterContainer.getNumberOfParwiseFeatures();
+		this.NUMBER_OF_PAIRWISE_FEATURES = parameterContainer.getNumberOfPairwiseFeatures();
 		this.imageList = imageList;
 		this.imageToFactorGraphMap = imageToFactorGraphMap;
 		this.parameterContainer = parameterContainer;

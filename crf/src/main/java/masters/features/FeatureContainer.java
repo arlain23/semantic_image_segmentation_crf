@@ -39,7 +39,10 @@ public class FeatureContainer implements Feature {
 	public int getFeatureIndex() {
 		return featureIndex;
 	}
-	
+	@Override
+	public boolean isOutOfBounds() {
+		return false;
+	}
 	public List<Feature> getFeatures() {
 	  return this.features;
 	}

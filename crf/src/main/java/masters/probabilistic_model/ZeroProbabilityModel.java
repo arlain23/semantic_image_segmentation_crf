@@ -1,9 +1,9 @@
-package masters.gmm;
+package masters.probabilistic_model;
 
 public class ZeroProbabilityModel implements ProbabilityEstimator{
 
 	@Override
-	public double getProbabilityEstimation(double featureValue) {
+	public double getProbabilityEstimation(Object featureValue) {
 		return 0;
 	}
 

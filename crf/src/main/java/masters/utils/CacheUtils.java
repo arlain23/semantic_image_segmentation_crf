@@ -46,6 +46,7 @@ public class CacheUtils {
 			br.close();
 			return superPixels;
 		} catch (IOException e) {
+			System.out.println("file not found");
 			throw new RuntimeException(e);
 		}
 	}

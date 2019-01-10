@@ -1,4 +1,4 @@
-package masters.gmm;
+package masters.probabilistic_model;
 
 import org.apache.log4j.Logger;
 
@@ -27,7 +27,8 @@ public class GaussianMixtureModel implements ProbabilityEstimator{
 	}
 	
 	@Override
-	public double getProbabilityEstimation(double featureValue) {
+	public double getProbabilityEstimation(Object featureValueObj) {
+		Double featureValue = (Double) featureValueObj;
 		if (!Constants.USE_NON_LINEAR_MODEL  || !Constants.USE_GRID_MODEL) {
 			_log.error("GMM available only for a grid of neighbours");
 			throw new RuntimeException();

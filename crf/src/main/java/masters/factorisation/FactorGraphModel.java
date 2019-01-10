@@ -21,7 +21,7 @@ import masters.features.ContinousFeature;
 import masters.features.DiscreteFeature;
 import masters.features.Feature;
 import masters.features.FeatureContainer;
-import masters.features.ValueMask;
+import masters.features.ValueDoubleMask;
 import masters.image.ImageDTO;
 import masters.image.ImageMask;
 import masters.superpixel.SuperPixelDTO;

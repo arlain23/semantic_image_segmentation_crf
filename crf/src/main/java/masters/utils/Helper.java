@@ -1,5 +1,6 @@
 package masters.utils;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +31,13 @@ public class Helper {
 		}
 		return result;
 	}
+	public static List<String> initFixedSizedListString(int listSize) {
+		List<String> result = new ArrayList<String>();
+		for (int i = 0; i < listSize; i++) {
+			result.add("");
+		}
+		return result;
+	}
 	public static List<Feature> initFixedSizedListContinuousFeature(int listSize) {
 		List<Feature> result = new ArrayList<Feature>();
 		for (int i = 0; i < listSize; i++) {
@@ -51,6 +59,14 @@ public class Helper {
 			System.out.print(d + " ");
 		}
 		System.out.println(" )");
+	}
+	public static String getColorHex(double[] rgb) {
+		String hex = String.format("#%02x%02x%02x", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+		return hex;
+	}
+	public static String getColorHex(Color color) {
+		String hex = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+		return hex;
 	}
 	public static void playSound(final String url) {
         Clip clip;

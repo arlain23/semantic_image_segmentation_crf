@@ -11,8 +11,8 @@ import masters.Constants;
 import masters.factorisation.FactorGraphModel;
 import masters.features.BinaryMask;
 import masters.features.Feature;
-import masters.gmm.ProbabilityEstimator;
 import masters.image.ImageDTO;
+import masters.probabilistic_model.ProbabilityEstimator;
 import masters.superpixel.SuperPixelDTO;
 
 public class ParametersContainer implements Serializable{
@@ -20,7 +20,7 @@ public class ParametersContainer implements Serializable{
   
 	private List<Double> labelProbabilities;
 	private int numberOfLocalFeatures;
-	private int numberOfParwiseFeatures;
+	private int numberOfPairwiseFeatures;
 	private String currentDate;
 	
 	private Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution;
@@ -49,6 +49,18 @@ public class ParametersContainer implements Serializable{
 		this.probabilityEstimationDistribution = probabilityEstimationDistribution;
 	}
 
+	public void setLabelProbabilities(List<Double> labelProbabilities) {
+		this.labelProbabilities = labelProbabilities;
+	}
+
+	public void setNumberOfLocalFeatures(int numberOfLocalFeatures) {
+		this.numberOfLocalFeatures = numberOfLocalFeatures;
+	}
+
+	public void setNumberOfParwiseFeatures(int numberOfPairwiseFeatures) {
+		this.numberOfPairwiseFeatures = numberOfPairwiseFeatures;
+	}
+
 	public String getCurrentDate() {
 		return currentDate;
 	}
@@ -57,8 +69,8 @@ public class ParametersContainer implements Serializable{
 		return numberOfLocalFeatures;
 	}
 
-	public int getNumberOfParwiseFeatures() {
-		return numberOfParwiseFeatures;
+	public int getNumberOfPairwiseFeatures() {
+		return numberOfPairwiseFeatures;
 	}
 
 	public void setParameters(List<ImageDTO> trainingImageList) {
@@ -78,7 +90,7 @@ public class ParametersContainer implements Serializable{
 		}
 		SuperPixelDTO superPixelDTO = trainingImageList.get(0).getSuperPixels().get(0);
 		this.numberOfLocalFeatures = superPixelDTO.getLocalFeatureVector().getFeatures().size();
-		this.numberOfParwiseFeatures = superPixelDTO.getPairwiseFeatureVector().getFeatures().size();
+		this.numberOfPairwiseFeatures = superPixelDTO.getPairwiseFeatureVector().getFeatures().size();
 		
 		  
 	}

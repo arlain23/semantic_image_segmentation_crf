@@ -1,10 +1,10 @@
-package masters.gmm;
+package masters.probabilistic_model;
 
 import masters.Constants;
 
 public interface ProbabilityEstimator {
 	
-	public double getProbabilityEstimation (double featureValue);
+	public double getProbabilityEstimation (Object featureValue);
 	
 	public double[] getDataArr();
 	

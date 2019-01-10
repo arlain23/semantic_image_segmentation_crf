@@ -9,5 +9,6 @@ public interface Feature extends Serializable{
 	public void setValue(Object value);
 	public double getDifference(Feature otherFeature);
 	public int getFeatureIndex();
+	public boolean isOutOfBounds();
 	
 }
