@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.hpsf.Array;
 
 import masters.Constants;
 import masters.Constants.State;
@@ -89,6 +90,7 @@ public class DataHelper {
 			segmentedImg = openImage(segmentedFile.getPath());
 		}
 
+		
 		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, state);
 		return imageObj;
 
@@ -191,15 +193,7 @@ public class DataHelper {
 				}
 			}
 		}
-		ImageIcon icon = new ImageIcon(img);
-		JFrame frame=new JFrame(title);
-		frame.setLayout(new FlowLayout());
-		frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
-		JLabel lbl = new JLabel();
-		lbl.setIcon(icon);
-		frame.add(lbl);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		showImageInJframe(title, img);
 	}
 
 	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
@@ -230,15 +224,7 @@ public class DataHelper {
 				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
 			}
 		}
-		ImageIcon icon = new ImageIcon(img);
-		JFrame frame = new JFrame(title);
-		frame.setLayout(new FlowLayout());
-		frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
-		JLabel lbl = new JLabel();
-		lbl.setIcon(icon);
-		frame.add(lbl);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		showImageInJframe(title, img);
 	}
 
 	public static void viewImageSuperpixelMeanData(ImageDTO image, List<SuperPixelDTO> superPixels) {
@@ -256,15 +242,7 @@ public class DataHelper {
 			}
 		}
 
-		ImageIcon icon = new ImageIcon(img);
-		JFrame frame = new JFrame(title);
-		frame.setLayout(new FlowLayout());
-		frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
-		JLabel lbl = new JLabel();
-		lbl.setIcon(icon);
-		frame.add(lbl);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		showImageInJframe(title, img);
 	}
 
 	public static void viewImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
@@ -289,15 +267,7 @@ public class DataHelper {
 			graphics.setColor(myColor);
 			graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
 		}
-		ImageIcon icon = new ImageIcon(img);
-		JFrame frame = new JFrame(title);
-		frame.setLayout(new FlowLayout());
-		frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
-		JLabel lbl = new JLabel();
-		lbl.setIcon(icon);
-		frame.add(lbl);
-		frame.setVisible(true);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		showImageInJframe(title, img);
 	}
 
 
@@ -561,30 +531,35 @@ public class DataHelper {
 		}
 	}
 
-	public static void saveImageWithChosenSuperPixel(ImageDTO image, SuperPixelDTO chosenSuperpixel, String path) throws IOException {
+	public static void saveImageWithChosenSuperPixel(ImageDTO image, SuperPixelDTO chosenSuperpixel, String path) {
 		File outputfile = new File(path);
 		outputfile.getParentFile().mkdirs();
-		outputfile.createNewFile();
-		BufferedImage img = cloneBufferedImage(image.getImage());
+		try {
+			outputfile.createNewFile();
+			BufferedImage img = cloneBufferedImage(image.getImage());
 
-		// update chosen superPixel
-		List<PixelDTO> pixels = chosenSuperpixel.getPixels();
-		int black = Color.black.getRGB();
-		for (PixelDTO pixel : pixels) {
-			img.setRGB(pixel.getXIndex(), pixel.getYIndex(), black);
-		}
-
-		/* update borders */
-		for (SuperPixelDTO superPixel : image.getSuperPixels()) {
-			int rgbSuperPixel = superPixel.getIdentifingColorRGB();
-			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
-			for (PixelDTO borderPixel : borderPixels) {
-				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			// update chosen superPixel
+			List<PixelDTO> pixels = chosenSuperpixel.getPixels();
+			int black = Color.black.getRGB();
+			for (PixelDTO pixel : pixels) {
+				img.setRGB(pixel.getXIndex(), pixel.getYIndex(), black);
 			}
+
+			/* update borders */
+			for (SuperPixelDTO superPixel : image.getSuperPixels()) {
+				int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+				List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+				}
+			}
+
+
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-
-
-		ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		
 	}
 
 	public static void saveImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String path) throws IOException {
@@ -699,29 +674,43 @@ public class DataHelper {
 	public static void save1DFeatureProbabilities(
 			List<Double> featureOnLabelsProbabilities, List<Double> colourValues, String path) {
 
-		int numberOfPercentageFeaturesBlocks;
 		List<Double> positionProbabilities = new ArrayList<>();
 		if (Constants.ADD_COLOUR_LOCAL_FEATURE) {
-			numberOfPercentageFeaturesBlocks = ((featureOnLabelsProbabilities.size() - 1) / 3);
 			if (Constants.ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION) {
 				int numberOfGridBlocks = (Constants.GRID_SIZE + Constants.GRID_SIZE + 1) * (Constants.GRID_SIZE + Constants.GRID_SIZE + 1);
-				numberOfPercentageFeaturesBlocks = ((featureOnLabelsProbabilities.size() - numberOfGridBlocks) / 3);
-				positionProbabilities = featureOnLabelsProbabilities.subList(numberOfGridBlocks * 3, featureOnLabelsProbabilities.size());
+				if (Constants.ADD_NEIGBOUR_FEATURES) {
+					positionProbabilities = featureOnLabelsProbabilities.subList(numberOfGridBlocks * 3, featureOnLabelsProbabilities.size());
+				} else {
+					positionProbabilities = new ArrayList<>();
+					ArrayList<Double> tmp = new ArrayList<>();
+					for (int i = 0; i < featureOnLabelsProbabilities.size(); i++) {
+						positionProbabilities.add(featureOnLabelsProbabilities.get(i));
+						tmp.add(null);
+						tmp.add(null);
+						tmp.add(null);
+						colourValues.add(null);
+						colourValues.add(null);
+						colourValues.add(null);
+					}
+					featureOnLabelsProbabilities = tmp;
+				}
 			}
 		} else  {
-			numberOfPercentageFeaturesBlocks = featureOnLabelsProbabilities.size() / 3;
+			positionProbabilities = new ArrayList<>();
+			for (int i = 0; i < featureOnLabelsProbabilities.size(); i++) {
+				if (i%3 == 0) positionProbabilities.add(null);
+			}
 		}
-		double colourProbability = featureOnLabelsProbabilities.get(featureOnLabelsProbabilities.size() - 1);
 		
 		int blockSize = 30;
 		int divisorSize = 20;
-		int numberOfBlocksInLine = Constants.GRID_SIZE * 2;
+		int numberOfBlocksInLine = Constants.GRID_SIZE * 2 + 1;
 		
-		int numberOfRows = (int) (1 + Math.ceil(numberOfPercentageFeaturesBlocks / numberOfBlocksInLine));
 		int buffer = 30;
 		
-		BufferedImage img = new BufferedImage(buffer + numberOfBlocksInLine * (4*blockSize + divisorSize) + buffer, 
-				buffer + numberOfRows * (blockSize + divisorSize) + buffer + 500, BufferedImage.TYPE_INT_RGB);
+		
+		BufferedImage img = new BufferedImage(buffer + numberOfBlocksInLine * (3*blockSize + divisorSize) + buffer, 
+				buffer + numberOfBlocksInLine * (3*blockSize + divisorSize) + buffer, BufferedImage.TYPE_INT_RGB);
 		
 		Graphics2D g2d = img.createGraphics();
 		
@@ -732,7 +721,8 @@ public class DataHelper {
 		x = buffer;
 		y = buffer;
 
-		if (Constants.ADD_COLOUR_LOCAL_FEATURE && Constants.ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION) {
+		if (Constants.ADD_COLOUR_LOCAL_FEATURE && !Constants.ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION) {
+			Double colourProbability = featureOnLabelsProbabilities.get(featureOnLabelsProbabilities.size() - 1);
 			colour = (int)Math.round(colourProbability * 255);
 			colour = (colour << 16) + (colour << 8) + colour;
 			fillColor = new Color(colour);
@@ -746,26 +736,39 @@ public class DataHelper {
 		//draw percentageFeatures
 		int blockIterator = 0;
 		for (int i = 0,index = 0; index < colourValues.size() - 1; index +=3, i++) {
-			double redValue = colourValues.get(index);
-			double greenValue = colourValues.get(index + 1);
-			double blueValue = colourValues.get(index + 2);
+			Double redValue = colourValues.get(index);
+			Double greenValue = colourValues.get(index + 1);
+			Double blueValue = colourValues.get(index + 2);
 			
 			int initX = x;
 			int initY = y;
-			colour = (int)Math.round(redValue * 255);
-			fillColor = new Color(colour, 0 ,0);
+			
+			if (redValue == null) {
+				fillColor = Color.PINK;
+			} else {
+				colour = (int)Math.round(redValue * 255);
+				fillColor = new Color(colour, 0 ,0);
+			}
 			borderColor = Color.RED;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
 			
-			colour = (int)Math.round(greenValue * 255);
-			fillColor = new Color(0, colour ,0);
+			if (greenValue == null) {
+				fillColor = Color.PINK;
+			} else {
+				colour = (int)Math.round(greenValue * 255);
+				fillColor = new Color(0, colour ,0);
+			}
 			borderColor = Color.GREEN;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
 			
-			colour = (int)Math.round(blueValue * 255);
-			fillColor = new Color(0, 0, colour);
+			if (blueValue == null) {
+				fillColor = Color.PINK;
+			} else {
+				colour = (int)Math.round(blueValue * 255);
+				fillColor = new Color(0, 0, colour);
+			}
 			borderColor = Color.BLUE;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
@@ -773,24 +776,36 @@ public class DataHelper {
 			initX = x;
 			initY = y + blockSize;
 			
-			double redProbability = featureOnLabelsProbabilities.get(index);
-			double greenProbability = featureOnLabelsProbabilities.get(index + 1);
-			double blueProbability = featureOnLabelsProbabilities.get(index + 2);
+			Double redProbability = featureOnLabelsProbabilities.get(index);
+			Double greenProbability = featureOnLabelsProbabilities.get(index + 1);
+			Double blueProbability = featureOnLabelsProbabilities.get(index + 2);
 			
-			gray = (int)Math.round(redProbability * 255);
-			fillColor = getRGB(gray);
+			if (redProbability == null) {
+				fillColor = Color.PINK;
+			} else {
+				gray = (int)Math.round(redProbability * 255);
+				fillColor = getRGB(gray);
+			}
 			borderColor = Color.RED;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
 			
-			gray = (int)Math.round(greenProbability * 255);
-			fillColor = getRGB(gray);
+			if (greenProbability == null) {
+				fillColor = Color.PINK;
+			} else {
+				gray = (int)Math.round(greenProbability * 255);
+				fillColor = getRGB(gray);
+			}
 			borderColor = Color.GREEN;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
 			
-			gray = (int)Math.round(blueProbability * 255);
-			fillColor = getRGB(gray);
+			if (blueProbability == null) {
+				fillColor = Color.PINK;
+			} else {
+				gray = (int)Math.round(blueProbability * 255);
+				fillColor = getRGB(gray);
+			}
 			borderColor = Color.BLUE;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
@@ -799,19 +814,24 @@ public class DataHelper {
 			initX = x;
 			initY = y + 2 *blockSize;
 			
-			double colorPositionProbability = positionProbabilities.get(i);
+
+			Double colorPositionProbability = positionProbabilities.get(i);
+			if (colorPositionProbability == null) {
+				fillColor = Color.PINK;
+			} else {
+				gray = (int)Math.round(colorPositionProbability * 255);
+				fillColor = getRGB(gray);
+			}
 			
-			gray = (int)Math.round(colorPositionProbability * 255);
-			fillColor = getRGB(gray);
 			borderColor = Color.RED;
 			drawSquare(g2d, initX, initY, blockSize, fillColor, borderColor);
 			initX += blockSize;
 			
 			x += 3 * blockSize;
 			
-			x += buffer;
+			x += divisorSize;
 			blockIterator++;
-			if (blockIterator > numberOfBlocksInLine) {
+			if (blockIterator >= numberOfBlocksInLine) {
 				x = buffer;
 				y += 3* blockSize + divisorSize;
 				blockIterator = 0;
@@ -912,12 +932,9 @@ public class DataHelper {
 		String trainPath = imageObj.getPath();
 		File trainFile = new File(trainPath);
 
-		System.out.println("TRAIN " + trainPath);
-
 		String[] fileName = trainFile.getName().split(".png");
 		String resultPath = Constants.TRAIN_RESULT_PATH + fileName[0] + "_N." + Constants.IMAGE_EXTENSION;
 		File resultFile =  new File("E:\\Studia\\CSIT\\praca_magisterska\\repository\\crf\\target\\classes\\" + resultPath );
-		System.out.println("RES " + resultFile.getAbsolutePath());
 
 		PixelDTO[][] pixels = imageObj.getPixelData();
 		int height = imageObj.getHeight();
@@ -1013,6 +1030,17 @@ public class DataHelper {
 		}
 	}
 
+	public static void showImageInJframe(String title, BufferedImage img) {
+		ImageIcon icon = new ImageIcon(img);
+		JFrame frame=new JFrame(title);
+		frame.setLayout(new FlowLayout());
+		frame.setSize(img.getWidth() + 10, img.getHeight() + 30);
+		JLabel lbl = new JLabel();
+		lbl.setIcon(icon);
+		frame.add(lbl);
+		frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
 
 	private static BufferedImage cloneBufferedImage(BufferedImage bi) {
 		ColorModel cm = bi.getColorModel();

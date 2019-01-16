@@ -230,7 +230,6 @@ public class ImageDTO implements Cloneable, Serializable {
 		
 		this.betaMap.put(feature, betaValue);
 		
-		System.out.println("BETA " + betaValue);
 		return betaValue;
 	}
 	

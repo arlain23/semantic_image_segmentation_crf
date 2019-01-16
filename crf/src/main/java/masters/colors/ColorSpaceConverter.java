@@ -152,7 +152,6 @@ public class ColorSpaceConverter {
 		hsl[0] = h;
 		hsl[1] = s * 100.0;
 		hsl[2] = l * 100.0;
-		System.out.println("hsl " + h + " "  +  s + " "+ l);
 		return hsl;
 	}
 	

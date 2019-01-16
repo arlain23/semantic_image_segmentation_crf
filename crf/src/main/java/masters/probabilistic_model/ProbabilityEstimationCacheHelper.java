@@ -272,23 +272,21 @@ public class ProbabilityEstimationCacheHelper {
 	}
 	
 	private static String getPDMCachePath(Feature singleFeature, int label) {
-		String constants = "grid_" + Constants.GRID_SIZE + "_neigh_" + Constants.NEIGHBOURHOOD_SIZE + "_hist_" + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS;
+		String constants = "grid_" + Constants.GRID_SIZE + "_neigh_" + Constants.NEIGHBOURHOOD_SIZE +
+				"_hist_" + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS + "_distance_" + Constants.MEAN_SUPERPIXEL_DISTANCE_MULTIPLIER;
 		
 		return Constants.WORK_PATH + "cache_pdms" + 
 				File.separator + Constants.IMAGE_FOLDER +
 				File.separator + "use_histogram_3d_" + Constants.USE_HISTOGRAMS_3D +
-				File.separator + "include_colour_" + Constants.ADD_COLOUR_LOCAL_FEATURE +
 				File.separator + constants +
 				File.separator + "feature_" + singleFeature.getFeatureIndex() + 
 				File.separator + "label_" + label;
 	}
 	private static String getLabelProbabilityCachePath() {
-		String constants = "grid_" + Constants.GRID_SIZE + "_neigh_" + Constants.NEIGHBOURHOOD_SIZE + "_hist_" + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS;
 		
 		return Constants.WORK_PATH + "cache_labels" + 
 				File.separator + Constants.IMAGE_FOLDER +
-				File.separator + "include_colour_" + Constants.ADD_COLOUR_LOCAL_FEATURE +
-				File.separator + constants;
+				File.separator + "labels";
 	}
 	
 	private static String getFeatureNumbersCachePath() {
@@ -296,7 +294,6 @@ public class ProbabilityEstimationCacheHelper {
 		
 		return Constants.WORK_PATH + "cache_feature_numbers" + 
 				File.separator + Constants.IMAGE_FOLDER +
-				File.separator + "include_colour_" + Constants.ADD_COLOUR_LOCAL_FEATURE +
 				File.separator + constants;
 	}
 

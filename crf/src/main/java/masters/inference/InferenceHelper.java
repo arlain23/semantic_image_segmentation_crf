@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import masters.factorisation.FactorGraphModel;
 import masters.image.ImageDTO;
 import masters.superpixel.SuperPixelDTO;
 import masters.train.WeightVector;
+import masters.utils.CRFUtils;
 import masters.utils.DataHelper;
 import masters.utils.ParametersContainer;
 
@@ -19,7 +22,7 @@ public class InferenceHelper {
 		for (ImageDTO currentImage : testImageList) {
 			  
 			  if (!testimageToFactorGraphMap.containsKey(currentImage)){
-				  System.out.println("IMAGE " + currentImage.getPath() + " not mapped");
+				  _log.error("IMAGE " + currentImage.getPath() + " not mapped");
 				  return;
 			  }
 			  System.out.println("inference image " + imageCounter);
@@ -64,5 +67,7 @@ public class InferenceHelper {
 			  System.out.println("finished for image " + imageCounter);
 		  }
 	}
+	
+	private static Logger _log = Logger.getLogger(InferenceHelper.class);
 	
 }

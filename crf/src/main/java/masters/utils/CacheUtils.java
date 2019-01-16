@@ -14,9 +14,12 @@ import java.util.stream.Collectors;
 
 import javax.management.RuntimeErrorException;
 
+import org.apache.log4j.Logger;
+
 import masters.Constants;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
+import masters.probabilistic_model.ProbabilityEstimatorHelper;
 
 public class CacheUtils {
 	private static String SEPARATOR = ",";
@@ -46,7 +49,7 @@ public class CacheUtils {
 			br.close();
 			return superPixels;
 		} catch (IOException e) {
-			System.out.println("file not found");
+			_log.error("file not found");
 			throw new RuntimeException(e);
 		}
 	}
@@ -62,9 +65,9 @@ public class CacheUtils {
 		
 		StringBuilder content = new StringBuilder();
 		PixelDTO[][] pixelData = image.getPixelData();
-		  for (int y = 0; y < pixelData.length; y++) {
-			  for (int x = 0; x < pixelData[0].length; x++) {
-				  int superPixelIndex = pixelData[x][y].getSuperPixelIndex();
+		  for (int j = 0; j < pixelData[0].length; j++) {
+			  for (int i = 0; i < pixelData.length; i++) {
+				  int superPixelIndex = pixelData[i][j].getSuperPixelIndex();
 				  content.append(superPixelIndex);
 				  content.append(SEPARATOR);
 			  }
@@ -78,4 +81,6 @@ public class CacheUtils {
 
 		  }
 	}
+	
+	private static Logger _log = Logger.getLogger(CacheUtils.class);
 }

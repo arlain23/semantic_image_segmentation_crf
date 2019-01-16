@@ -664,20 +664,41 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		return neighboursIndexes;
 	}
 	public GridPoint getSamplePixel() {
-		if (this.samplePixel != null) {
-			return this.samplePixel;
-		} else {
-			int xSum = 0;
-			int ySum = 0;
-			
-			for (PixelDTO pixel : this.pixels) {
-				xSum += pixel.getXIndex();
-				ySum += pixel.getYIndex();
-			}
-			int x = xSum / this.pixels.size();
-			int y = ySum / this.pixels.size();
-			return new GridPoint(x,y);
+		if (this.samplePixel == null) {
+			this.samplePixel = getMassCentreOfSuperPixel();
 		}
+		return this.samplePixel;
+	}
+	private GridPoint getMassCentreOfSuperPixel() {
+		int xSum = 0;
+		int ySum = 0;
+		
+		for (PixelDTO pixel : this.pixels) {
+			xSum += pixel.getXIndex();
+			ySum += pixel.getYIndex();
+		}
+		int x = (int)(Math.round((xSum * 1.0 )/ this.pixels.size()));
+		int y = (int)(Math.round((ySum * 1.0 )/ this.pixels.size()));
+		return new GridPoint(x,y);
+	}
+	private GridPoint getSamplePixelInSuperPixelBounds() {
+		int x = 0;
+		int y = 0;
+		int maxX = 0;
+		int minX = Integer.MAX_VALUE;
+		int maxY = 0;
+		int minY = Integer.MAX_VALUE;
+		for (PixelDTO bp : borderPixels) {
+			if (bp.getXIndex() > maxX) maxX = bp.getXIndex();
+			if (bp.getXIndex() < minX) minX = bp.getXIndex();
+			if (bp.getYIndex() > maxY) maxY = bp.getYIndex();
+			if (bp.getYIndex() < minY) minY = bp.getYIndex();
+		}
+		y = (maxY - minY) / 2;
+		x = (maxX - minX) / 2;
+		y += minY;
+		x += minX;
+		return new GridPoint(x,y);
 	}
 	
 	public double[] getMeanRGB() {

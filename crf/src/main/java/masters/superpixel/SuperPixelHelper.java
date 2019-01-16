@@ -30,9 +30,11 @@ public class SuperPixelHelper {
 	public static List<SuperPixelDTO> getSuperPixels(ImageDTO imageDTO, List<List<Integer>> superPixelDivision) {
 		List <SuperPixelDTO> superPixels = new ArrayList<SuperPixelDTO>();
 		
+		
 		// read the output from the command
 		Map<SuperPixelDTO,SuperPixelDTO> createdSuperPixels = new HashMap<SuperPixelDTO, SuperPixelDTO>();
 		PixelDTO[][] pixelData = imageDTO.getPixelData();
+
 		
 		for(int rowIndex = 0; rowIndex < superPixelDivision.size(); rowIndex++) {
 			List<Integer> row = superPixelDivision.get(rowIndex);
@@ -86,6 +88,7 @@ public class SuperPixelHelper {
 			}
 			
 			List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision);
+			DataHelper.viewImageSegmentedSuperPixels(imageDTO, superPixels, "foo");
 			CacheUtils.saveSuperPixelDivision(imageDTO, prefix);
 			
 			if (savePath) {

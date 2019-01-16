@@ -103,7 +103,7 @@ public class Constants {
 	public static String IMAGE_EXTENSION= "png";
 	
 	public static int TRAIN_IMAGE_LIMIT = 1000;
-	public static int TEST_IMAGE_LIMIT = 5;
+	public static int TEST_IMAGE_LIMIT = 10;
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 100;
@@ -151,6 +151,7 @@ public class Constants {
 	public static int GRID_SIZE = 3;
 	public static int NEIGHBOURHOOD_SIZE = 2;
 	public static double KERNEL_BANDWIDTH = 0.03; 
+	public static double MEAN_SUPERPIXEL_DISTANCE_MULTIPLIER = 1; 
   
 	
 	public static boolean USE_HISTOGRAMS_3D = false;

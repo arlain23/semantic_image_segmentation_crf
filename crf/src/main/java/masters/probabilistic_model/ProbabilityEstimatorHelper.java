@@ -251,7 +251,7 @@ public class ProbabilityEstimatorHelper {
 						pdm = ProbabilityEstimationCacheHelper.getCachedHistogram3D(singleFeature, label);
 						labelDistribution.put(label, pdm);
 					} else {
-						System.out.println(singleFeature.getFeatureIndex() + " not found");
+						_log.error(singleFeature.getFeatureIndex() + " not found");
 						throw new ProbabilityCacheException("");
 					}
 				}
@@ -265,7 +265,7 @@ public class ProbabilityEstimatorHelper {
 						pdm = ProbabilityEstimationCacheHelper.getCachedHistogram(singleFeature, label);
 						labelDistribution.put(label, pdm);
 					} else {
-						System.out.println(singleFeature.getFeatureIndex() + " not found");
+						_log.error(singleFeature.getFeatureIndex() + " not found");
 						throw new ProbabilityCacheException("");
 					}
 				}
@@ -280,7 +280,7 @@ public class ProbabilityEstimatorHelper {
 						pdm = ProbabilityEstimationCacheHelper.getCachedDisreteModel(singleFeature, label);
 						labelDistribution.put(label, pdm);
 					} else {
-						System.out.println(singleFeature.getFeatureIndex() + " not found");
+						_log.error(singleFeature.getFeatureIndex() + " not found");
 						throw new ProbabilityCacheException("");
 					}
 				}
@@ -295,7 +295,7 @@ public class ProbabilityEstimatorHelper {
 						pdm = ProbabilityEstimationCacheHelper.getCachedDisretePositionModel(singleFeature, label);
 						labelDistribution.put(label, pdm);
 					} else {
-						System.out.println(singleFeature.getFeatureIndex() + " not found");
+						_log.error(singleFeature.getFeatureIndex() + " not found");
 						throw new ProbabilityCacheException("");
 					}
 				}

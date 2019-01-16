@@ -341,7 +341,6 @@ public class FactorGraphModel implements Serializable {
 			}
 			currentNode.setMaxBeliefs(newMaxBeliefs);
 		}
-		System.out.println("factor belief " + maxFactorBefiefChange + " variable belief " + maxVariableBefiefChange);
 		return maxFactorBefiefChange <= CONVERGENCE_TOLERANCE && maxVariableBefiefChange <= CONVERGENCE_TOLERANCE; 
 	}
 	private List<Double> computeFactorBeliefs(Factor factor) {

@@ -21,7 +21,9 @@ public class GridHelper {
 				counter++;
 			}
 		}
-		return (int)Math.round(distance / counter);
+		double meanSuperPixelDistance = distance / counter;
+		meanSuperPixelDistance  *= Constants.MEAN_SUPERPIXEL_DISTANCE_MULTIPLIER;
+		return (int)Math.round(meanSuperPixelDistance);
 		
 	}
 	
@@ -33,7 +35,6 @@ public class GridHelper {
 	}
 	public static List<GridPoint> getGrid (SuperPixelDTO superPixel, int meanSuperPixelDistance) {
 		int gridSize = Constants.GRID_SIZE;
-		
 		List<GridPoint> pointList = new ArrayList<GridPoint> ();
 		GridPoint middlePoint = superPixel.getSamplePixel();
 		int startingX = middlePoint.x - gridSize * meanSuperPixelDistance;

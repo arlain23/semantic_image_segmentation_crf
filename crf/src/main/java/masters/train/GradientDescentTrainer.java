@@ -56,7 +56,6 @@ public class GradientDescentTrainer {
 			int iterator = 0;
 			for (ImageDTO trainingImage : imageList) {
 				iterator++;
-				if (iterator % 50 == 0) System.out.println(iterator);
 				// get samples
 				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
 				ImageMask currentMask = null;

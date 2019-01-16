@@ -189,7 +189,7 @@ public class CRFUtils {
 		if (Constants.USE_NON_LINEAR_MODEL) {
 			return getPairwiseImageFiNonLinear(superPixel, label, variableLabel, image, pairwiseFeatures, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfPairwiseFeatures());
 		} else {
-			return getPairwiseImageFiLinear(superPixel, mask, label, variableLabel, superPixelIndex, parameterContainer.getNumberOfPairwiseFeatures());
+			return getPairwiseImageFiLinear(superPixel, mask, label, variableLabel, superPixelIndex, parameterContainer.getNumberOfLocalFeatures());
 		}
 	}
 
@@ -217,7 +217,9 @@ public class CRFUtils {
 	}
 
 
-	public static FeatureVector getPairwiseImageFiLinear(SuperPixelDTO superPixel, ImageMask mask, Integer label1, Integer label2, int superPixelIndex, int numberOfLocalFeatures){
+	public static FeatureVector getPairwiseImageFiLinear(SuperPixelDTO superPixel, ImageMask mask, Integer label1, Integer label2, 
+			int superPixelIndex, int numberOfLocalFeatures){
+		
 		if (label1 == null) {
 			label1 = mask.getMask().get(superPixelIndex);
 		} 

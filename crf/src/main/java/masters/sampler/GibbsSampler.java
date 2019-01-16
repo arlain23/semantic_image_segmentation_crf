@@ -125,7 +125,7 @@ public class GibbsSampler {
 			if (randNumber < (i + 1) * blockSize)
 				return i;
 		}
-		System.out.println("sth wrong (get random label)");
+		_log.error("sth wrong (get random label)");
 		return 0;
 	}
 	private static Logger _log = Logger.getLogger(GibbsSampler.class);

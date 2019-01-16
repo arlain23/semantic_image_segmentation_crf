@@ -63,7 +63,6 @@ public class ResultAnalyser {
 								null, superPixel.getLabel(), neighbour.getLabel(), currentImage, parameterContainer);
 
 						double pairwiseValue = (double) pairwiseImageFi.getFeatures().get(1).getValue();
-						System.out.println("P " + pairwiseValue);
 						if (!Helper.equals(pairwiseValue, 0.0)) {
 							if (pairwiseValue < minPairwiseProb) {
 								minPairwiseProb = pairwiseValue;
@@ -83,7 +82,6 @@ public class ResultAnalyser {
 						trainImageList, parameterContainer);
 
 				double localValue = (double) localImageFi.getFeatures().get(0).getValue();
-				System.out.println("L " + localValue);
 
 				if (!Helper.equals(localValue, 0.0)) {
 					if (localValue < minLocalProb) {
@@ -233,7 +231,7 @@ public class ResultAnalyser {
 						featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
 						
 						if (superPixel.getSuperPixelIndex() == 187 &&k ==4) {
-							//System.out.println("# L(O)" + objectLabel  + " L:" + label + " " + currentFeatureOnLabelConditionalProbability + " " + currentLabelProbability) ;	
+							System.out.println("# L(O)" + objectLabel  + " L:" + label + " " + currentFeatureOnLabelConditionalProbability + " " + currentLabelProbability) ;	
 						}
 						
 
