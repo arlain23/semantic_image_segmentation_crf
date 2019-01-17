@@ -1,1 +1,104 @@
 A basis of both inference and parameter training is a proper formulation of an energy function, which reflects a probability of occurrence of a given configuration of variables in a system. In semantic image segmentation, without correctly defined energy function it will not be possible to differentiate objects of different classes. As it has already been presented, energy is composed of two terms: unary potential and pairwise potential. 
+\begin{equation}
+    E(Y=y,X=x) = \sum_{i \in V}{E_1(y_i,x_i)} +  \sum_{i,j \in V}{E_2(y_i,y_j)})
+\end{equation}
+Both of those terms are needed for Conditional Random Fields to be successful. 
+
+\subsection{Unary potential}
+In semantic image segmentation, the unary component of the energy function predicts a label of a given pixel or region, based on some observed features of this part of an image. A feature can be described as a numeric representation of row data that is fetched from an image. The process of extracting and selecting those representations is a challenging task as without properly chosen features that provide all the required information to the model, it would not be possible to perform the assigned task. What is more, it usually accounts for the vast majority of the time that is needed to perform a machine learning task \cite{features_oreilly}. Proper formulation of a feature vector is a crucial step in machine learning as it reflects not only the level of the model complexity but also its performance. However, the relevance of available features is strictly bound to data and to the chosen model and due to to the large diversity in both data and models it is extremely difficult to generalise the process of feature engineering. Depending on the task some models can perform well given a large number of features while others require less, but more informative features. Though there exist some automatic or semiautomatic tools for feature engineering \cite{python_h2o, python_tpot, python_auto-sklearn}, that aim to make feature extraction less problem specific, still the vast majority of machine learning tasks use the traditional approach of manual feature selection \cite{feature_engineering}. 
+Features used for any task within the area of image processing can be either low- or high-level \cite{feature_extraction_book}. Low-level features are such features that can be automatically extracted from an image such as pixel intensity, gradients, colours, edges or textures. They do not give any information about spatial relations between regions of an image. On the other hand, high-level features correlate data obtained from low-level features with a content of an image to provide information about shapes and objects, thus having a semantic meaning. 
+Feature engineering is a time-consuming and demanding task of its own and it is not a part of this dissertation. Therefore, to stay within the scope of the thesis, feature extraction is limited only to features that are based solely on colour-related data. Hence, in the most basic form, the unary potential of the energy function can be expressed as a linear relation between a weight vector $w$ and a feature vector $\varphi$ that is composed of colour values of each individual pixel.
+A colour value can be expressed in a numerical form with the use of a chosen colour space. A colour space is a mathematical model representing a colour value as a tuple of typically three or four numbers. The most popular colour space being based on the physiology of a human eye is RGB model, in which an arbitrary colour value is expressed as a combination of values of three primary colours, which are red, green, and blue. A different colour space, named CIELAB, was created in other to mimic a human perception of colours. The model is constructed on three axes, first being axis L* representing Lightness with values between 0 and 100. Axes a* and b* encode green-red and blue-yellow components respectively. There are many other colour spaces such as CMYK, HSV, HSL or YUV, each of them being more suitable for certain tasks \cite{colour_space}. Nevertheless, the choice of colour space in which colour features will be encoded in the prediction model can influence its performance. For simplicity, in this chapter RGB colour space will be assumed. Hence, a feature vector $\varphi$ for a given pixel is composed of three features, each representing a different component of the chosen colour space as in equation \ref{eq:fi_RGB}.
+\begin{equation}
+    \label{eq:fi_RGB}
+    \varphi(x_i) = \begin{bmatrix}
+        \varphi_R\\ 
+        \varphi_G\\ 
+        \varphi_B
+    \end{bmatrix}
+\end{equation}
+For a given problem of classification, there is a separate weight vector associated with each class as in equation \ref{eq:weight_RGB}.
+\begin{equation}
+    \label{eq:weight_RGB}
+    w(y_i) = \begin{bmatrix}
+        w_R\\ 
+        w_G\\ 
+        w_B
+    \end{bmatrix}
+\end{equation}
+This distinction is required as each object class can be best characterised by different features. For example, given an object with label \textit{grass} a green component of the feature vector should be prioritised, while for label \textit{sky} it should be a blue component. As the task of image segmentation, meaning finding an optimal prediction $y^*$ for each pixel in an image, is equivalent to the problem of energy minimisation, weights which are associated with prioritised features should have relatively small values. Hence, with the same example of two labels \textit{grass} and \textit{sky} proper configuration of weights would be as in equation \ref{eq:weights_labels}.
+\begin{equation}
+    \label{eq:weights_labels}
+    \begin{matrix} 
+        w_{grass} = \begin{bmatrix}
+            1.0\\ 
+            0.0\\ 
+            1.0
+            \end{bmatrix}  
+        & & &
+        w_{sky} = \begin{bmatrix}
+            1.0\\ 
+            1.0\\ 
+            0.0
+            \end{bmatrix} 
+    \end{matrix}
+\end{equation}
+Then, for example for fully blue pixels, with $\varphi = [0.0, 0.0, 1.0]$, the unary component of energy will be equal to 0.0 for label \textit{sky} and 1.0 for label \textit{grass}. Thus, label \textit{sky} will be chosen for such pixels, as the energy for this label is smaller than for other labels. 
+Hence. to obtain the unary component of the energy function for a given pixel $x_i$ with a given label $y_i$ from a set of labels $L$, a corresponding weight vector needs to be multiplied by the feature vector as in equation \ref{eq:e1_weight_vector}. 
+\begin{equation}
+    \label{eq:e1_weight_vector}
+    E_1(y_i,x_i)= 
+    \begin{cases}
+        \left \langle w_{1,0}, \varphi({x_i}) \right \rangle , &  \text{if } y_i = 0\\ 
+        \left \langle w_{1,1}, \varphi({x_i}) \right \rangle , & \text{if } y_i = 1\\
+         ...& ...\\ 
+        \left \langle w_{1,L}, \varphi({x_i}) \right \rangle , & \text{if } y_i = L\\  
+    \end{cases}
+\end{equation}
+
+
+Presented formulation of the unary potential is the most trivial one, however, it can also be applied also for more complex models and the only difference is in a way the feature vector is constructed. The goal of energy function is to provide a measure on how well pixels in an image are labelled and any feature vector that can be expressed in a numerical form is possible to be applied for unary term of the energy. A feature vector does not need to be composed of low-level features that can be extracted from an image. Instead, a higher level of abstraction can be used to make features of a given pixel dependent on other classifiers. One example would be a Decision Tree Field approach in which factors that form unary potential are dependent on Decision Trees \cite{crf_decision_trees}. Another, and a very popular and widely described approach to semantic image segmentation is to model a feature vector for unary potential by utilisation of outputs of a Convolutional Neural Network \cite{inference_crf, crf_cnn1, crf_cnn2}.
+    
+
+
+\subsection{Pairwise potential}
+When it comes to the second component of the energy function - a pairwise potential, it is responsible for smoothness of the predicted labels. It is aimed to handle situations in which there is some noise in an image as it penalises a situation in which two neighbouring pixels have a different label assigned. Thus, a sample pixel that is surrounded by pixels with some label will be more likely to have the same label even if the unary term is more prone to assign a different label to this pixel, because of its noised features. In the simplest form, a weight vector $\varphi$ is a two-dimensional vector with only two possible values $[1,0]$ for pairs with the same label, and $[0,1]$ for pairs with a different label, as presented in equation \ref{eq:fi_pairwise_two_labels}
+\begin{equation}
+    \label{eq:fi_pairwise_two_labels}
+    \begin{matrix}
+        \varphi_{y_i = y_j} = \begin{bmatrix}
+            1 \\
+            0
+        \end{bmatrix} & & &
+        \varphi_{y_i \neq y_j} = \begin{bmatrix}
+            0 \\
+            1
+        \end{bmatrix}
+    \end{matrix}
+\end{equation}
+Then, a weight vector is a two dimensional vector composed of weight $w_{2,0}$ which describes a situation in which neighbouring pixels have the same label, and weight  $w_{2,1}$ for a pair differing in assigned labels. 
+\begin{equation}
+    \label{eq:weight_pairwise}
+    w(y_i, y_j) = \begin{bmatrix}
+        w_{2,0} \\ 
+        w_{2,1}
+    \end{bmatrix}
+\end{equation}
+Similarly to the unary component of the energy function, the pairwise component can be described as a linear relation between weight and feature vectors. This is, in fact,  equivalent to expressing it in terms of two weights which directly reflect pairwise energy value. If two pixels that form neighbouring nodes in a factor graph have the same label assigned, then the energy of the factor between them will be equal to weight $w_{2,0}$, if they have a different label assigned, then it will be $w_{2,1}$ as in equation \ref{eq:energy_pairwise}. Again, as the state of smaller energy is the one that is going to be chosen for a given factor, if the situation of two neighbouring pixels having the same label is to be promoted, then $w_{2,0}$ should have a smaller value than $w_{2,1}$.
+\begin{equation}
+ \label{eq:energy_pairwise}
+    E_2(y_i,y_j)=\begin{Bmatrix}
+     w_1 & , y_i=y_j \\ 
+     w_2 & , y_i \neq y_j
+    \end{Bmatrix}
+\end{equation}
+The pairwise term of energy function provides higher-order information about relations neighbouring pixels, however, the notion of neighbours is different depending on the model used. In general, a neighbour is any pixel that is adjacent to the given pixel, however, neighbourhoods of larger size can also be used. In such a situation factor graphs are highly beneficial as they allow to model relations between even larger groups of pixels in a clear and straightforward way. What is more, pairwise potential can be utilised to take into account even more complex relations between pixels by introducing a measure on how different their classes are from each other. Then, the feature vector, instead of having only two possible values $0$ or $1$, can take any value within the range of $0$ and $1$ which reflects a measure of similarity between pixel classes. Then, the formula for a feature vector used to calculate a pairwise potential can be expressed as in the equation below.
+\begin{equation}
+    \label{eq:fi_pairwise}
+    \varphi(y_i,y_j) = \begin{bmatrix}
+        1 - \left | (y_i - y_j) \right | \\
+        \left | (y_i - y_j) \right |
+    \end{bmatrix}
+\end{equation}
+Assuming that the difference between labels $\left | (y_i - y_j) \right |$ is either 0 if labels are the same or 1 if labels are different, equation \ref{eq:fi_pairwise} is equivalent to equation \ref{eq:fi_pairwise_two_labels}.
+

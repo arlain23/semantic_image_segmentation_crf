@@ -2,6 +2,7 @@
 \usepackage[subpreambles=true]{standalone}
 \usepackage[utf8]{inputenc}
 \usepackage[english, polish]{babel}
+\let\lll\undefined
 \usepackage{import}
 
 \usepackage[T1]{fontenc}
@@ -15,10 +16,14 @@
 \pagestyle{headings}
 \usepackage{mathptmx}
 \usepackage[font=small,labelfont={bf,it},textfont={it},justification=centering,skip=2pt]{caption}
-\usepackage[backend=bibtex,sorting=none]{biblatex}
+\usepackage[backend=bibtex,sorting=none,style=numeric,giveninits=true,doi=false,url=false]{biblatex}
+\usepackage[autostyle]{csquotes}
 \usepackage{nameref}
+\usepackage[parfill]{parskip}
+\usepackage{url}
+
 \addbibresource{bibliography.bib}
-\addbibresource{images.bib}
+\addbibresource{website_bibliography.bib}
 
 \newcommand\blankpage{%
     \null
@@ -36,12 +41,19 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathAlphabet{\pazocal}{OMS}{zplm}{m}{n}
+\DeclareQuoteStyle{polish}%
+  {\textquoteleft}
+  {\textquoteright}
+  [0.05em]
+  {\textquotedblleft}
+  {\textquotedblright}
 
 \renewcommand{\contentsname}{Table of contents}
 
 
 \setlength{\textwidth}{14cm}
 \setlength{\textheight}{20cm}
+\setlength{\parskip}{1em}
 \renewcommand{\baselinestretch}{1.5}
 \graphicspath{ {./images/} }
 
@@ -69,6 +81,7 @@
 
 \chapter{Introduction}
 \import{sections/introduction/}{introduction}
+
 \section{Purpose and scope of the thesis}
 \import{sections/introduction/}{purpose}
 
