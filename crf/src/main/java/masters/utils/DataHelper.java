@@ -51,22 +51,22 @@ public class DataHelper {
 	/* getters */ 
 
 
-	public static List<ImageDTO> getValidationDataSegmented() {
+	public static List<ImageDTO> getValidationDataSegmented(ParametersContainer parameterContainer) {
 		Map<String, File> validationFiles = getFilesFromDirectory(Constants.VALIDATION_PATH);
 		Map<String, File> resultFiles = getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
 
-		return getDataSegmented(validationFiles, resultFiles, State.VALIDATION);
+		return getDataSegmented(validationFiles, resultFiles, State.VALIDATION, parameterContainer);
 	}
 
-	public static List<ImageDTO> getTrainingDataSegmented() {
+	public static List<ImageDTO> getTrainingDataSegmented(ParametersContainer parameterContainer) {
 		Map<String, File> trainingFiles = getFilesFromDirectory(Constants.TRAIN_PATH);
 		Map<String, File> resultFiles = getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
 
-		return getDataSegmented(trainingFiles, resultFiles, State.TRAIN);
+		return getDataSegmented(trainingFiles, resultFiles, State.TRAIN, parameterContainer);
 	}
 
 	private static List<ImageDTO> getDataSegmented(
-			Map<String, File> files, Map<String, File> resultFiles, State state) {
+			Map<String, File> files, Map<String, File> resultFiles, State state, ParametersContainer parameterContainer) {
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
 		for (String key : files.keySet()) {
@@ -77,13 +77,13 @@ public class DataHelper {
 			File trainFile = files.get(key);
 			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
 
-			imageList.add(getSingleImageSegmented(trainFile, segmentedFile, state));
+			imageList.add(getSingleImageSegmented(trainFile, segmentedFile, state, parameterContainer));
 		}
 		return imageList;
 	}
 
 	public static ImageDTO getSingleImageSegmented(
-			File trainFile, File segmentedFile, State state) {
+			File trainFile, File segmentedFile, State state, ParametersContainer parameterContainer) {
 		BufferedImage trainImg = openImage(trainFile.getPath());
 		BufferedImage segmentedImg = null;
 		if (segmentedFile != null) {
@@ -91,7 +91,7 @@ public class DataHelper {
 		}
 
 		
-		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, state);
+		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, state, parameterContainer);
 		return imageObj;
 
 	}
@@ -99,7 +99,7 @@ public class DataHelper {
 
 
 
-	public static List<ImageDTO> getTestData() {
+	public static List<ImageDTO> getTestData(ParametersContainer parameterContainer) {
 		Map<String, File> testFiles = getFilesFromDirectory(Constants.TEST_PATH);
 
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
@@ -112,7 +112,7 @@ public class DataHelper {
 
 			BufferedImage trainImg = openImage(trainFile.getPath());
 
-			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, State.TEST);
+			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, State.TEST, parameterContainer);
 
 			imageList.add(imageObj);
 		}
@@ -562,32 +562,36 @@ public class DataHelper {
 		
 	}
 
-	public static void saveImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String path) throws IOException {
-		File outputfile = new File(path);
-		outputfile.getParentFile().mkdirs();
-		outputfile.createNewFile();
-		BufferedImage img = cloneBufferedImage(image.getImage());
-
-		/* update superpixel index */
-		Graphics graphics = img.getGraphics();
-		graphics.setFont(new Font("Arial", Font.PLAIN, 9));
-
-		/* update borders */
-		for (SuperPixelDTO superPixel : superPixels) {
-			int rgbSuperPixel = superPixel.getIdentifingColorRGB();
-			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
-			for (PixelDTO borderPixel : borderPixels) {
-				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+	public static void saveImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		try {
+			File outputfile = new File(path);
+			outputfile.getParentFile().mkdirs();
+			outputfile.createNewFile();
+			BufferedImage img = cloneBufferedImage(image.getImage());
+	
+			/* update superpixel index */
+			Graphics graphics = img.getGraphics();
+			graphics.setFont(new Font("Arial", Font.PLAIN, 9));
+	
+			/* update borders */
+			for (SuperPixelDTO superPixel : superPixels) {
+				int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+				List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+				}
 			}
+	
+			for (SuperPixelDTO superPixel : superPixels) {
+				GridPoint middle = superPixel.getSamplePixel();
+				Color myColor =  new Color(superPixel.getIdentifingColorRGB());
+				graphics.setColor(myColor);
+				graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
+			}
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-
-		for (SuperPixelDTO superPixel : superPixels) {
-			GridPoint middle = superPixel.getSamplePixel();
-			Color myColor =  new Color(superPixel.getIdentifingColorRGB());
-			graphics.setColor(myColor);
-			graphics.drawString(String.valueOf(superPixel.getSuperPixelIndex()), middle.x, middle.y);
-		}
-		ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
 	}
 	public static void saveImageSegmentedWithMask(ImageDTO image, List<SuperPixelDTO> superPixels, List<Integer> mask, String path) {
 		try {

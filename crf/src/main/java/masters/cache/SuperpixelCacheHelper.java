@@ -1,4 +1,4 @@
-package masters.utils;
+package masters.cache;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,8 +20,9 @@ import masters.Constants;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
 import masters.probabilistic_model.ProbabilityEstimatorHelper;
+import masters.utils.DataHelper;
 
-public class CacheUtils {
+public class SuperpixelCacheHelper {
 	private static String SEPARATOR = ",";
 	private static String NEW_LINE = System.getProperty("line.separator");
 	
@@ -82,5 +83,5 @@ public class CacheUtils {
 		  }
 	}
 	
-	private static Logger _log = Logger.getLogger(CacheUtils.class);
+	private static Logger _log = Logger.getLogger(SuperpixelCacheHelper.class);
 }

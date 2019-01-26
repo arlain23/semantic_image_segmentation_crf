@@ -24,6 +24,7 @@ public class ParametersContainer implements Serializable{
 	private String currentDate;
 	
 	private Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution;
+	private List<Integer> selectedFeatureIds;
 	
 	private static ParametersContainer instance = null;
 	
@@ -40,6 +41,14 @@ public class ParametersContainer implements Serializable{
 		return instance;
 	}
 	
+	public List<Integer> getSelectedFeatureIds() {
+		return selectedFeatureIds;
+	}
+
+	public void setSelectedFeatureIds(List<Integer> selectedFeatureIds) {
+		this.selectedFeatureIds = selectedFeatureIds;
+	}
+
 	public Map<Feature, Map<Integer, ProbabilityEstimator>> getProbabilityEstimationDistribution() {
 		return probabilityEstimationDistribution;
 	}

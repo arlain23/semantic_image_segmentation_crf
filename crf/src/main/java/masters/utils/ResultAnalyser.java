@@ -120,6 +120,9 @@ public class ResultAnalyser {
 	}
 
 	public static double assessLabelisationCorrectness(Map<ImageDTO, List<List<Double>>> imageProbabilityMap) {
+		return 1.0 - assessLabelisationError(imageProbabilityMap);
+	}
+	public static double assessLabelisationError(Map<ImageDTO, List<List<Double>>> imageProbabilityMap) {
 		int totalNumberOfIncorrectLabels = 0;
 		int totalNumberOfSuperPixels = 0;
 
@@ -152,12 +155,11 @@ public class ResultAnalyser {
 			}
 
 			totalNumberOfIncorrectLabels += numberOfIncorrectLabels;
-			System.out.println("NUMBER OF INCORRECT LABELS " + numberOfIncorrectLabels + " / " + superPixels.size());
+//			System.out.println("NUMBER OF INCORRECT LABELS " + numberOfIncorrectLabels + " / " + superPixels.size());
 		}
 
 		double result = totalNumberOfIncorrectLabels * 1.0;
-		result = 1.0 - result / totalNumberOfSuperPixels;
-		return result;
+		return result / totalNumberOfSuperPixels;
 
 	}
 
@@ -210,7 +212,7 @@ public class ResultAnalyser {
 										double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(null, currentImage, label, singleFeature, new ArrayList<>(), currentProbabilityEstimator);
 										currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
 										isProbabilityZero = false;
-									}
+									} 
 								} else {
 									isProbabilityZero = true;
 								}
@@ -218,10 +220,11 @@ public class ResultAnalyser {
 						} else {
 							ProbabilityEstimator currentprobabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
 							if (currentprobabilityEstimator != null) {
-								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(null, currentImage, label, feature, new ArrayList<>(), currentprobabilityEstimator);
-								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-								isProbabilityZero = false;
-							} else {
+								if (feature.getValue() != null) {
+									double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(null, currentImage, label, feature, new ArrayList<>(), currentprobabilityEstimator);
+									currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+									isProbabilityZero = false;
+								}
 							}
 						}
 
@@ -231,7 +234,7 @@ public class ResultAnalyser {
 						featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
 						
 						if (superPixel.getSuperPixelIndex() == 187 &&k ==4) {
-							System.out.println("# L(O)" + objectLabel  + " L:" + label + " " + currentFeatureOnLabelConditionalProbability + " " + currentLabelProbability) ;	
+//							System.out.println("# L(O)" + objectLabel  + " L:" + label + " " + currentFeatureOnLabelConditionalProbability + " " + currentLabelProbability) ;	
 						}
 						
 
@@ -247,8 +250,8 @@ public class ResultAnalyser {
 					} else {
 						finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
 						if (superPixel.getSuperPixelIndex() == 187 &&k ==4) {
-							System.out.println("#" + objectLabel + "  " + finalProbability + "		" + featureOnLabelConditionalProbability + "	" +
-									labelProbability + "		" + featureProbability) ;	
+//							System.out.println("#" + objectLabel + "  " + finalProbability + "		" + featureOnLabelConditionalProbability + "	" +
+//									labelProbability + "		" + featureProbability) ;	
 						}
 						if (featureProbability == 0) {
 							finalProbability = 1.0 / Constants.NUMBER_OF_STATES;
@@ -272,7 +275,7 @@ public class ResultAnalyser {
 		}
 
 		double result = assessLabelisationCorrectness(imageProbabilityMap);
-		_log.info("HIST: " + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS + " " + result);
+//		_log.info("HIST: " + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS + " " + result);
 
 		return imageProbabilityMap;
 	}

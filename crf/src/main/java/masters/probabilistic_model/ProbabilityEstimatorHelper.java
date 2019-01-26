@@ -15,6 +15,8 @@ import org.jdesktop.swingx.calendar.SingleDaySelectionModel;
 
 import masters.Constants;
 import masters.Constants.State;
+import masters.cache.ProbabilityCacheException;
+import masters.cache.ProbabilityEstimationCacheHelper;
 import masters.features.BinaryMask;
 import masters.features.Continous3DFeature;
 import masters.features.ContinousFeature;
@@ -96,7 +98,7 @@ public class ProbabilityEstimatorHelper {
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN);
+			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
 			
 			/*
 			 *  generate label probability

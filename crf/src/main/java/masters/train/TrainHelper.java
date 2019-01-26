@@ -9,14 +9,14 @@ import masters.utils.ParametersContainer;
 
 public class TrainHelper {
 	
-	public static WeightVector train(List<Double> initWeightList, List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer) {
+	public static WeightVector train(List<Double> initWeightList, ParametersContainer parameterContainer) {
 		WeightVector weights;
 		if (initWeightList == null) {
-			GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, parameterContainer);
+			GradientDescentTrainer trainer = new GradientDescentTrainer(parameterContainer);
 			  weights = trainer.train(null);
 		} else {
 			WeightVector pretrainedWeights = new WeightVector(initWeightList);
-			GradientDescentTrainer trainer = new GradientDescentTrainer(imageList, imageToFactorGraphMap, parameterContainer);
+			GradientDescentTrainer trainer = new GradientDescentTrainer(parameterContainer);
 			weights = trainer.train(pretrainedWeights);
 		}
 		return weights;

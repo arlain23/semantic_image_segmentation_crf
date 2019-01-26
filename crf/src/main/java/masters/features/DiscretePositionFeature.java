@@ -9,8 +9,6 @@ public class DiscretePositionFeature implements Feature {
 	private int featureIndex;
 	private int gridIndex;
 
-	
-
 	public DiscretePositionFeature(String value, int featureIndex, int gridIndex) {
 		this.value = value;
 		this.featureIndex = featureIndex;
@@ -41,6 +39,7 @@ public class DiscretePositionFeature implements Feature {
 	public int getGridIndex() {
 		return this.gridIndex;
 	}
+	
 	@Override
 	public String toString() {
 		return "Discrete Feature [" + value +  "(" + featureIndex + ")]";

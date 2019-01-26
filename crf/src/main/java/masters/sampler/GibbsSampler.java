@@ -69,6 +69,7 @@ public class GibbsSampler {
 					if (Double.isNaN(sum)) {
 						System.out.println(labelProbabilities.get(i)  + " - " + labelProbabilities.get(j));
 						_log.error("Label probability is NaN: exp(" + probabilityDifference + ")");
+						throw new RuntimeException();
 					}
 				}
 			}
@@ -94,7 +95,8 @@ public class GibbsSampler {
 
 	public static double getSampleEnergy(FactorGraphModel factorGraph, ImageMask mask, WeightVector weightVector, ParametersContainer parameterContainer) {
 		FeatureVector featureVector = CRFUtils.calculateImageFi(weightVector, factorGraph, mask, parameterContainer);
-		return featureVector.calculateEnergy(weightVector);
+		double energy = featureVector.calculateEnergy(weightVector);
+		return energy;
 	}
 
 	private static List<Integer> joinLists(List<Integer> resultingList, int value, List<Integer> previousList) {

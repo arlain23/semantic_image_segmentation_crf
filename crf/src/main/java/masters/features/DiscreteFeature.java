@@ -32,6 +32,7 @@ public class DiscreteFeature implements Feature {
 	public boolean isOutOfBounds() {
 		return this.value == null;
 	}
+	
 	@Override
 	public String toString() {
 		return "Discrete Feature [" + value +  "(" + featureIndex + ")]";

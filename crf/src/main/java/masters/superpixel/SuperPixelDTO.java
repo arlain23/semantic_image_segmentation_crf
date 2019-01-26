@@ -42,6 +42,10 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
   
   	private FeatureVector localFeatureVector = null;
 	private FeatureVector pairwiseFeatureVector = null;
+	
+	private List<Feature> availableLocalFeatures;
+	private List<Feature> availablePairwiseFeatures;
+	
 	private double[] meanRGB;	
 	private int label;
 	
@@ -81,20 +85,48 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		List<Feature> pairwiseFeatures = new ArrayList<Feature>();
 		
 		if (Constants.USE_NON_LINEAR_MODEL) {
-		  List<Feature> tmpLocalFeatures = new ArrayList<Feature>();
-		  tmpLocalFeatures.addAll(initLocalFeatures(this.meanRGB,meanSuperPixelDistance, superPixels, image));
-		  Feature featureContainer = new FeatureContainer(tmpLocalFeatures, 0);
-		  localFeatures.add(featureContainer);
-
-		  pairwiseFeatures.addAll(initPairwiseFeatures(this.meanRGB));
+			List<Feature> tmpLocalFeatures = new ArrayList<Feature>();
+			tmpLocalFeatures.addAll(initLocalFeatures(this.meanRGB,meanSuperPixelDistance, superPixels, image));
+			Feature featureContainer = new FeatureContainer(tmpLocalFeatures, 0);
+			localFeatures.add(featureContainer);
+			pairwiseFeatures.addAll(initPairwiseFeatures(this.meanRGB));
 			
 		} else {
 			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
 			
 		}
+		this.availableLocalFeatures = localFeatures;
 		this.localFeatureVector = new FeatureVector(localFeatures, true);
+		
+		this.availablePairwiseFeatures = pairwiseFeatures;
 		this.pairwiseFeatureVector = new FeatureVector(pairwiseFeatures, true);
 		
+	}
+	
+	public void updateSelectedFeatures(Set<Integer> selectedLocalFeatureIds) {
+		List<Feature> selectedFeatures = new ArrayList<>();
+		List<Feature> availableFeatures = new ArrayList<>();
+		
+		for (Feature feature : this.availableLocalFeatures) {
+			if (feature instanceof FeatureContainer) {
+				availableFeatures.addAll(((FeatureContainer)feature).getFeatures());
+			} else {
+				availableFeatures.add(feature);
+			}
+		}
+		
+		for (Feature feature : availableFeatures) {
+			if (selectedLocalFeatureIds.contains(feature.getFeatureIndex())) {
+				selectedFeatures.add(feature);
+			}
+		}
+		
+		List<Feature> localFeatures = new ArrayList<>();
+		Feature featureContainer = new FeatureContainer(selectedFeatures, 0);
+		localFeatures.add(featureContainer);
+		
+		this.localFeatureVector =  new FeatureVector(localFeatures, true);
+				
 	}
 	public void initMeanRGB() {
 		try {

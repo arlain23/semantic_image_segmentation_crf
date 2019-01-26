@@ -1,5 +1,6 @@
 package masters.train;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,13 +9,16 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import masters.Constants;
+import masters.Constants.State;
 import masters.factorisation.FactorGraphModel;
 import masters.image.ImageDTO;
 import masters.image.ImageMask;
+import masters.inference.InferenceHelper;
 import masters.sampler.GibbsSampler;
 import masters.utils.CRFUtils;
 import masters.utils.DataHelper;
 import masters.utils.Helper;
+import masters.utils.InputHelper;
 import masters.utils.ParametersContainer;
 
 public class GradientDescentTrainer {
@@ -26,21 +30,19 @@ public class GradientDescentTrainer {
 	private int NUMBER_OF_LOCAL_FEATURES;
 	private int NUMBER_OF_PAIRWISE_FEATURES;
 	
-	private List<ImageDTO> imageList;
-	private Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap;
-	
 	private ParametersContainer parameterContainer;
 	
-	public GradientDescentTrainer(List<ImageDTO> imageList, Map<ImageDTO, FactorGraphModel> imageToFactorGraphMap, ParametersContainer parameterContainer) {
+	public GradientDescentTrainer(ParametersContainer parameterContainer) {
 		
 		this.NUMBER_OF_LOCAL_FEATURES = parameterContainer.getNumberOfLocalFeatures();
 		this.NUMBER_OF_PAIRWISE_FEATURES = parameterContainer.getNumberOfPairwiseFeatures();
-		this.imageList = imageList;
-		this.imageToFactorGraphMap = imageToFactorGraphMap;
 		this.parameterContainer = parameterContainer;
+		
 	}
 	
 	public WeightVector train(WeightVector weightVector) {
+		Map<String, File> trainingFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_PATH);
+		Map<String, File> resultFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
 		
 		//random initial weights
 		if (weightVector == null) {
@@ -48,23 +50,27 @@ public class GradientDescentTrainer {
 		}
 		
 		int numberOfWeights = weightVector.getWeightSize();
-		Map<ImageDTO, ImageMask> imageToMaskMap = new HashMap<ImageDTO, ImageMask>();
 		System.out.println(weightVector);
 		for (int epoch = 0; epoch < NUMBER_OF_ITERATIONS; epoch++) {
+			System.out.println("---------------------------");
+			System.out.println("I " + epoch);
+			
 			// for each training image
-			int size = imageList.size();
+			int size = trainingFiles.keySet().size();
 			int iterator = 0;
-			for (ImageDTO trainingImage : imageList) {
+			
+			for (String fileName : trainingFiles.keySet()) {
+				
+				File trainFile = trainingFiles.get(fileName);
+				File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
+				
+				ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
+				FactorGraphModel factorGraph = new FactorGraphModel(trainingImage, weightVector, parameterContainer);
 				iterator++;
 				// get samples
-				FactorGraphModel factorGraph = imageToFactorGraphMap.get(trainingImage);
 				ImageMask currentMask = null;
-				if (imageToMaskMap.containsKey(trainingImage)) {
-					currentMask = imageToMaskMap.get(trainingImage);
-				}
 				currentMask = GibbsSampler.getSample(factorGraph, weightVector, currentMask, parameterContainer);
 				
-				imageToMaskMap.put(trainingImage, currentMask);
 				// calculate gradient
 				List<Double> gradients = Helper.initFixedSizedListDouble(numberOfWeights);
 				
@@ -90,23 +96,26 @@ public class GradientDescentTrainer {
 					newWeights.add(newWeight);
 				}
 				WeightVector newWeightVetor = new WeightVector(newWeights);
-				/*if (epoch % 100 == 0) {
-					double gradientLength = getVectorLength(gradients);
-					System.out.println("Gradient length: " + gradientLength);
-				}*/
+				
+				double gradientLength = getVectorLength(gradients);
+				System.out.println("Gradient length: " + gradientLength);
+				
 				weightVector = newWeightVetor;
 				DataHelper.saveWeights(weightVector, parameterContainer.getCurrentDate(), true);
 				
 			}
-			if (epoch % 100 == 0) {
-				System.out.println(weightVector);
-				System.out.println();
-				//Helper.playSound("cow-moo1.wav");
-			}
-			if (epoch % 101 == 0) {
-				System.out.println(weightVector);
-			}
-			System.out.println("I " + epoch);
+			//check if accuracy is better
+			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
+			List<ImageDTO> trainImageList = new ArrayList<>();
+			Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = InputHelper.prepareTestData(parameterContainer, weightVector, testImageList, trainImageList);
+			
+			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
+			InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, baseImagePath, "training_26_01_" + epoch, parameterContainer, weightVector);
+			
+			
+			System.out.println(weightVector);
+			System.out.println();
+			
 			//save weights 
 			DataHelper.saveWeights(weightVector, parameterContainer.getCurrentDate(), false);
 		}  

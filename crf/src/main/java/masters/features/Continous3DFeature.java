@@ -6,8 +6,10 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 public class Continous3DFeature implements Feature {
-  private static final long serialVersionUID = 8860208681108964405L;
+	
+	private static final long serialVersionUID = 8860208681108964405L;
   
+	
 	private List<Feature> features;
 	private Double[] values;
 	private int featureIndex;
@@ -63,7 +65,6 @@ public class Continous3DFeature implements Feature {
 	public String toString() {
 		return "3D Continous feature [" + featureIndex + "->"  + value + "]";
 	}
-
 	
 	@Override
 	public int hashCode() {

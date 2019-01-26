@@ -19,10 +19,10 @@ import javax.management.RuntimeErrorException;
 import org.apache.log4j.Logger;
 
 import masters.Constants;
+import masters.cache.SuperpixelCacheHelper;
 import masters.colors.ColorSpaceException;
 import masters.image.ImageDTO;
 import masters.image.PixelDTO;
-import masters.utils.CacheUtils;
 import masters.utils.DataHelper;
 
 public class SuperPixelHelper {
@@ -64,7 +64,7 @@ public class SuperPixelHelper {
 	}
 	
 	public static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) {
-		List<List<Integer>> superPixelDivision = CacheUtils.getSuperPixelDivision(imageDTO, prefix);
+		List<List<Integer>> superPixelDivision = SuperpixelCacheHelper.getSuperPixelDivision(imageDTO, prefix);
 		return getSuperPixels(imageDTO, superPixelDivision);
 		
 	}
@@ -89,7 +89,7 @@ public class SuperPixelHelper {
 			
 			List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision);
 			DataHelper.viewImageSegmentedSuperPixels(imageDTO, superPixels, "foo");
-			CacheUtils.saveSuperPixelDivision(imageDTO, prefix);
+			SuperpixelCacheHelper.saveSuperPixelDivision(imageDTO, prefix);
 			
 			if (savePath) {
 				String name = DataHelper.getFileNameFromImageDTO(imageDTO);

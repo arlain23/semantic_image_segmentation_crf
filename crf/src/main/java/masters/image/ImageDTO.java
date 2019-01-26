@@ -34,6 +34,7 @@ import masters.grid.GridHelper;
 import masters.superpixel.SuperPixelDTO;
 import masters.superpixel.SuperPixelHelper;
 import masters.utils.DataHelper;
+import masters.utils.ParametersContainer;
 
 public class ImageDTO implements Cloneable, Serializable {
   private static final long serialVersionUID = 4107635746274497378L;
@@ -54,7 +55,7 @@ public class ImageDTO implements Cloneable, Serializable {
 	private Map<Feature, Double> betaMap;
 	
 	
-	public ImageDTO(String path, int width, int height, PixelDTO[][] pixelData, BufferedImage img, BufferedImage segmentedImage, State state) {
+	public ImageDTO(String path, int width, int height, PixelDTO[][] pixelData, BufferedImage img, BufferedImage segmentedImage, State state, ParametersContainer parameterContainer) {
 		super();
 		this.path = path;
 		this.width = width;
@@ -68,8 +69,11 @@ public class ImageDTO implements Cloneable, Serializable {
 		}
 		prepareSuperPixels(state);
 		prepareFeatureMasks();
+		if (parameterContainer.getSelectedFeatureIds() != null) {
+			updateSelectedFeatures(parameterContainer.getSelectedFeatureIds());
+		}
 	}
-	public ImageDTO(String path, int width, int height, BufferedImage img, BufferedImage segmentedImage, State state) {
+	public ImageDTO(String path, int width, int height, BufferedImage img, BufferedImage segmentedImage, State state, ParametersContainer parameterContainer) {
 		super();
 		this.path = path;
 		this.width = width;
@@ -82,6 +86,9 @@ public class ImageDTO implements Cloneable, Serializable {
 		}
 		prepareSuperPixels(state);
 		prepareFeatureMasks();
+		if (parameterContainer.getSelectedFeatureIds() != null) {
+			updateSelectedFeatures(parameterContainer.getSelectedFeatureIds());
+		}
 	}
 	
 	private void prepareSuperPixels(State state) {
@@ -336,6 +343,15 @@ public class ImageDTO implements Cloneable, Serializable {
 			}
 		}
 	}
+	public void updateSelectedFeatures(List<Integer> selectedFeatureIds) {
+		Set<Integer> selectedFeatureIdsSet = new HashSet<>(selectedFeatureIds);
+		
+		for (SuperPixelDTO sp : this.superPixels) {
+			sp.updateSelectedFeatures(selectedFeatureIdsSet);
+		}
+	}
+	
+	
 	public Map<Feature, BinaryMask> getFeatureMap() {
 		return discreteFeatureMap;
 	}

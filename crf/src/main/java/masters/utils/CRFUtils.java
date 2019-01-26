@@ -50,7 +50,7 @@ public class CRFUtils {
 				imageFi.add(pairWiseModel);
 			}
 		}
-	return imageFi;
+		return imageFi;
 	}
 
 
@@ -62,9 +62,9 @@ public class CRFUtils {
 			List<ImageDTO> trainImageList, ParametersContainer parameterContainer,
 			List<Feature> localFeatures) {
 		
+		
 		Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution = 
 				parameterContainer.getProbabilityEstimationDistribution();
-		
 		
 		FeatureVector imageFi;
 		int featureIndex = 0;
@@ -96,44 +96,51 @@ public class CRFUtils {
 					// p(f1|l)* p(f2|l) * .... * p(fn|l)
 					boolean isProbabilityZero = true;
 					double currentFeatureOnLabelConditionalProbability = 1.0;
-					
 					if (feature instanceof FeatureContainer) {
 						FeatureContainer featureContainer = (FeatureContainer) feature;
 						for (Feature singleFeature : featureContainer.getFeatures()) {
-							ProbabilityEstimator currentProbabilityEstimator = null;
-							if (probabilityEstimationDistribution.containsKey(singleFeature)) {
-								currentProbabilityEstimator = probabilityEstimationDistribution.get(singleFeature).get(label);
-								isProbabilityZero = currentProbabilityEstimator.getAllZerosOnInput();
-								
-								if (!isProbabilityZero) {
-									double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
-									currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-								} 
-							} else {
-								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
-								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+							if (singleFeature.getValue() != null) {
+								ProbabilityEstimator currentProbabilityEstimator = null;
+								boolean hasAllZeros = false;
+								if (probabilityEstimationDistribution.containsKey(singleFeature)) {
+									currentProbabilityEstimator = probabilityEstimationDistribution.get(singleFeature).get(label);
+									hasAllZeros = currentProbabilityEstimator.getAllZerosOnInput();
+								}
+								if (!hasAllZeros) {
+									if (singleFeature.getValue() != null) {
+										double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
+										isProbabilityZero = false;
+										if (probabilityFeatureLabel == 0) {
+											probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
+										}
+										currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+									} 
+								} else {
+									isProbabilityZero = true;
+								}
 							}
-							
 						}
 					} else {
-						ProbabilityEstimator currentProbabilityEstimator = null;
-						if (probabilityEstimationDistribution.containsKey(feature)) {
-							currentProbabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
-							double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
-							currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-							isProbabilityZero = false;
-							
-						} else {
-							double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
-							currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+						if (feature.getValue() != null) {
+							ProbabilityEstimator currentProbabilityEstimator = null;
+							if (probabilityEstimationDistribution.containsKey(feature)) {
+								currentProbabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
+								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
+								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+								isProbabilityZero = false;
+								
+							} else {
+								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
+								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+							}
 						}
 					}
 					
+					
 					// log p(l)
-					double currentLabelProbability = parameterContainer.getLabelProbability(objectLabel);
-						
+					double currentLabelProbability = parameterContainer.getLabelProbability(label);
+
 					featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
-						
 					
 					if (label == objectLabel) {
 						featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
@@ -142,20 +149,17 @@ public class CRFUtils {
 					}
 				}
 				
+				
 				double finalProbability;
 				if (isCurrentProbabilityZero) {
-					finalProbability = 0.0;
-					_log.error("Final probability is 0");
-					throw new RuntimeException();
+					finalProbability = 0;
 				} else {
 					finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
-					if (featureOnLabelConditionalProbability == 0) {
+					if (featureProbability == 0) {
 						finalProbability = 1.0 / Constants.NUMBER_OF_STATES;
 					}
-					
 					finalProbability = -Math.log(finalProbability);
 				}
-				
 				imageFi.setFeatureValue(featureIndex++, finalProbability);
 
 				
@@ -252,10 +256,11 @@ public class CRFUtils {
 	public static double getFeatureOnLabelProbability(ImageMask mask, ImageDTO trainImage, int objectLabel, Feature feature, 
 			List<ImageDTO> trainImageList, ProbabilityEstimator currentProbabilityEstimator) {
 		if (feature instanceof DiscreteFeature || feature instanceof DiscretePositionFeature) {
-			return getDiscreteFeatureOnLabelProbability(mask, trainImage, objectLabel, feature, trainImageList, currentProbabilityEstimator);
+			return  getDiscreteFeatureOnLabelProbability(mask, trainImage, objectLabel, feature, trainImageList, currentProbabilityEstimator);
 		} else if (feature instanceof ContinousFeature || feature instanceof Continous3DFeature) {
 			return getContinuousFeatureOnLabelProbability(mask, trainImage, objectLabel, feature, trainImageList, currentProbabilityEstimator);
 		}
+
 		throw new RuntimeException("Undefined feature type -> " + feature);
 	}
 
@@ -316,7 +321,6 @@ public class CRFUtils {
   
 	private static double getContinuousFeatureOnLabelProbability(ImageMask mask, ImageDTO trainImage, int objectLabel,
 			Feature feature, List<ImageDTO> trainImageList, ProbabilityEstimator currentProbabilityEstimator) {
-		
 		if (trainImageList == null) {
 			return getFeatureOnLabelKernelProbabilityTraining(mask, trainImage, objectLabel, feature, currentProbabilityEstimator);
 		} else {

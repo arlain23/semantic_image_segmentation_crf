@@ -5,9 +5,10 @@ import org.apache.log4j.Logger;
 import masters.Constants;
 
 public class ContinousFeature implements Feature {
-  private static final long serialVersionUID = 8860208681108964405L;
-  
-  private Double value;
+	
+	private static final long serialVersionUID = 8860208681108964405L;
+	
+	private Double value;
 	private int featureIndex;
 	
 	public ContinousFeature(Double value, int featureIndex) {
@@ -34,7 +35,7 @@ public class ContinousFeature implements Feature {
 	}
 	@Override
 	public String toString() {
-		return "Feature [" + featureIndex + "->"  + value + "]";
+		return "Continuous feature [" + featureIndex + "->"  + value + "]";
 	}
 
 	@Override

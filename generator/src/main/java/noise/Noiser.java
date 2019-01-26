@@ -21,6 +21,7 @@ import masters.image.PixelDTO;
 import masters.superpixel.SuperPixelDTO;
 import masters.superpixel.SuperPixelHelper;
 import masters.utils.DataHelper;
+import masters.utils.ParametersContainer;
 
 public class Noiser {
 	
@@ -45,6 +46,7 @@ public class Noiser {
 	}
 	private static void addNoiseToData(String baseImagePath, State phase, Map<String, File> trainingFiles, Map<String, File> resultFiles, int noiseNumberLimit) {
 		baseImagePath = "src/main/resources/" + baseImagePath + "/" + phase.toString().toLowerCase() + "/";
+		ParametersContainer parameterContainer = ParametersContainer.getInstance();
 		Random rand = new Random();
 		int limit = 40;
 		if (phase.equals("test")) {
@@ -55,7 +57,7 @@ public class Noiser {
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO image = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, phase);
+			ImageDTO image = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, phase, parameterContainer);
     		int r = rand.nextInt(100);
 			String imageName = DataHelper.getFileNameFromImageDTO(image);
 			try {

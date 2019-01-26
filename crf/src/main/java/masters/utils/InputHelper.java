@@ -13,8 +13,7 @@ import masters.train.WeightVector;
 
 public class InputHelper {
 	public static Map<ImageDTO, FactorGraphModel> prepareTestData(ParametersContainer parameterContainer,WeightVector weights,
-			List<ImageDTO> testImageList, List<ImageDTO> trainImageList)
-			throws IOException, ColorSpaceException {
+			List<ImageDTO> testImageList, List<ImageDTO> trainImageList) {
 		
 		Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = new HashMap<>();
 

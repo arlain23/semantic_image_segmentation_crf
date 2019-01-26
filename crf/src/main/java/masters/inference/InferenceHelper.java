@@ -16,7 +16,7 @@ import masters.utils.ParametersContainer;
 
 public class InferenceHelper {
 	public static void runInference(List<ImageDTO>  testImageList,  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap
-			, String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) throws IOException {
+			, String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) {
 		
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {

@@ -20,8 +20,8 @@ public class Constants {
 	public static boolean USE_NON_LINEAR_MODEL = true;
 	public static boolean USE_GRID_MODEL = true;
 	public static boolean ADD_NEIGBOUR_FEATURES = true;
-	public static boolean ADD_COLOUR_LOCAL_FEATURE = true;
-	public static boolean ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION = true;
+	public static boolean ADD_COLOUR_LOCAL_FEATURE = false;
+	public static boolean ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION = false;
 	
 	public static enum ColorSpace {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
@@ -86,7 +86,7 @@ public class Constants {
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large_noise;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_version2;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01_noise_19;
 	
 	
 	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_03_01;
@@ -107,8 +107,8 @@ public class Constants {
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 100;
-	public static double REGULARIZATION_FACTOR = 1000;
-	public static double TRAINING_STEP = 0.10000;
+	public static double REGULARIZATION_FACTOR = 100000;
+	public static double TRAINING_STEP = 0.000000001;
 	
 	//factorisation
 	public static int NUMBER_OF_STATES = 4;

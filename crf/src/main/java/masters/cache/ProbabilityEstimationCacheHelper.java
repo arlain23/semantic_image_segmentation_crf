@@ -1,4 +1,4 @@
-package masters.probabilistic_model;
+package masters.cache;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,6 +20,10 @@ import org.apache.log4j.Logger;
 
 import masters.Constants;
 import masters.features.Feature;
+import masters.probabilistic_model.DiscreteFeatureModel;
+import masters.probabilistic_model.DiscreteFeaturePositionModel;
+import masters.probabilistic_model.Histogram3DModel;
+import masters.probabilistic_model.HistogramModel;
 
 public class ProbabilityEstimationCacheHelper {
 	
@@ -258,17 +262,7 @@ public class ProbabilityEstimationCacheHelper {
 	}
 
 	public static void saveStringToFile(String path, String stringToSave) {
-		File file = new File(path);
-		file.getParentFile().mkdirs();
-		
-		BufferedWriter bw;
-		try {
-			bw = new BufferedWriter(new FileWriter(path));
-			bw.write(stringToSave);
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		CacheUtils.saveStringToFile(path, stringToSave);
 	}
 	
 	private static String getPDMCachePath(Feature singleFeature, int label) {

@@ -16,6 +16,8 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
+import com.nativelibs4java.opencl.util.ParallelMath;
+
 import masters.Constants.ImageFolder;
 import masters.Constants.State;
 import masters.colors.ColorSpaceException;
@@ -27,6 +29,7 @@ import masters.features.DiscreteFeature;
 import masters.features.DiscretePositionFeature;
 import masters.features.Feature;
 import masters.features.FeatureContainer;
+import masters.features.FeatureSelector;
 import masters.features.ValueDoubleMask;
 import masters.features.ValueStringMask;
 import masters.grid.GridHelper;
@@ -41,6 +44,8 @@ import masters.probabilistic_model.HistogramModel;
 import masters.probabilistic_model.ProbabilityEstimator;
 import masters.probabilistic_model.ProbabilityEstimatorHelper;
 import masters.superpixel.SuperPixelDTO;
+import masters.train.GradientDescentTrainer;
+import masters.train.TrainHelper;
 import masters.train.WeightVector;
 import masters.utils.CRFUtils;
 import masters.utils.DataHelper;
@@ -59,6 +64,7 @@ public class App {
 	public static boolean GENERATE_TEST_SAMPLES = false;
 	public static boolean ONLY_INFERENCE = true;
 	public static boolean MAKE_VISUAL_ANALYSIS = true;
+	public static boolean RUN_INFERENCE = true;
 	public static boolean PREPARE_INPUT = false;
 	
 	private static Logger _log = Logger.getLogger(App.class);
@@ -70,7 +76,7 @@ public class App {
 		if (MAKE_VISUAL_ANALYSIS) {
 			// constants
 			Constants.ADD_COLOUR_LOCAL_FEATURE = true;
-			Constants.ADD_NEIGBOUR_FEATURES = false;
+			Constants.ADD_NEIGBOUR_FEATURES = true;
 			Constants.ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION = true;
 			Constants.USE_HISTOGRAMS_3D = false;
 			Constants.NUMBER_OF_HISTOGRAM_DIVISIONS = 17; // without colour 21, with colour 17
@@ -79,7 +85,7 @@ public class App {
 //			List<Double> meanDistance = Arrays.asList(new Double[] {1.5, 2.0, 2.5, 3.0});
 			Constants.MEAN_SUPERPIXEL_DISTANCE_MULTIPLIER = 1.0;
 			Constants.IMAGE_FOLDER = ImageFolder.generated_03_01_noise_19;
-
+			
 			
 			Constants.TRAIN_PATH = Constants.IMAGE_FOLDER + File.separator + "train" + File.separator ;
 			Constants.TRAIN_RESULT_PATH = Constants.IMAGE_FOLDER + File.separator + "result" + File.separator ;
@@ -89,9 +95,9 @@ public class App {
 			String basePath = "C:\\Users\\anean\\Desktop\\CRF_TEMP\\";
 			FileUtils.cleanDirectory(new File(basePath)); 
 			
-			List<ImageDTO> validationImageList = DataHelper.getValidationDataSegmented();
-			
 			ParametersContainer parameterContainer = ParametersContainer.getInstance();
+			List<ImageDTO> validationImageList = DataHelper.getValidationDataSegmented(parameterContainer);
+			
 			// prepare probability estimation data
 			ImageDTO sampleImage = validationImageList.get(0);
 			List<SuperPixelDTO> superPixels = sampleImage.getSuperPixels();
@@ -106,6 +112,17 @@ public class App {
 				probabilityEstimationDistribution = null;
 			}
 			parameterContainer.setProbabilityEstimationDistribution(probabilityEstimationDistribution);
+			
+			_log.info("TESTING: feature selection");
+			// choose appropriate features 
+			FeatureSelector featureSelector = new FeatureSelector(5, 3, testFeature, parameterContainer, validationImageList);
+			List<Integer> selectedFeatureIds = featureSelector.selectFeatureIds();
+			parameterContainer.setSelectedFeatureIds(selectedFeatureIds);
+			for (ImageDTO validationImage : validationImageList) {
+				validationImage.updateSelectedFeatures(selectedFeatureIds);
+			}
+
+			
 			Map<ImageDTO, List<List<Double>>> probabilityDistribution  = ResultAnalyser.analyseProbabilityDistribution(parameterContainer, validationImageList, null);
 			System.out.println("distribution generated");
 			int i = 0;
@@ -128,7 +145,8 @@ public class App {
 			
 			List<Double> probabilitiesFor0 = null;
 			List<Double> probabilitiesFor3 = null;
-			while (true) {
+			boolean stop = true;
+			while (!stop) {
 				// get superpixel index
 				System.out.println("Pick superpixel index: ");
 				int superPixelIndex = in.nextInt();
@@ -179,15 +197,42 @@ public class App {
 					if (Constants.USE_HISTOGRAMS_3D) {
 						//DataHelper.save3DFeatureProbabilities(featureOnLabelsProbabilities, basePath + "val_" + (i++) + ".png");
 					} else {
-						DataHelper.save1DFeatureProbabilities(featureOnLabelsProbabilities, colourProbabilities, basePath + "probs_label_" + label + ".png");
+						//DataHelper.save1DFeatureProbabilities(featureOnLabelsProbabilities, colourProbabilities, basePath + "probs_label_" + label + ".png");
 						//DataHelper.save1DFeatureProbabilities(featureOnLabelsProbabilities, colourProbabilities, basePath + "probs2_label_" + label + ".png");
 					}
 					
 				}
-				
+				if (RUN_INFERENCE) stop = true;
 			}
+			
+			_log.info("Starting training");
+			
+//			// testing 
+			List<Double> initWeightList = Arrays.asList(new Double[] {
+					0.13228307175100648, 0.06763942418439105, 0.13114885297515072
+			});
+//			WeightVector weights = new WeightVector(initWeightList);
+			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
+			List<ImageDTO> trainImageList = new ArrayList<>();
+			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
+			
+			
+			if (!Constants.USE_NON_LINEAR_MODEL) {
+				trainImageList = DataHelper.getTrainingDataSegmented(parameterContainer);
+				parameterContainer.setNumberOfLocalFeatures(3);
+			}
+
+			
+			Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = InputHelper.prepareTestData(parameterContainer, weights, testImageList, trainImageList);
+			
+			
+			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
+			InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, baseImagePath, "test_26_01", parameterContainer, weights);
+			
+			
 		}
 		if (PREPARE_INPUT) {
+			
 			List<Integer> il= Arrays.asList(new Integer []{0, 1, 7, 19});
 	//		for (int i = 1; i < 20; i+=3) {
 			for (int i : il) {
@@ -243,11 +288,11 @@ public class App {
 										" ADD COLOUR FEATURE: " + Constants.ADD_COLOUR_LOCAL_FEATURE);
 											
 								// prepare data
+								ParametersContainer parameterContainer = ParametersContainer.getInstance();
 					//			List<ImageDTO> trainingImageList = DataHelper.getTrainingDataSegmented();
-								List<ImageDTO> validationImageList = DataHelper.getValidationDataSegmented();
+								List<ImageDTO> validationImageList = DataHelper.getValidationDataSegmented(parameterContainer);
 					//			List<ImageDTO> testImageList = DataHelper.getTestData();
 					
-								ParametersContainer parameterContainer = ParametersContainer.getInstance();
 								// prepare probability estimation data
 								ImageDTO sampleImage = validationImageList.get(0);
 								List<SuperPixelDTO> superPixels = sampleImage.getSuperPixels();
@@ -275,28 +320,6 @@ public class App {
 			}
 			return;
 		}
-		
-		
-		// testing 
-		List<Double> initWeightList = Arrays.asList(new Double[] {
-				0.0,1.0,1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.25, 0.0 
-		});
-		WeightVector weights = new WeightVector(initWeightList);
-		
-		List<ImageDTO> trainImageList = DataHelper.getTrainingDataSegmented();
-		List<ImageDTO> testImageList = DataHelper.getTestData();
-		ParametersContainer parameterContainer = ParametersContainer.getInstance();
-		if (!Constants.USE_NON_LINEAR_MODEL) {
-			parameterContainer.setNumberOfLocalFeatures(3);
-		}
-
-		
-		Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = InputHelper.prepareTestData(parameterContainer, weights, testImageList, trainImageList);
-		
-		
-		String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-		InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, baseImagePath, "init_test_14_01", parameterContainer, weights);
-		
 	}
 	
 	
@@ -305,7 +328,7 @@ public class App {
 		Map<String, File> resultFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
 		
 		String baseProbabilityImagePath = "C:\\Users\\anean\\Desktop\\CRF\\segmentation\\";
-		
+		ParametersContainer parameterContainer = ParametersContainer.getInstance();
 		
 		List<String> fileNames = Arrays.asList(new String [] {"138","199","872"});
 		List<Integer> pixels = Arrays.asList(new Integer [] {398,160,192});
@@ -315,7 +338,7 @@ public class App {
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN);
+			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
 			
 			DataHelper.saveImageSuperpixelBordersOnly(trainingImage, trainingImage.getSuperPixels(), baseProbabilityImagePath + fileName + ".png" );
 			DataHelper.saveImageSegmentedSuperPixels(trainingImage, trainingImage.getSuperPixels(), baseProbabilityImagePath + fileName + "_S.png" );
@@ -355,7 +378,7 @@ public class App {
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN);
+			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
 			
 			for (Feature singleFeature : features) {
 				 if (singleFeature instanceof DiscretePositionFeature) {

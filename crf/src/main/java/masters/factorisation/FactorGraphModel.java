@@ -86,7 +86,7 @@ public class FactorGraphModel implements Serializable {
 						if (factor.equals(f)) {
 							outputNode.addAdjacentFactors(f);
 							factor = f;
-							break;
+//							break;
 						}
 					}
 				}
@@ -110,6 +110,7 @@ public class FactorGraphModel implements Serializable {
 			FactorEdgeKey factorToFeatureNodeKey = new FactorEdgeKey(factor, featureNode);
 			Edge factorToFeatureNodeEdge = new Edge(factor, featureNode);
 			factorVariableToEdgeMap.put(factorToFeatureNodeKey, factorToFeatureNodeEdge);
+			
 		}
 	}
 	
@@ -124,7 +125,6 @@ public class FactorGraphModel implements Serializable {
 		}
 		
 		
-		
 		//for every factor
 		for (Factor factor : createdFactors) {
 			//for every label
@@ -132,7 +132,6 @@ public class FactorGraphModel implements Serializable {
 				OutputNode leftNode = factorisedSuperPixels.get(factor.getLeftSuperPixelIndex());
 				Node rightNode;
 				boolean isOutputNode = (factor.getRightSuperPixelIndex() >= 0);
-				
 				// pairwise model
 				if (isOutputNode) {
 					rightNode = factorisedSuperPixels.get(factor.getRightSuperPixelIndex());

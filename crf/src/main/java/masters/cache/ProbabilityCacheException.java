@@ -1,4 +1,4 @@
-package masters.probabilistic_model;
+package masters.cache;
 
 public class ProbabilityCacheException extends Exception {
 
