@@ -107,8 +107,8 @@ public class Constants {
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 100;
-	public static double REGULARIZATION_FACTOR = 100000;
-	public static double TRAINING_STEP = 0.000000001;
+	public static double REGULARIZATION_FACTOR = 100;
+	public static double TRAINING_STEP = 0.0000001;
 	
 	//factorisation
 	public static int NUMBER_OF_STATES = 4;

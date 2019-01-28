@@ -15,20 +15,16 @@ import masters.utils.DataHelper;
 import masters.utils.ParametersContainer;
 
 public class InferenceHelper {
-	public static void runInference(List<ImageDTO>  testImageList,  Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap
-			, String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) {
+	public static void runInference(List<ImageDTO>  testImageList, List<ImageDTO>  trainImageList,
+			String baseImagePath, String typeFolderName, ParametersContainer parameterContainer, WeightVector weights) {
 		
 		int imageCounter = 0;
 		for (ImageDTO currentImage : testImageList) {
 			  
-			  if (!testimageToFactorGraphMap.containsKey(currentImage)){
-				  _log.error("IMAGE " + currentImage.getPath() + " not mapped");
-				  return;
-			  }
 			  System.out.println("inference image " + imageCounter);
 			  imageCounter++;
-			  FactorGraphModel factorGraph = testimageToFactorGraphMap.get(currentImage);
-			  factorGraph.setWeightVector(weights);
+			  
+			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, trainImageList, weights, parameterContainer);
 			  
 			  DataHelper.saveImageWithSuperPixelsIndex(currentImage, currentImage.getSuperPixels(), baseImagePath + "images\\"+imageCounter + ".png");
 			  List<SuperPixelDTO> superPixels = currentImage.getSuperPixels();

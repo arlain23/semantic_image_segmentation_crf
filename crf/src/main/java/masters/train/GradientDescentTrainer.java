@@ -107,10 +107,9 @@ public class GradientDescentTrainer {
 			//check if accuracy is better
 			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
 			List<ImageDTO> trainImageList = new ArrayList<>();
-			Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = InputHelper.prepareTestData(parameterContainer, weightVector, testImageList, trainImageList);
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-			InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, baseImagePath, "training_26_01_" + epoch, parameterContainer, weightVector);
+			InferenceHelper.runInference(testImageList, trainImageList, baseImagePath, "training_27_01_" + (epoch + 1), parameterContainer, weightVector);
 			
 			
 			System.out.println(weightVector);

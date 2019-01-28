@@ -62,6 +62,11 @@ public class CRFUtils {
 			List<ImageDTO> trainImageList, ParametersContainer parameterContainer,
 			List<Feature> localFeatures) {
 		
+		boolean print = false;
+		if (superPixelIndex == 509 && trainImage.getPath().contains("1.png")) {
+			print = true;
+			System.out.println("PIXEL 509");
+		}
 		
 		Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution = 
 				parameterContainer.getProbabilityEstimationDistribution();
@@ -73,7 +78,6 @@ public class CRFUtils {
 		}
 		if (Constants.USE_NON_LINEAR_MODEL) {
 			imageFi = new FeatureVector(parameterContainer.getNumberOfLocalFeatures() + (parameterContainer.getNumberOfPairwiseFeatures() + 1));
-			
 			for (Feature feature : localFeatures) {
 				/*
 				 * 		p(l|f) = p(f|l)*p(l) / p(f)
@@ -83,7 +87,8 @@ public class CRFUtils {
 				 */
 				
 				//  p(f1|l)* p(f2|l) * .... * p(fn|l)
-				double featureOnLabelConditionalProbability = 1;
+				double featureOnLabelConditionalProbability = 0;
+				double logOfFeatureOnLabelConditionalProbability = 0;
 				
 				// log p(l)
 				double labelProbability = 0;
@@ -96,6 +101,7 @@ public class CRFUtils {
 					// p(f1|l)* p(f2|l) * .... * p(fn|l)
 					boolean isProbabilityZero = true;
 					double currentFeatureOnLabelConditionalProbability = 1.0;
+					double currrentLogOfFeatureOnLabelConditionalProbability = 1.0;
 					if (feature instanceof FeatureContainer) {
 						FeatureContainer featureContainer = (FeatureContainer) feature;
 						for (Feature singleFeature : featureContainer.getFeatures()) {
@@ -110,10 +116,8 @@ public class CRFUtils {
 									if (singleFeature.getValue() != null) {
 										double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
 										isProbabilityZero = false;
-										if (probabilityFeatureLabel == 0) {
-											probabilityFeatureLabel = 1.0 / Constants.NUMBER_OF_STATES;
-										}
 										currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+										currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
 									} 
 								} else {
 									isProbabilityZero = true;
@@ -127,23 +131,27 @@ public class CRFUtils {
 								currentProbabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
 								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
 								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+								currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
 								isProbabilityZero = false;
 								
 							} else {
 								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
 								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
+								currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
 							}
 						}
 					}
 					
 					
 					// log p(l)
+
 					double currentLabelProbability = parameterContainer.getLabelProbability(label);
 
 					featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
 					
 					if (label == objectLabel) {
 						featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
+						logOfFeatureOnLabelConditionalProbability = currrentLogOfFeatureOnLabelConditionalProbability;
 						labelProbability = currentLabelProbability;
 						isCurrentProbabilityZero = isProbabilityZero;
 					}
@@ -178,6 +186,7 @@ public class CRFUtils {
 				}
 			}
 		}
+		if (print) System.out.println("LOCAL " +objectLabel + "  "+ imageFi);
 		return imageFi;
 	}
 
@@ -210,6 +219,9 @@ public class CRFUtils {
 		}
 		imageFi.setFeatureValue(featureIndex++, 1);
 		
+		if (superPixel.getSuperPixelIndex() == 509 && image.getPath().contains("1.png")) {
+			System.out.println("PAIRWISE " + label + " -> " + variableLabel + "   "+  imageFi);
+		}
 		return imageFi;
 	}
 

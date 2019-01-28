@@ -93,7 +93,7 @@ public class App {
 			Constants.VALIDATION_RESULT_PATH = Constants.IMAGE_FOLDER + File.separator + "validation_result" + File.separator ;
 			Constants.TEST_PATH = Constants.IMAGE_FOLDER + File.separator + "test" + File.separator;
 			String basePath = "C:\\Users\\anean\\Desktop\\CRF_TEMP\\";
-			FileUtils.cleanDirectory(new File(basePath)); 
+			DataHelper.clearDirectory(basePath); 
 			
 			ParametersContainer parameterContainer = ParametersContainer.getInstance();
 			List<ImageDTO> validationImageList = DataHelper.getValidationDataSegmented(parameterContainer);
@@ -123,7 +123,7 @@ public class App {
 			}
 
 			
-			Map<ImageDTO, List<List<Double>>> probabilityDistribution  = ResultAnalyser.analyseProbabilityDistribution(parameterContainer, validationImageList, null);
+			Map<ImageDTO, List<List<Double>>> probabilityDistribution  = ResultAnalyser.analyseProbabilityDistribution(parameterContainer, validationImageList, basePath + "dont_know//");
 			System.out.println("distribution generated");
 			int i = 0;
 			
@@ -145,7 +145,7 @@ public class App {
 			
 			List<Double> probabilitiesFor0 = null;
 			List<Double> probabilitiesFor3 = null;
-			boolean stop = true;
+			boolean stop = false;
 			while (!stop) {
 				// get superpixel index
 				System.out.println("Pick superpixel index: ");
@@ -209,10 +209,12 @@ public class App {
 			
 //			// testing 
 			List<Double> initWeightList = Arrays.asList(new Double[] {
-					0.13228307175100648, 0.06763942418439105, 0.13114885297515072
+//					0.4785516209771158, 0.03148649257070709, 0.06105045148819792
+//					1.0, 0.0, 0.0
+					0.0000005, 3.0, 4.0
 			});
-//			WeightVector weights = new WeightVector(initWeightList);
-			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
+			WeightVector weights = new WeightVector(initWeightList);
+//			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
 			List<ImageDTO> trainImageList = new ArrayList<>();
 			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
 			
@@ -223,11 +225,9 @@ public class App {
 			}
 
 			
-			Map<ImageDTO, FactorGraphModel> testimageToFactorGraphMap = InputHelper.prepareTestData(parameterContainer, weights, testImageList, trainImageList);
-			
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-			InferenceHelper.runInference(testImageList, testimageToFactorGraphMap, baseImagePath, "test_26_01", parameterContainer, weights);
+			InferenceHelper.runInference(testImageList, new ArrayList<>(), baseImagePath, "test_27_01_0", parameterContainer, weights);
 			
 			
 		}

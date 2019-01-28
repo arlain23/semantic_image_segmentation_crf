@@ -273,6 +273,18 @@ public class ResultAnalyser {
 			}
 			imageProbabilityMap.put(currentImage, labelProbabilities);
 		}
+		
+		
+		for (ImageDTO currentImage : imageProbabilityMap.keySet()) {
+			List<List<Double>> labelProbabilities = imageProbabilityMap.get(currentImage);
+			String imageName = DataHelper.getFileNameFromImageDTO(currentImage);
+			String basePath = baseProbabilityImagePath + imageName + "\\";
+			if (currentImage.getPath().contains("1.png")) {
+				DataHelper.saveSegmentationByImageFi1Probabilities(currentImage, labelProbabilities, basePath, true);
+			} else {
+				DataHelper.saveSegmentationByImageFi1Probabilities(currentImage, labelProbabilities, basePath, false);
+			}
+		}
 
 		double result = assessLabelisationCorrectness(imageProbabilityMap);
 //		_log.info("HIST: " + Constants.NUMBER_OF_HISTOGRAM_DIVISIONS + " " + result);

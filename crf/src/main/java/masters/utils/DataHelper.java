@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -432,6 +433,83 @@ public class DataHelper {
 		}
 	}
 	
+	
+	public static void saveSegmentationByImageFi1Probabilities(ImageDTO image, List<List<Double>> labelProbabilities,
+			String basePath, boolean print) {
+
+		List<SuperPixelDTO> superPixels = image.getSuperPixels();
+		String filePath = basePath + "result." + Constants.IMAGE_EXTENSION;
+		File outputfile = new File(filePath);
+		outputfile.getParentFile().mkdirs();
+		
+		List<Double> superPixelProbs0 = labelProbabilities.get(0);
+		List<Double> superPixelProbs1 = labelProbabilities.get(1);
+		List<Double> superPixelProbs2 = labelProbabilities.get(2);
+		List<Double> superPixelProbs3 = labelProbabilities.get(3);
+		
+		try {
+			outputfile.createNewFile();
+			BufferedImage img = cloneBufferedImage(image.getImage());
+			for (SuperPixelDTO superPixel : superPixels) {
+				double minProb = Integer.MAX_VALUE;
+				int winningLabel = -1;
+
+				
+				double labelProbability0 = -Math.log(superPixelProbs0.get(superPixel.getSuperPixelIndex()));
+				double labelProbability1 = -Math.log(superPixelProbs1.get(superPixel.getSuperPixelIndex()));
+				double labelProbability2 = -Math.log(superPixelProbs2.get(superPixel.getSuperPixelIndex()));
+				double labelProbability3 = -Math.log(superPixelProbs3.get(superPixel.getSuperPixelIndex()));
+				
+				if (superPixel.getSuperPixelIndex() == 509 && print) {
+					System.out.println("0 -> " + labelProbability0);
+					System.out.println("1 -> " + labelProbability1);
+					System.out.println("2 -> " + labelProbability2);
+					System.out.println("3 -> " + labelProbability3);
+					
+				}
+				
+				if (labelProbability0 < minProb) {
+					minProb = labelProbability0;
+					winningLabel = 0;
+				}
+				
+				if (labelProbability1 < minProb) {
+					minProb = labelProbability1;
+					winningLabel = 1;
+				}
+				
+				if (labelProbability2 < minProb) {
+					minProb = labelProbability2;
+					winningLabel = 2;
+				}
+				
+				if (labelProbability3 < minProb) {
+					minProb = labelProbability3;
+					winningLabel = 3;
+				}
+				
+				Color labelColour = Constants.LABEL_TO_COLOUR_MAP.get(winningLabel);
+				int rgb = labelColour.getRGB();
+				List<PixelDTO> pixels = superPixel.getPixels();
+				for (PixelDTO pixel : pixels) {
+					img.setRGB(pixel.getXIndex(), pixel.getYIndex(), rgb);
+
+				}
+			}
+
+			/* update borders */
+			for (SuperPixelDTO superPixel : superPixels) {
+				int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+				List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+				}
+			}
+
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+		} catch (IOException e) {
+		}
+	}
 	public static void saveImageFi1Probabilities(ImageDTO image, List<SuperPixelDTO> superPixels,
 			String basePath, int objectLabel,
 			List<Double> superPixelProbs) {
@@ -1053,8 +1131,26 @@ public class DataHelper {
 		return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
 	}
 
-	private static double[] WEIGHTS = { 0.2989, 0.5870, 0.1140 };
-
+	public static void clearDirectory(String path) {
+		
+		File f = new File(path);
+		clearDirectory(f);
+		
+	}
+	
+	private static void clearDirectory(File f){
+	    for (File c : f.listFiles()) {
+	    	if (c.isDirectory()) {
+	    		clearDirectory(c);
+	    	}
+	    }
+		try {
+			FileUtils.cleanDirectory(f);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static Color getRGB(int gray) {
 	    int rgb = gray << 16 | gray << 8 | gray;
 	    
