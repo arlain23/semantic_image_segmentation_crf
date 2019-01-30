@@ -21,6 +21,7 @@
 \usepackage{nameref}
 \usepackage[parfill]{parskip}
 \usepackage{url}
+\usepackage{subcaption}
 
 \addbibresource{bibliography.bib}
 \addbibresource{website_bibliography.bib}
@@ -98,6 +99,7 @@
 \import{sections/image_segmentation/}{semantic_segmentation_methods}
 
 \chapter{Structured Prediction}
+\label{chapter:structured_prediction}
 \import{sections/structured_prediction/}{introduction}
 
 \section{Probabilistic Graphical Model}
@@ -119,6 +121,17 @@
 \section{Energy formulation}	
 \label{sec:energy}
 \import{sections/structured_prediction/}{energy}
+
+\chapter{Semantic Image Segmentation system}
+\import{sections/implementation_details/}{introduction}
+
+\section{Dataset}	
+\import{sections/implementation_details/}{dataset}
+
+\section{Preprocessing}	
+\import{sections/implementation_details/}{preprocessing}
+
+
 \newpage
 \printbibliography 
 \end{document}
