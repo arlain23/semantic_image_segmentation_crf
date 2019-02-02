@@ -1,8 +1,19 @@
 package masters.test2;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import masters.Constants;
+import masters.Constants.State;
+import masters.image.ImageDTO;
+import masters.superpixel.SuperPixelDTO;
+import masters.superpixel.SuperPixelHelper;
+import masters.utils.DataHelper;
+import masters.utils.ParametersContainer;
 
 /**
  * Unit test for simple App.
@@ -31,8 +42,20 @@ public class AppTest
     /**
      * Rigourous Test :-)
      */
-    public void testApp()
-    {
-        assertTrue( true );
+    
+    public void testSuperpixelSegmentation() {
+    	String path = "E:\\Studia\\CSIT\\praca_magisterska\\thesis\\tests\\peppers.png";
+    	String savePath = "E:\\Studia\\CSIT\\praca_magisterska\\thesis\\tests\\peppers_sp_border_300_50.png";
+    	String savePath3 = "E:\\Studia\\CSIT\\praca_magisterska\\thesis\\tests\\peppers_mean_300_50.png";
+    	ParametersContainer parameterContainer = ParametersContainer.getInstance();
+    	
+    	Constants.NUMBER_OF_SUPERPIXELS = 300;
+    	Constants.RIGIDNESS = 50;
+    	
+    	ImageDTO imageDTO = DataHelper.getSingleImageSegmented(new File(path), null, State.TEST, parameterContainer);
+		
+		DataHelper.saveImageSuperpixelBordersOnly(imageDTO, imageDTO.getSuperPixels(), savePath);
+		DataHelper.saveImageSuperpixelsMeanColour(imageDTO, imageDTO.getSuperPixels(), savePath3);
+		assertTrue(true);
     }
 }

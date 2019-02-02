@@ -44,7 +44,7 @@ public class ImageDTO implements Cloneable, Serializable {
 	private int height = 0;
 	private PixelDTO[][] pixelData;
 	private List<SuperPixelDTO> superPixels;
-	transient private BufferedImage img;
+	private final BufferedImage img;
 	private ImageMask mask = null;
 	
 	private Map<Feature, BinaryMask> discreteFeatureMap;
@@ -61,7 +61,7 @@ public class ImageDTO implements Cloneable, Serializable {
 		this.width = width;
 		this.height = height;
 		this.pixelData = pixelData;
-		this.img = img;
+		this.img = DataHelper.cloneBufferedImage(img);
 		this.pixelData = getPixelDTOs(img, false);
 		if (segmentedImage != null) {
 			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImage, true);
@@ -78,7 +78,7 @@ public class ImageDTO implements Cloneable, Serializable {
 		this.path = path;
 		this.width = width;
 		this.height = height;
-		this.img = img;
+		this.img = DataHelper.cloneBufferedImage(img);;
 		this.pixelData = getPixelDTOs(img, false);
 		if (segmentedImage != null) {
 			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImage, true);
@@ -261,7 +261,7 @@ public class ImageDTO implements Cloneable, Serializable {
 	}
 	
 	public BufferedImage getImage() {
-		return img;
+		return this.img;
 	}
 	
 	public PixelDTO[][] getPixelData() {
@@ -376,11 +376,6 @@ public class ImageDTO implements Cloneable, Serializable {
 	
 	public ValueStringMask getDiscretePositionFeatureValueMask(Feature feature) {
 		return this.discretePositionFeatureMap.get(feature);
-	}
-	
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	  in.defaultReadObject();
-	  this.img = DataHelper.openImage(this.path);
 	}
 	
 	private String getFileName(String path) {

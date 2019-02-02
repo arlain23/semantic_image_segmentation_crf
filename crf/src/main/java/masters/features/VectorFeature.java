@@ -41,20 +41,33 @@ public class VectorFeature implements Feature {
 	}
 	@Override
 	public double getDifference(Feature otherFeature) {
-		// if vector values are the same - return 0
-		// if vector values are different - return 1
+//		// if vector values are the same - return 0
+//		// if vector values are different - return 1
+//		
+//		
+//		List<Double> otherValues = ((VectorFeature)otherFeature).getValues();
+//		boolean areValuesTheSame = true;
+//		for (int i = 0; i < values.size(); i++) {
+//			if (!Helper.equals(this.values.get(i), otherValues.get(i))) {
+//				areValuesTheSame = false;
+//			}
+//		}
+//		return areValuesTheSame ? 0 : 1;
+//		
+//		// return (Double)getValue() - (Double)otherFeature.getValue();
 		
-		
+		//return euclidean disance
+		double euclideanDistance = 0;
 		List<Double> otherValues = ((VectorFeature)otherFeature).getValues();
-		boolean areValuesTheSame = true;
 		for (int i = 0; i < values.size(); i++) {
-			if (!Helper.equals(this.values.get(i), otherValues.get(i))) {
-				areValuesTheSame = false;
-			}
+			Double otherValue = otherValues.get(i);
+			Double thisValue = this.values.get(i);
+			
+			double difference = Math.abs(otherValue - thisValue);
+			euclideanDistance += Math.pow(difference, 2);
 		}
-		return areValuesTheSame ? 0 : 1;
-		
-		// return (Double)getValue() - (Double)otherFeature.getValue();
+		euclideanDistance = Math.sqrt(euclideanDistance);
+		return euclideanDistance;
 	}
 	private double getVectorLength() {
 		double result = 0;

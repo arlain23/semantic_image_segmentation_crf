@@ -17,7 +17,7 @@ public class Constants {
 
 	public static Logger _log = Logger.getLogger(App.class);
 
-	public static boolean USE_NON_LINEAR_MODEL = true;
+	public static boolean USE_NON_LINEAR_MODEL = false;
 	public static boolean USE_GRID_MODEL = true;
 	public static boolean ADD_NEIGBOUR_FEATURES = true;
 	public static boolean ADD_COLOUR_LOCAL_FEATURE = false;
@@ -40,8 +40,8 @@ public class Constants {
 	public static enum ColorAverageMethod {
 	    MEAN, POPULARITY
 	}
-	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.POPULARITY; 
-//	public static ColorAverageMethod colorAverageMethod = ColorAverageMethod.MEAN; 
+	public static ColorAverageMethod COLOR_AVERAGE_METHOD = ColorAverageMethod.POPULARITY; 
+//	public static ColorAverageMethod COLOR_AVERAGE_METHOD = ColorAverageMethod.MEAN; 
 	
 	public static int COLOR_FEATURE_HISTOGRAM_DIVISIONS = 16;
 	
@@ -75,6 +75,7 @@ public class Constants {
 	    generated_03_01_noise_12, generated_03_01_noise_13, generated_03_01_noise_14, generated_03_01_noise_15,
 	    generated_03_01_noise_16, generated_03_01_noise_17, generated_03_01_noise_18, generated_03_01_noise_19,
 	    generated_03_01_noise_20,
+	    generated_linear, generated_linear_coloured
 	}
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_equal;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
@@ -86,10 +87,12 @@ public class Constants {
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large_noise;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_version2;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01_noise_19;
+//	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01_noise_19;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_linear;
 	
 	
-	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_03_01;
+	
+	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_linear;
 	
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + File.separator + "train" + File.separator ;
@@ -102,13 +105,13 @@ public class Constants {
 	public static String RESULT_IMAGE_SUFFIX = "_N";
 	public static String IMAGE_EXTENSION= "png";
 	
-	public static int TRAIN_IMAGE_LIMIT = 1000;
+	public static int TRAIN_IMAGE_LIMIT = 30;
 	public static int TEST_IMAGE_LIMIT = 10;
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 100;
-	public static double REGULARIZATION_FACTOR = 100;
-	public static double TRAINING_STEP = 0.0000001;
+	public static double REGULARIZATION_FACTOR = 1;
+	public static double TRAINING_STEP = 0.00001;
 	
 	//factorisation
 	public static int NUMBER_OF_STATES = 4;

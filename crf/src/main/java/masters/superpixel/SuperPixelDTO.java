@@ -130,7 +130,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	}
 	public void initMeanRGB() {
 		try {
-			switch (Constants.colorAverageMethod) {
+			switch (Constants.COLOR_AVERAGE_METHOD) {
 			case MEAN:
 				this.meanRGB = getMeanRGBValue();
 				break;
@@ -300,7 +300,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	}
 	private List<Feature> initPairwiseFeatures(double [] rgb) {
 		List<Feature> features = new ArrayList<Feature> ();
-		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
+		features.add(new VectorFeature(getNeighbourColoursPercentage(rgb), features.size()));
+//		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
 		return features;
 	}
 	
@@ -333,6 +334,35 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		
 
 	}
+	
+	private List<Double> getNeighbourColoursPercentage(double[] rgb) {
+		List<Double> result = new ArrayList<>();
+		
+		Map<String, Integer> hexToCounterMap = new HashMap<String, Integer>();
+		for (Color colour : Constants.AVAILABLE_COLOURS) {
+			String colourHex = String.format("#%02x%02x%02x", colour.getRed(), colour.getGreen(), colour.getBlue());
+			hexToCounterMap.put(colourHex, 0);
+		}
+		
+		for (SuperPixelDTO neighbour : this.neigbouringSuperPixels) {
+			double[] neigbourRGB = neighbour.getMeanRGB();
+			String hex = Helper.getColorHex(neigbourRGB);
+			if (!hexToCounterMap.containsKey(hex)) {
+				_log.error("Colour " + hex + " not available as a feature");
+			} else {
+				int counter = hexToCounterMap.get(hex) + 1;
+				hexToCounterMap.put(hex, counter);
+			}
+		}
+		for (Color colour : Constants.AVAILABLE_COLOURS) {
+			String colourHex = String.format("#%02x%02x%02x", colour.getRed(), colour.getGreen(), colour.getBlue());
+			int counter = hexToCounterMap.get(colourHex);
+			result.add(counter / 100.0);
+		}
+		
+		return result;
+	}
+	
 	private Feature getNeighbourBayesColourFeature(int startingIndex) { 
 		//most popular colour of neigbours
 		String baseHex = String.format("#%02x%02x%02x", (int)this.meanRGB[0], (int)this.meanRGB[1], (int)this.meanRGB[2]);
@@ -373,7 +403,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		}
 		return hexToCounterMap;
 	}
-
 
 
 	private Double[] getNeighboursMeanRGB() {

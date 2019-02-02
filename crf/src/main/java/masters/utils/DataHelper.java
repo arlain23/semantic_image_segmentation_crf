@@ -85,10 +85,10 @@ public class DataHelper {
 
 	public static ImageDTO getSingleImageSegmented(
 			File trainFile, File segmentedFile, State state, ParametersContainer parameterContainer) {
-		BufferedImage trainImg = openImage(trainFile.getPath());
+		BufferedImage trainImg = openImage(trainFile);
 		BufferedImage segmentedImg = null;
 		if (segmentedFile != null) {
-			segmentedImg = openImage(segmentedFile.getPath());
+			segmentedImg = openImage(segmentedFile);
 		}
 
 		
@@ -111,7 +111,7 @@ public class DataHelper {
 			}
 			File trainFile = testFiles.get(key);
 
-			BufferedImage trainImg = openImage(trainFile.getPath());
+			BufferedImage trainImg = openImage(trainFile);
 
 			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, State.TEST, parameterContainer);
 
@@ -160,10 +160,10 @@ public class DataHelper {
 
 	}
 
-	public static BufferedImage openImage(String path) {
+	public static BufferedImage openImage(File file) {
 		BufferedImage img;
 		try {
-			img = ImageIO.read(new File(path));
+			img = ImageIO.read(file);
 			return img;
 		} catch(IOException e) {
 			return null;
@@ -196,6 +196,17 @@ public class DataHelper {
 		}
 		showImageInJframe(title, img);
 	}
+	public static void viewImage(ImageDTO image) {
+		viewImage(image, "");
+	}
+	public static void viewImage(ImageDTO image, String title) {
+		BufferedImage img = cloneBufferedImage(image.getImage());
+		showImageInJframe(title, img);
+	}
+	public static void viewImage(BufferedImage img, String title) {
+		showImageInJframe(title, img);
+	}
+
 
 	public static void viewImageSegmentedSuperPixels(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
 		for (SuperPixelDTO superPixel : superPixels) {
@@ -315,14 +326,55 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public static void saveImageSuperpixelsMeanColour(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		BufferedImage img = cloneBufferedImage(image.getImage());
+		for (SuperPixelDTO superPixel : superPixels) {
+			double[] meanRGB = superPixel.getMeanRGB();
+			int pixelColor = (new Color((int)meanRGB[0], (int)meanRGB[1], (int)meanRGB[2])).getRGB();
+			List<PixelDTO> allPixels = superPixel.getPixels();
+			for (PixelDTO pixel : allPixels) {
+				img.setRGB(pixel.getXIndex(), pixel.getYIndex(), pixelColor);
+			}
+		}
+		File outputFile = new File(path);
+		outputFile.getParentFile().mkdirs();
+		try {
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	public static void saveImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
-		BufferedImage img = image.getImage();
+		BufferedImage img = cloneBufferedImage(image.getImage());
 		for (SuperPixelDTO superPixel : superPixels) {
 			int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> allPixels = superPixel.getPixels();
+			for (PixelDTO pixel : allPixels) {
+				int pixelColor = (new Color(pixel.getR(), pixel.getG(), pixel.getB())).getRGB();
+				img.setRGB(pixel.getXIndex(), pixel.getYIndex(), pixelColor);
+			}
+			
 			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
 			for (PixelDTO borderPixel : borderPixels) {
 				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			}
+		}
+		File outputFile = new File(path);
+		outputFile.getParentFile().mkdirs();
+		try {
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public static void saveImageSuperpixels(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		BufferedImage img = cloneBufferedImage(image.getImage());
+		for (SuperPixelDTO superPixel : superPixels) {
+			int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> allPixels = superPixel.getPixels();
+			for (PixelDTO pixel : allPixels) {
+				img.setRGB(pixel.getXIndex(), pixel.getYIndex(), rgbSuperPixel);
 			}
 		}
 		File outputFile = new File(path);
@@ -460,14 +512,14 @@ public class DataHelper {
 				double labelProbability2 = -Math.log(superPixelProbs2.get(superPixel.getSuperPixelIndex()));
 				double labelProbability3 = -Math.log(superPixelProbs3.get(superPixel.getSuperPixelIndex()));
 				
-				if (superPixel.getSuperPixelIndex() == 509 && print) {
-					System.out.println("0 -> " + labelProbability0);
-					System.out.println("1 -> " + labelProbability1);
-					System.out.println("2 -> " + labelProbability2);
-					System.out.println("3 -> " + labelProbability3);
-					
-				}
-				
+//				if (superPixel.getSuperPixelIndex() == 509 && print) {
+//					System.out.println("0 -> " + labelProbability0);
+//					System.out.println("1 -> " + labelProbability1);
+//					System.out.println("2 -> " + labelProbability2);
+//					System.out.println("3 -> " + labelProbability3);
+//					
+//				}
+//				
 				if (labelProbability0 < minProb) {
 					minProb = labelProbability0;
 					winningLabel = 0;
@@ -1124,7 +1176,7 @@ public class DataHelper {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
-	private static BufferedImage cloneBufferedImage(BufferedImage bi) {
+	public static BufferedImage cloneBufferedImage(BufferedImage bi) {
 		ColorModel cm = bi.getColorModel();
 		boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
 		WritableRaster raster = bi.copyData(null);

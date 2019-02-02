@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import com.nativelibs4java.opencl.util.ParallelMath;
 
+import masters.Constants.ColorAverageMethod;
 import masters.Constants.ImageFolder;
 import masters.Constants.State;
 import masters.colors.ColorSpaceException;
@@ -67,11 +68,75 @@ public class App {
 	public static boolean RUN_INFERENCE = true;
 	public static boolean PREPARE_INPUT = false;
 	
+	
+	
+	public static boolean IS_LINEAR = true;
+	
 	private static Logger _log = Logger.getLogger(App.class);
 	
 	public static void main( String[] args ) throws ColorSpaceException, ClassNotFoundException, IOException, URISyntaxException {
 		System.out.println("༼ つ ◕_◕ ༽つ");
 		
+		
+		if (IS_LINEAR) {
+			Constants.USE_NON_LINEAR_MODEL = false;
+			Constants.IMAGE_FOLDER = ImageFolder.generated_linear_coloured;
+			Constants.SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_linear;
+			Constants.COLOR_AVERAGE_METHOD = ColorAverageMethod.MEAN;
+			Constants.NUMBER_OF_STATES = 3;
+			Constants.TRAINING_STEP = 0.0001;
+			Constants.REGULARIZATION_FACTOR = 1000;
+			
+			Constants.TRAIN_PATH = Constants.IMAGE_FOLDER + File.separator + "train" + File.separator ;
+			Constants.TRAIN_RESULT_PATH = Constants.IMAGE_FOLDER + File.separator + "result" + File.separator ;
+			Constants.VALIDATION_PATH = Constants.IMAGE_FOLDER + File.separator + "validation" + File.separator ;
+			Constants.VALIDATION_RESULT_PATH = Constants.IMAGE_FOLDER + File.separator + "validation_result" + File.separator ;
+			Constants.TEST_PATH = Constants.IMAGE_FOLDER + File.separator + "test" + File.separator;
+			
+			ParametersContainer parameterContainer = ParametersContainer.getInstance();
+			parameterContainer.setNumberOfLocalFeatures(3);
+			
+			// testing 
+			// linear basic colour
+//			List<Double> initWeightList = Arrays.asList(new Double[] {
+//					-0.04148262363505202, 0.02088709381110257, 0.012204837263693908, 
+//					0.02053515535187271, -0.04250326661084058, 0.013991170837388876, 
+//					0.020947468283179317, 0.02161617279973801, -0.026196008101082784, 
+//					-0.2191765937200767, 0.2191765937200767
+//			});
+			
+			// linear coloured CIELAB
+//			List<Double> initWeightList = Arrays.asList(new Double[] {
+//					-4.3541902265591256E-4, -0.008407929539318907, -0.00680094864001077,
+//					-0.0010723486101746709, 0.01483647596323914, -0.010258986068260709,
+//					0.0015077676328305695, -0.006428546423920232, 0.0170599347082715,
+//					-0.23759526574339257, 0.23759526574339257 
+//			});
+			
+		
+			// linear coloured RGB
+			List<Double> initWeightList = Arrays.asList(new Double[] {
+					-0.01929696880558088, 0.00967165632403644, 0.014061761254553109,
+					0.013121748946249215, -0.013694388602578954, 0.01513050683624383,
+					0.00617521985933168, 0.0040227322785425495, -0.02919226809079693,
+					-0.23531971785110614, 0.23531971785110614
+			});
+						
+			
+			
+					
+			WeightVector weights = new WeightVector(initWeightList);
+//			WeightVector weights = TrainHelper.train(null, parameterContainer);
+			List<ImageDTO> trainImageList = DataHelper.getTrainingDataSegmented(parameterContainer);
+			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
+
+			
+			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\thesis_inference_data\\";
+			InferenceHelper.runInference(testImageList, new ArrayList<>(), baseImagePath, "linear_coloured_rgb", parameterContainer, weights);
+			
+			
+			return;
+		}
 		
 		if (MAKE_VISUAL_ANALYSIS) {
 			// constants
@@ -209,12 +274,13 @@ public class App {
 			
 //			// testing 
 			List<Double> initWeightList = Arrays.asList(new Double[] {
-//					0.4785516209771158, 0.03148649257070709, 0.06105045148819792
+					0.9035850594426786, 0.97218963318741401246, 1.942003813595220153
+//					0.0 , 1.0 , 0.0
 //					1.0, 0.0, 0.0
-					0.0000005, 3.0, 4.0
+//					0.0000005, 3.0, 4.0
 			});
-			WeightVector weights = new WeightVector(initWeightList);
-//			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
+//			WeightVector weights = new WeightVector(initWeightList);
+			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
 			List<ImageDTO> trainImageList = new ArrayList<>();
 			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
 			
@@ -227,7 +293,7 @@ public class App {
 			
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-			InferenceHelper.runInference(testImageList, new ArrayList<>(), baseImagePath, "test_27_01_0", parameterContainer, weights);
+			InferenceHelper.runInference(testImageList, new ArrayList<>(), baseImagePath, "test_31_01", parameterContainer, weights);
 			
 			
 		}
@@ -331,7 +397,7 @@ public class App {
 		ParametersContainer parameterContainer = ParametersContainer.getInstance();
 		
 		List<String> fileNames = Arrays.asList(new String [] {"138","199","872"});
-		List<Integer> pixels = Arrays.asList(new Integer [] {398,160,192});
+		List<Integer> pixels = Arrays.asList(new Integer [] {398, 160, 192});
 		int i = 0;
 		for (String fileName : fileNames) {
 					int superPixelIndex = pixels.get(i++);
@@ -348,14 +414,10 @@ public class App {
 			FeatureContainer f = (FeatureContainer) superPixel.getLocalFeatureVector().getFeatures().get(0);
 			List<Feature> features = f.getFeatures();
 			
-			System.out.println(superPixel.getLabel() + "  ->  " + Helper.getColorHex(superPixel.getMeanRGB()));
-			System.out.println(features.get(171));
 			int meanDistance = GridHelper.getMeanSuperPixelDistance(trainingImage.getSuperPixels());
 			List<GridPoint> grid = GridHelper.getGrid(superPixel, meanDistance);
-			System.out.println("### "  + superPixelIndex);
 			try {
 				int index = GridHelper.getGridPointSuperPixelIndex(grid.get(24), trainingImage.getPixelData());
-				System.out.println(superPixel.getSuperPixelIndex() + "-> " + index);
 			} catch (GridOutOfBoundsException e) {
 				e.printStackTrace();
 			}

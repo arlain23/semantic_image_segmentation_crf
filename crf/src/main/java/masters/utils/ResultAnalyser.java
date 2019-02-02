@@ -233,11 +233,6 @@ public class ResultAnalyser {
 
 						featureProbability += currentFeatureOnLabelConditionalProbability * currentLabelProbability;
 						
-						if (superPixel.getSuperPixelIndex() == 187 &&k ==4) {
-//							System.out.println("# L(O)" + objectLabel  + " L:" + label + " " + currentFeatureOnLabelConditionalProbability + " " + currentLabelProbability) ;	
-						}
-						
-
 						if (label == objectLabel) {
 							featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
 							labelProbability = currentLabelProbability;
@@ -249,10 +244,6 @@ public class ResultAnalyser {
 						finalProbability = 0;
 					} else {
 						finalProbability = featureOnLabelConditionalProbability * labelProbability / featureProbability;
-						if (superPixel.getSuperPixelIndex() == 187 &&k ==4) {
-//							System.out.println("#" + objectLabel + "  " + finalProbability + "		" + featureOnLabelConditionalProbability + "	" +
-//									labelProbability + "		" + featureProbability) ;	
-						}
 						if (featureProbability == 0) {
 							finalProbability = 1.0 / Constants.NUMBER_OF_STATES;
 						}

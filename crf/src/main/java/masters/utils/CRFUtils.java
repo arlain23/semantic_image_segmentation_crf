@@ -57,16 +57,11 @@ public class CRFUtils {
   /*
    * 	LOCAL IMAGE FI
    */
-
 	public static FeatureVector getLocalImageFi(int superPixelIndex, Integer objectLabel, ImageMask mask, ImageDTO trainImage,
 			List<ImageDTO> trainImageList, ParametersContainer parameterContainer,
 			List<Feature> localFeatures) {
 		
 		boolean print = false;
-		if (superPixelIndex == 509 && trainImage.getPath().contains("1.png")) {
-			print = true;
-			System.out.println("PIXEL 509");
-		}
 		
 		Map<Feature, Map<Integer, ProbabilityEstimator>> probabilityEstimationDistribution = 
 				parameterContainer.getProbabilityEstimationDistribution();
@@ -87,9 +82,8 @@ public class CRFUtils {
 				 */
 				
 				//  p(f1|l)* p(f2|l) * .... * p(fn|l)
-				double featureOnLabelConditionalProbability = 0;
-				double logOfFeatureOnLabelConditionalProbability = 0;
-				
+				double featureOnLabelConditionalProbability = 1.0;
+
 				// log p(l)
 				double labelProbability = 0;
 				
@@ -101,7 +95,6 @@ public class CRFUtils {
 					// p(f1|l)* p(f2|l) * .... * p(fn|l)
 					boolean isProbabilityZero = true;
 					double currentFeatureOnLabelConditionalProbability = 1.0;
-					double currrentLogOfFeatureOnLabelConditionalProbability = 1.0;
 					if (feature instanceof FeatureContainer) {
 						FeatureContainer featureContainer = (FeatureContainer) feature;
 						for (Feature singleFeature : featureContainer.getFeatures()) {
@@ -115,9 +108,11 @@ public class CRFUtils {
 								if (!hasAllZeros) {
 									if (singleFeature.getValue() != null) {
 										double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, singleFeature, trainImageList, currentProbabilityEstimator);
-										isProbabilityZero = false;
+										if (probabilityFeatureLabel == 0) {
+											probabilityFeatureLabel = 1e-6;
+										}
 										currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-										currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
+										isProbabilityZero = false;
 									} 
 								} else {
 									isProbabilityZero = true;
@@ -131,13 +126,11 @@ public class CRFUtils {
 								currentProbabilityEstimator = probabilityEstimationDistribution.get(feature).get(label);
 								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
 								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-								currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
 								isProbabilityZero = false;
 								
 							} else {
 								double probabilityFeatureLabel = CRFUtils.getFeatureOnLabelProbability(mask, trainImage, label, feature, trainImageList, currentProbabilityEstimator);
 								currentFeatureOnLabelConditionalProbability *= probabilityFeatureLabel;
-								currrentLogOfFeatureOnLabelConditionalProbability += Math.log(probabilityFeatureLabel);
 							}
 						}
 					}
@@ -151,7 +144,6 @@ public class CRFUtils {
 					
 					if (label == objectLabel) {
 						featureOnLabelConditionalProbability = currentFeatureOnLabelConditionalProbability;
-						logOfFeatureOnLabelConditionalProbability = currrentLogOfFeatureOnLabelConditionalProbability;
 						labelProbability = currentLabelProbability;
 						isCurrentProbabilityZero = isProbabilityZero;
 					}
@@ -219,9 +211,6 @@ public class CRFUtils {
 		}
 		imageFi.setFeatureValue(featureIndex++, 1);
 		
-		if (superPixel.getSuperPixelIndex() == 509 && image.getPath().contains("1.png")) {
-			System.out.println("PAIRWISE " + label + " -> " + variableLabel + "   "+  imageFi);
-		}
 		return imageFi;
 	}
 
