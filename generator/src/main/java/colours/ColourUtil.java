@@ -23,6 +23,101 @@ public class ColourUtil {
 		}
 	}
 	
+	public static void fillColour2sections(Graphics2D trainG2d, Graphics2D resultG2d, Color color, Color color2) {
+		//first part
+		trainG2d.setColor(color);
+		trainG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+		
+		//second part
+		trainG2d.setColor(color2);
+		trainG2d.fillRect(GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color2));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+	}
+	
+	public static void fillColour3sections(Graphics2D trainG2d, Graphics2D resultG2d, Color color, Color color2) {
+		//first part
+		trainG2d.setColor(color);
+		trainG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+		
+		//second part
+		trainG2d.setColor(color2);
+		trainG2d.fillRect(0, GeneratorConstants.HEIGHT/3, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color2));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(0, GeneratorConstants.HEIGHT/3, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+	}
+	
+	
+	public static void fillColour4sections(Graphics2D trainG2d, Graphics2D resultG2d, Color color, Color color2, Color color3, Color color4) {
+		//first part
+		trainG2d.setColor(color);
+		trainG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+		
+		//second part
+		trainG2d.setColor(color2);
+		trainG2d.fillRect(GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color2));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+		
+		//third part
+		trainG2d.setColor(color3);
+		trainG2d.fillRect(GeneratorConstants.HEIGHT/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		
+		if (resultG2d != null) {
+			Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+					GeneratorConstants.COLOR_TO_LABEL_MAP.get(color3));
+			resultG2d.setColor(markupColor);
+			resultG2d.fillRect(GeneratorConstants.HEIGHT/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+		}
+		
+		//furth part
+			trainG2d.setColor(color4);
+			trainG2d.fillRect(GeneratorConstants.HEIGHT/2, GeneratorConstants.WIDTH/2, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+			
+			if (resultG2d != null) {
+				Color markupColor = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+						GeneratorConstants.COLOR_TO_LABEL_MAP.get(color4));
+				resultG2d.setColor(markupColor);
+				resultG2d.fillRect(GeneratorConstants.HEIGHT/2, GeneratorConstants.WIDTH/2, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT);
+			}
+	}
+	
 	public static Color getRandomColor() {
 		Random random = new Random();
 		int index = random.nextInt(GeneratorConstants.AVAILABLE_COLOURS.size());

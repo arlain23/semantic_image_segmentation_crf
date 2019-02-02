@@ -3,18 +3,21 @@ package shapes;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
 import colours.ColourUtil;
 import generator.GeneratorConstants;
 import generator.GeneratorConstants.Shape;
-import masters.superpixel.SuperPixelHelper;
+import masters.Constants;
 
 public class ShapeDrawer {
 	
@@ -24,6 +27,57 @@ public class ShapeDrawer {
 	private static int SHAPE_SIZE = 4;
 	
 	
+	public static void drawNonLinearShapes(Graphics2D trainG2d,
+			Graphics2D resultG2d) {
+		
+		int fillnessIndex = ThreadLocalRandom.current().nextInt(5);
+		if (fillnessIndex < 1) {
+			//background
+			Color color = getRandomColor();
+			ColourUtil.fillColour(trainG2d, resultG2d, color);
+			
+			//foreground
+			drawRandomShape(trainG2d, resultG2d, 0, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT, 2);
+			
+		} else if (fillnessIndex < 2) {
+			Color color = getRandomColor();
+			Color color2 = getRandomColor();
+			
+			ColourUtil.fillColour2sections(trainG2d, resultG2d, color, color2);
+			
+			//foreground
+			drawRandomShape(trainG2d, resultG2d, 0, 0, GeneratorConstants.WIDTH/2, GeneratorConstants.HEIGHT, 1);
+			drawRandomShape(trainG2d, resultG2d, GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT, 1);
+			
+		} else if (fillnessIndex < 4) {
+			Color color = getRandomColor();
+			Color color2 = getRandomColor();
+			List<Color> availableColors = new ArrayList<>(GeneratorConstants.AVAILABLE_COLOURS);
+			availableColors.remove(color);
+			availableColors.remove(color2);
+			Color color3 = availableColors.get(0);
+			
+			ColourUtil.fillColour3sections(trainG2d, resultG2d, color, color2);
+			
+			//foreground
+			drawRandomShape(trainG2d, resultG2d, 0, 0*GeneratorConstants.HEIGHT, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT, color3, 2);
+			
+		} else if (fillnessIndex < 5) {
+			Color color = getRandomColor();
+			Color color2 = getRandomColor();
+			Color color3 = getRandomColor();
+			Color color4 = getRandomColor();
+			
+			ColourUtil.fillColour4sections(trainG2d, resultG2d, color, color2, color3, color4);
+			//foreground
+			drawRandomShape(trainG2d, resultG2d, 0, 0, GeneratorConstants.WIDTH/2, GeneratorConstants.HEIGHT/2, 1);
+			drawRandomShape(trainG2d, resultG2d, GeneratorConstants.WIDTH/2, 0, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT/2, 1);
+			drawRandomShape(trainG2d, resultG2d, 0, GeneratorConstants.HEIGHT/2, GeneratorConstants.WIDTH/2, GeneratorConstants.HEIGHT, 1);
+			drawRandomShape(trainG2d, resultG2d, GeneratorConstants.WIDTH/2, GeneratorConstants.HEIGHT/2, GeneratorConstants.WIDTH, GeneratorConstants.HEIGHT, 1);
+			
+		}
+		
+	}
 	public static void initDrawVersion2(Graphics2D trainG2d,
 			Graphics2D resultG2d, Shape shape, boolean isPrimaryShape) {
 		
@@ -54,21 +108,25 @@ public class ShapeDrawer {
 			drawSquare(trainG2d, initShape_X, initShape_Y, blockSize);
 		} else if (shape == Shape.CIRCLE) {
 			drawCircle(trainG2d, initShape_X, initShape_Y, blockSize);
+		} else if (shape == Shape.PENTAGON) {
+			drawPentagon(resultG2d, initShape_X, initShape_Y, blockSize);
 		}
+		
 		if (resultG2d != null){
 			Color foregroundMarkup;
 			if (isPrimaryShape) {
 				foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get
 						(GeneratorConstants.COLOR_TO_LABEL_MAP.size());
 			} else {
-				foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
-						GeneratorConstants.COLOR_TO_LABEL_MAP.get(FOREGROUND_COLOR));
+				foregroundMarkup = getColorMarkup(FOREGROUND_COLOR);
 			}
 			resultG2d.setColor(foregroundMarkup);
 			if (shape == Shape.SQUARE) {
 				drawSquare(resultG2d, initShape_X, initShape_Y, blockSize);
 			} else if (shape == Shape.CIRCLE) {
 				drawCircle(resultG2d, initShape_X, initShape_Y, blockSize);
+			} else if (shape == Shape.PENTAGON) {
+				drawPentagon(resultG2d, initShape_X, initShape_Y, blockSize);
 			}
 		}
 		
@@ -133,16 +191,13 @@ public class ShapeDrawer {
 		drawOtherShape(trainG2d, initX, initY, FOREGROUND_COLOR, chosenShape);
 		
 		if (resultG2d != null){
-			Color foregroundMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
-					GeneratorConstants.COLOR_TO_LABEL_MAP.get(FOREGROUND_COLOR));
-			Color neighbourMarkup = GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
-					GeneratorConstants.COLOR_TO_LABEL_MAP.get(NEIGHBOUR_COLOR));
+			Color foregroundMarkup = getColorMarkup(FOREGROUND_COLOR);
+			Color neighbourMarkup = getColorMarkup(NEIGHBOUR_COLOR);
 			
 			drawOtherShapeNeighbourhood(resultG2d, initX, initY, blockSize, neighbourMarkup);
 			drawOtherShape(resultG2d, initX, initY, foregroundMarkup, chosenShape);
 		}
 	}
-	
 	public static void drawMainShape(Graphics2D trainG2d, Graphics2D resultG2d, int initX, int initY, int blockSize) {
 		drawBaseShapeNeighbourhood(trainG2d, initX, initY, NEIGHBOUR_COLOR);
 		drawBaseShape(trainG2d, initX, initY, FOREGROUND_COLOR);
@@ -225,9 +280,52 @@ public class ShapeDrawer {
 	
 	}
 	
-	public static void drawOtherShape(Graphics2D g2d, int x, int y, Color color, Shape chosenShape) {
+	private static Color getRandomColor() {
+		int colourIndex = ThreadLocalRandom.current().nextInt(Constants.AVAILABLE_COLOURS.size());
+		Color color = Constants.AVAILABLE_COLOURS.get(colourIndex);
+		return color;
+	}
+	
+	private static Color getColorMarkup(Color color) {
+		return GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
+				GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
+	}
+	
+	private static Shape getRandomShape() {
+		Random rand = new Random();
+		int index = rand.nextInt(GeneratorConstants.availableShapes.size());
+		return GeneratorConstants.availableShapes.get(index);
+	}
+	
+	
+	public static void drawRandomShape(Graphics2D trainG2d, Graphics2D resultG2d, int minX, int minY,
+			int maxX, int maxY, Color color, int sizeModfier) {
+		
+		Shape chosenShape = getRandomShape();
+		
 		int blockSize = GeneratorConstants.BLOCK_SIZE;
-		int figureSize = SHAPE_SIZE * blockSize;
+		int figureSize = SHAPE_SIZE * blockSize * sizeModfier;
+		int buffer = 15;
+		int x = ThreadLocalRandom.current().nextInt(minX + buffer, maxX - figureSize - buffer + 1);
+		int y = ThreadLocalRandom.current().nextInt(minY + buffer, maxY - figureSize - buffer + 1);
+		
+		drawOtherShape(trainG2d, x, y, color, chosenShape, sizeModfier);
+		if (resultG2d != null) {
+			Color resultColor = getColorMarkup(color);
+			drawOtherShape(resultG2d, x, y, resultColor, chosenShape, sizeModfier);
+		}
+		
+	}
+	public static void drawRandomShape(Graphics2D trainG2d, Graphics2D resultG2d, int minX, int minY,
+			int maxX, int maxY, int sizeModifier) {
+		
+		Color color = getRandomColor();
+		drawRandomShape(trainG2d, resultG2d, minX, minY, maxX, maxY, color, sizeModifier);
+	}
+	
+	public static void drawOtherShape(Graphics2D g2d, int x, int y, Color color, Shape chosenShape, int sizeModifier) {
+		int blockSize = GeneratorConstants.BLOCK_SIZE;
+		int figureSize = SHAPE_SIZE * blockSize * sizeModifier;
 		g2d.setColor(color);
 		
 		if (chosenShape.equals(Shape.SQUARE)) {
@@ -236,10 +334,30 @@ public class ShapeDrawer {
 			drawCircle(g2d, x, y, figureSize);
 		} else if (chosenShape.equals(Shape.PENTAGON)) {
 			drawPentagon(g2d, x, y, figureSize);
+		} else if (chosenShape.equals(Shape.HEXAGON)) {
+			drawHexagon(g2d, x, y, figureSize);
 		} else {
 			_log.error("shape: " + chosenShape + " not implemented"); 
 		}
 	}
+	
+	public static void drawOtherShape(Graphics2D g2d, int x, int y, Color color, Shape chosenShape) {
+		drawOtherShape(g2d, x, y, color, chosenShape, 1);
+	}
+	
+	private static void drawHexagon(Graphics2D g2d, int initX, int initY, int diameter) {
+		   Polygon p = new Polygon();
+		   int radius = diameter / 2;
+		   int x = initX + radius;
+		   int y = initY + radius;
+			
+		   for (int i = 0; i < 6; i++)
+		      p.addPoint((int) (x + radius * Math.cos(i * 2 * Math.PI / 6)),
+		          (int) (y + radius * Math.sin(i * 2 * Math.PI / 6)));
+
+		    g2d.fillPolygon(p);
+
+		}
 	
 	private static void drawPentagon(Graphics2D g2d, int initX, int initY, int diameter) {
 	   Polygon p = new Polygon();
