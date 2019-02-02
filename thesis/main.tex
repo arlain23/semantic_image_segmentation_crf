@@ -22,6 +22,8 @@
 \usepackage[parfill]{parskip}
 \usepackage{url}
 \usepackage{subcaption}
+\usepackage{textcomp}
+\usepackage{multicol}
 
 \addbibresource{bibliography.bib}
 \addbibresource{website_bibliography.bib}
@@ -54,6 +56,10 @@
 \setlength{\parskip}{1em}
 \renewcommand{\baselinestretch}{1.5}
 \graphicspath{ {./images/} }
+
+\PassOptionsToPackage{export}{adjustbox}
+\fboxsep=0mm%padding thickness
+\fboxrule=1pt%border thickness
 
 
 \title{Semantic image segmentation with use of conditional random fields}
@@ -122,16 +128,50 @@
 \label{sec:energy}
 \import{sections/structured_prediction/}{energy}
 
-\chapter{Semantic Image Segmentation system}
-\import{sections/implementation_details/}{introduction}
+\chapter{Linear CRF - tmp title}
+\label{chapter:linear}
+\import{sections/practical_crf_linear/}{introduction}
 
-\section{Dataset}	
-\import{sections/implementation_details/}{dataset}
+\section{System overview}	
+\import{sections/practical_crf_linear/}{system_overview}
 
 \section{Preprocessing}	
-\import{sections/implementation_details/}{preprocessing}
+\label{sec:linear_preprocessing}
+\import{sections/practical_crf_linear/}{preprocessing}
 
+\section{Feature function selection}	
+\import{sections/practical_crf_linear/}{feature_function}
+
+\section{Dataset}	
+\import{sections/practical_crf_linear/}{dataset}
+
+
+
+
+
+\section{Experimental results}	
+\import{sections/practical_crf_linear/}{experiments}
+
+\chapter{NonLinear CRF - tmp title}
+\label{chapter:nonlinear}
+\import{sections/practical_crf_nonlinear/}{introduction}
+
+\section{System overview}	
+\import{sections/practical_crf_nonlinear/}{system_overview}
+
+\section{Dataset}	
+\import{sections/practical_crf_nonlinear/}{dataset}
+
+\section{Feature function selection}	
+\import{sections/practical_crf_nonlinear/}{feature_function}
+
+\section{Preprocessing}	
+\import{sections/practical_crf_nonlinear/}{preprocessing}
+
+\section{Experimental results}	
+\import{sections/practical_crf_nonlinear/}{experiments}
 
 \newpage
+\emergencystretch=2em
 \printbibliography 
 \end{document}
