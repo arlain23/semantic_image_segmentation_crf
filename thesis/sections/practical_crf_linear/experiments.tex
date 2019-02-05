@@ -25,7 +25,7 @@ The first experiment of this part of the system was aimed to perform segmentatio
     \caption{Trained weights for segmentation of tricoloured images.}
     \centering
     \begin{tabular}{|
-    >{\columncolor[HTML]{C0C0C0}}c |n{2}{6}|n{2}{6}|n{2}{6}|}
+    >{\columncolor[HTML]{C0C0C0}}c|n{2}{6}|n{2}{6}|n{2}{6}|}
     \multicolumn{4}{c}{\cellcolor[HTML]{656565}{\color[HTML]{FFFFFF} \textit{local weights}}} \\ \hline
      & \multicolumn{1}{c|}{\cellcolor[HTML]{C0C0C0}red} & \multicolumn{1}{c|}{\cellcolor[HTML]{C0C0C0}green} & \multicolumn{1}{c|}{\cellcolor[HTML]{C0C0C0}blue} \\ \hline
     label 0 & -0.04148262363505202 & 0.02088709381110257 & 0.012204837263693908 \\ \hline
@@ -69,11 +69,11 @@ Accuracy of the described segmentation method is the presented in the table \ref
 \centering
 \caption{Accuracy of segmentation for tricoloured images expressed in IoU for each class.}
 \label{table:iou_linear_exp1}
-    \begin{tabular}{
-    >{\columncolor[HTML]{9B9B9B}}c ccc
-    >{\columncolor[HTML]{343434}}c }
-    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\
-    IoU {[}\%{]} & 100.00 & 100.00 & 100.00 & {\color[HTML]{FFFFFF} 100.00}
+    \begin{tabular}
+    {|>{\columncolor[HTML]{9B9B9B}}c|c|c|c|>{\columncolor[HTML]{343434}}c|} 
+    \hline
+    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\ \hline 
+    IoU {[}\%{]} & 100.00 & 100.00 & 100.00 & {\color[HTML]{FFFFFF} 100.00} \\ \hline
     \end{tabular}
 \end{table}
  
@@ -137,12 +137,13 @@ Basing on the inference performed on test images, it can be stated that the pres
 \centering
 \caption{Accuracy of segmentation based on RGB features for multicoloured images, expressed in IoU.}
 \label{table:iou_linear_exp2_1}
-    \begin{tabular}{
-    >{\columncolor[HTML]{9B9B9B}}c ccc
-    >{\columncolor[HTML]{343434}}c }
-    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\
-    local potential IoU {[}\%{]} & 84.24 & 54.72 & 69.27 & {\color[HTML]{FFFFFF} 69.41} \\
-    final IoU {[}\%{]} & 91.52 & 52.59 & 71.12 & {\color[HTML]{FFFFFF} 71.74} 
+    \begin{tabular}{|
+    >{\columncolor[HTML]{9B9B9B}}c|c|c|c|
+    >{\columncolor[HTML]{343434}}c|}
+    \hline
+    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\ \hline
+    local potential IoU {[}\%{]} & 84.24 & 54.72 & 69.27 & {\color[HTML]{FFFFFF} 69.41} \\ \hline
+    final IoU {[}\%{]} & 91.52 & 52.59 & 71.12 & {\color[HTML]{FFFFFF} 71.74} \\ \hline
     \end{tabular}
 \end{table}
 
@@ -205,11 +206,13 @@ By representing colour features in CIELAB colour space a large improvement was a
 \centering
 \caption{Accuracy of segmentation based on CIELAB features for multicoloured images, expressed in IoU.}
 \label{table:iou_linear_exp2_2}
-    \begin{tabular}{
-    >{\columncolor[HTML]{9B9B9B}}c ccc
-    >{\columncolor[HTML]{343434}}c }
-    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\
-    local potential IoU {[}\%{]} & 97.15 &  87.22 & 88.34 & {\color[HTML]{FFFFFF} 90.90} \\
-    final IoU {[}\%{]} & 100.00 & 100.00 & 100.00 & {\color[HTML]{FFFFFF} 100.00} 
+    \begin{tabular}{|
+    >{\columncolor[HTML]{9B9B9B}}c|c|c|c|
+    >{\columncolor[HTML]{343434}}c| }
+    \hline
+    \textit{class} & \cellcolor[HTML]{9B9B9B}label 0 & \cellcolor[HTML]{9B9B9B}label 1 & \cellcolor[HTML]{9B9B9B}label 2 & {\color[HTML]{FFFFFF} mIoU {[}\%{]}} \\ \hline
+    local potential IoU {[}\%{]} & 97.15 &  87.22 & 88.34 & {\color[HTML]{FFFFFF} 90.90} \\ \hline
+    final IoU {[}\%{]} & 100.00 & 100.00 & 100.00 & {\color[HTML]{FFFFFF} 100.00} \\ \hline
     \end{tabular}
 \end{table}
+

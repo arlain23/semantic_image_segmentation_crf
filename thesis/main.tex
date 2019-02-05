@@ -21,6 +21,9 @@
 \usepackage{nameref}
 \usepackage[parfill]{parskip}
 \usepackage{url}
+\usepackage{breakurl}
+\usepackage[breaklinks]{hyperref}
+\def\UrlBreaks{\do\/\do-}
 \usepackage{subcaption}
 \usepackage{textcomp}
 \usepackage{multicol}
@@ -141,18 +144,26 @@
 \label{sec:energy}
 \import{sections/structured_prediction/}{energy}
 
+
+\chapter{Semantic image segmentation system}
+\import{sections/practical_crf_linear/}{introduction}
+
+\section{Technological stack}	
+\import{sections/system/}{stack}
+
+\section{System components}	
+\import{sections/system/}{components}
+
+
 \chapter{Linear CRF - tmp title}
 \label{chapter:linear}
 \import{sections/practical_crf_linear/}{introduction}
 
-\section{System overview}	
-\import{sections/practical_crf_linear/}{system_overview}
-
-\section{Preprocessing}	
+\section{Preprocessing}
 \label{sec:linear_preprocessing}
 \import{sections/practical_crf_linear/}{preprocessing}
 
-\section{Feature function selection}	
+\section{Feature function definition}	
 \import{sections/practical_crf_linear/}{feature_function}
 
 \section{Dataset}	
@@ -165,26 +176,42 @@
 \section{Experimental results}	
 \import{sections/practical_crf_linear/}{experiments}
 
+
+
+
 \chapter{NonLinear CRF - tmp title}
 \label{chapter:nonlinear}
 \import{sections/practical_crf_nonlinear/}{introduction}
 
-\section{System overview}	
-\import{sections/practical_crf_nonlinear/}{system_overview}
-
-\section{Dataset}	
-\import{sections/practical_crf_nonlinear/}{dataset}
-
-\section{Feature function selection}	
+\section{Feature function definition}
 \import{sections/practical_crf_nonlinear/}{feature_function}
 
-\section{Preprocessing}	
-\import{sections/practical_crf_nonlinear/}{preprocessing}
+\section{Probability distribution estimation}
+\import{sections/practical_crf_nonlinear/}{pdm_estimation}
 
-\section{Experimental results}	
-\import{sections/practical_crf_nonlinear/}{experiments}
+\section{Semantic segmentation on noise free images}
+\import{sections/practical_crf_nonlinear/noise_free/}{introduction} 
+    \subsection{Dataset}
+
+    \subsection{Feature selection}
+    \import{sections/practical_crf_nonlinear/noise_free/}{feature_selection}
+    
+    \subsection{Experimental results}	
+    
+
+\section{Semantic segmentation on noised images}
+    \subsection{Dataset}
+    
+    \subsection{Feature function selection}
+    
+    \subsection{Experimental results}	
+
+
+
+
 
 \newpage
 \emergencystretch=2em
+\Urlmuskip=0mu plus 1mu\relax
 \printbibliography 
 \end{document}
