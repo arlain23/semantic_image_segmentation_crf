@@ -86,4 +86,25 @@ Computing of all messages for every edge of the graph allows finding such a conf
    \mu_i (y_i) = \sum_{F' \in M(i)}{ r_{F' \rightarrow Y_i}(y_i)}
 \end{equation}
 
+\subsection{Optimal labelling prediction}
+
+Inference is a message passing algorithm which is conducted iteratively. Initially, all variable-to-factor messages are set to 0 and because of that factor-to-variable messages can be computed. In the first iteration, those messages are calculated basing on energy of the factors only. Then, variable-to-factor messages can be computed. This process is exactly the same for factor graphs composed of two types of nodes, which is the case in Conditional Random Fields. Figure \ref{fig:inference_msgs} depicts both kinds of messages for a factor graph constructed on an image that is to be segmented.
+\begin{figure}[ht]
+ \centering
+   \begin{subfigure}[h]{0.40\textwidth}
+    \includegraphics[width=\textwidth]{structured_prediction/factor_to_variable_msg.png}
+    \caption{factor-to-variable-messages}
+    \label{fig:factor_variable_msg}
+  \end{subfigure}
+  %
+  \begin{subfigure}[h]{0.40\textwidth}
+    \includegraphics[width=\textwidth]{structured_prediction/variable_to_factor_msg.png}
+    \caption{variable-to-factor messages}
+    \label{fig:variable_factor_msg}
+  \end{subfigure}
+    \caption{Message passing algorithm on a factor graph created for an image of size $3\times 3$ pixels}
+    \label{fig:inference_msgs}
+\end{figure}
+After all messages are transferred, maximal beliefs for each factor are computed and a winning label is chosen, and the whole process is repeated in the next iteration. Inference is said to be completed when the state of convergence is achieved, which means when a change of maximal beliefs is smaller than a chosen convergence tolerance coefficient.
+
 Presented inference algorithms allow predicting the optimal configuration of labels for unclassified test samples given the observed data and an established model in a form of a factor graph. The model can be defined by expertise, however, usually it is trained based on known train samples.

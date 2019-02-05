@@ -4,7 +4,7 @@
 \usepackage[english, polish]{babel}
 \let\lll\undefined
 \usepackage{import}
-
+\usepackage[table,xcdraw]{xcolor}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
@@ -24,6 +24,18 @@
 \usepackage{subcaption}
 \usepackage{textcomp}
 \usepackage{multicol}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{siunitx}
+\usepackage{booktabs} 
+\usepackage{numprint}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
 
 \addbibresource{bibliography.bib}
 \addbibresource{website_bibliography.bib}
@@ -58,6 +70,7 @@
 \graphicspath{ {./images/} }
 
 \PassOptionsToPackage{export}{adjustbox}
+ 
 \fboxsep=0mm%padding thickness
 \fboxrule=1pt%border thickness
 
@@ -143,11 +156,11 @@
 \import{sections/practical_crf_linear/}{feature_function}
 
 \section{Dataset}	
+\label{sec:linear_dataset}
 \import{sections/practical_crf_linear/}{dataset}
 
-
-
-
+\section{Evaluation method}	
+\import{sections/practical_crf_linear/}{evaluation_method}
 
 \section{Experimental results}	
 \import{sections/practical_crf_linear/}{experiments}
