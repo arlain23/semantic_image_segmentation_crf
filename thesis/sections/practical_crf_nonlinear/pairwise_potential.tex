@@ -1,0 +1,9 @@
+The next component that is needed to compute an energy of the whole system is a pairwise potential. While unary potential was responsible for detecting shapes, the role of the pairwise potential is to remove noises from images. For this part of the system feature function based on Potts model was used. The general definition of this method was already presented in \textit{section \ref{sec:pariwise_potential}: \nameref{sec:pariwise_potential}}. The feature function used for 
+
+\begin{equation}
+    \label{eq:potts_model}
+    \varphi(y_i,y_j) = \begin{bmatrix}
+        \exp{(-\beta_0 \left \| \phi_0(x_i) - \varphi_0(x_j)\right \|^2)} \\
+        1
+    \end{bmatrix}
+\end{equation}
