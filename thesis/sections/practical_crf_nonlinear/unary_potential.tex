@@ -32,7 +32,7 @@ Having defined which superpixels have an influence on a superpixel under conside
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{nonlinear_intro/grid_colour.png}
-    \caption{Neighbour colour features for a sample superpixel}
+    \caption{Grid colour features for a sample superpixel}
     \label{fig:grid_colour}
 \end{figure}
 
@@ -40,14 +40,14 @@ The second type of features that were used in the system are also based on the d
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{nonlinear_intro/grid_neighbours.png}
-    \caption{Neighbour colour percentage features for a sample superpixel}
+    \caption{A sample superpixel from the grid with its closest neighbours marked.}
     \label{fig:grid_colour_neighbour}
 \end{figure}
 In this image, values of \nth{121}, \nth{122} and \nth{123} features are to be computed, which are the percentage of red, green and blue neighbours for a superpixel that is marked in pink. This superpixel has seven closest neighbours, each marked with a pink circle, out of which five are green, two are red, and none are blue. Therefore, value of the \nth{121} feature will be equal to around 0.29, \nth{121} feature will have a value of 0.71, and for \nth{123} feature it will be 0. In such a way, every feature for every superpixel is computed. Similarly, as in case of the previous type of features, also a visual representation of computed features might be useful especially when comparing two different superpixels. Figure \ref{fig:grid_colour_neighbour_percentage} depicts such a representation. 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\textwidth]{nonlinear_intro/grid_colour_percentage.png}
-    \caption{Neighbour colour percentage features for a sample superpixel}
+    \caption{Grid neighbour colour percentage features for a sample superpixel}
     \label{fig:grid_colour_neighbour_percentage}
 \end{figure}
 For each superpixel, three boxes are shown, one per each of the available colours, with a border representing this colour. The percentage of red, green or blue neighbours is expressed as a number between 0 and 1, which is then is multiplied by 255. The inner colour of every box is exactly this value. It can be easily seen, where there is a boundary between a green and a red region, as the features expressing percentage of green neighbours are gradually changing their colour from all white, meaning 100\% of green neighbours to all black meaning 0\% and conversely a feature for red percentage goes through through greyscale colours from black to white. Yet again, features of the superpixels that is under consideration are marked with a pink border.

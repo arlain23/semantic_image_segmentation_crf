@@ -32,6 +32,9 @@
 \usepackage{siunitx}
 \usepackage{booktabs} 
 \usepackage{numprint}
+\usepackage{array}
+\usepackage{graphbox}
+\usepackage[section]{placeins}
 \usepackage[super]{nth}
 \hypersetup{
     colorlinks,
@@ -180,7 +183,7 @@
 
 
 
-\chapter{NonLinear CRF - tmp title}
+\chapter{Shape-based semantic image segmentation}
 \label{chapter:nonlinear}
 \import{sections/practical_crf_nonlinear/}{introduction}
 
@@ -188,6 +191,7 @@
 \import{sections/practical_crf_nonlinear/}{feature_function}
 
 \subsection{Feature function for the unary potential}
+\label{sec:nonlinear_unary_potential}
 \import{sections/practical_crf_nonlinear/}{unary_potential}
 
 \subsection{Probability distribution estimation}
@@ -198,14 +202,16 @@
 
 \section{Semantic segmentation on noise free images}
 \import{sections/practical_crf_nonlinear/noise_free/}{introduction} 
+    
     \subsection{Dataset}
-
+    \import{sections/practical_crf_nonlinear/noise_free/}{dataset}
+ 
     \subsection{Feature selection}
     \label{sec:feature_selection_noise_free}
     \import{sections/practical_crf_nonlinear/noise_free/}{feature_selection}
     
     \subsection{Experimental results}	
-    
+        \import{sections/practical_crf_nonlinear/noise_free/}{experiments}
 
 \section{Semantic segmentation on noised images}
     \subsection{Dataset}

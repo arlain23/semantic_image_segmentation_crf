@@ -84,7 +84,7 @@ As probabilities of all possible labellings for a given pixel needs to sum to 1,
     p(f_i) = \sum_{y_i \in \pazocal{Y}}{(p(f_i | y_i) \cdot p(y_i))} 
 \end{equation}
 
-Hence, to calculate a unary potential for a pixel in a given image it is necessary to know the probability of occurrence of the chosen label and a probability of pixel features conditioned on this label. Both of them can be found from a probability distribution that needs to be modelled in an additional training process. With a set of correctly labelled training examples a label probability $p(y_i)$ is straightforward to calculate as it enough to find the ratio between pixels with a given label assigned and all pixels in a training set. Computation of $p(f_i | y_i)$ can be fairly complex, as a dimension of this distribution is dependent on the number of chosen features. However, assuming that chosen features are independent of each other, a problem of finding N-dimensional probability distribution can be transformed into N problems of finding 1-dimensional distributions as in equation \ref{eq:distribution_dimension}.
+Hence, to calculate a unary potential for a pixel in a given image it is necessary to know the probability of occurrence of the chosen label and a probability of pixel features conditioned on this label. Both of them can be found from a probability distribution that needs to be modelled in an additional training process. With a set of correctly labelled training examples a label probability $p(y_i)$ is straightforward to calculate as it enough to find the ratio between pixels with a given label assigned and all pixels in a training set. Computation of $p(f_i | y_i)$ can be fairly complex, as a dimension of this distribution is dependent on the number of chosen features. However, assuming that chosen features are independent of each other, a problem of finding N-dimensional probability distribution can be transformed into N problems of finding one-dimensional distributions as in equation \ref{eq:distribution_dimension}.
 \begin{equation}
     \label{eq:distribution_dimension}
     p(f_i|y_i) = \prod_{k=1}^{K}p(f_{i,k}|y_i)
@@ -146,7 +146,7 @@ When it comes to the second component of the energy function - a pairwise potent
         \end{bmatrix}
     \end{matrix}
 \end{equation}
-Then, a weight vector is a two dimensional vector composed of weight $w_{2,0}$ which describes a situation in which neighbouring pixels have the same label, and weight $w_{2,1}$ for a pair differing in assigned labels. 
+Then, a weight vector is a two-dimensional vector composed of weight $w_{2,0}$ which describes a situation in which neighbouring pixels have the same label, and weight $w_{2,1}$ for a pair differing in assigned labels. 
 \begin{equation}
     \label{eq:weight_pairwise}
     w(y_i, y_j) = \begin{bmatrix}
@@ -176,17 +176,17 @@ Penalising a situation in which adjacent pixels have different labels is well su
 \begin{equation}
     \label{eq:potts_model}
     \varphi(y_i,y_j) = \begin{bmatrix}
-        \exp{(-\beta_0 \left \| \phi_0(x_i) - \varphi_0(x_j)\right \|^2)} \\
-        \exp{(-\beta_1 \left \| \phi_1(x_i) - \varphi_1(x_j)\right \|^2)} \\
+        \exp{(-\beta_0 \left \| \phi_0(x_i) - \phi_0(x_j)\right \|^2)} \\
+        \exp{(-\beta_1 \left \| \phi_1(x_i) - \phi_1(x_j)\right \|^2)} \\
         ...             \\
-        \exp{(-\beta_n \left \| \phi_n(x_i) - \varphi_n(x_j)\right \|^2)} \\
+        \exp{(-\beta_n \left \| \phi_n(x_i) - \phi_n(x_j)\right \|^2)} \\
         1
     \end{bmatrix}
 \end{equation}
 
 Potts model requires a measure of similarity between pixels in order to check if there is an edge between them. This measure is represented as the difference between feature vectors of those pixels $\left \| \phi(x_i) - \phi(x_j)\right \|$ and a way of its calculation is dependent on a type of the chosen features. For example, a contrast sensitive Potts model that measures the difference between colour features of neighbouring pixels can be used \cite{article_main}, as differences in colour intensity are the simplest indicator of edges in an image. Then $\phi(x_i)$ and $\phi(x_j)$ would denote a three-dimensional vectors representing colours in a chosen colour scheme, of a given pixel pair $i$ and $j$. Depending on the problem a similarity of pixels can be calculated differently. If an image was pre-classified so that each region is represented by one discrete state, it is enough to propose a binary method of pixel similarity measure. Then the difference $\phi(x_i)$ and $\phi(x_j)$ would take value $0$ if pixels are of the same class, and value $1$ otherwise. For images that were not pre-classified, this measure can take any numeric value. For example, for colour features, it would the distance between colours in the chosen colour scheme. The CIELAB scheme would be a beneficial choice, as its way of modelling colour differences is the most similar to human colour vision. 
 
-The described way of representing pairwise feature vectors requires also a hyperparameter $\beta$. This is an image dependent parameter that reflects the spatial correlation between adjacent image pixels \cite{potts_beta}. For small values of $\beta$ classification will remain noisy, while for too large $\beta$ the result will be over-smoothed. Proper selection of this hyperparameter is crucial for denoising abilities of the pairwise term, however, it is difficult to fix this value a beforehand, as spatial organisation of images tend to differ. Therefore, a value of the hyperparameter $\beta$ should be adjusted separately for each image. One of the ways to make $\beta$ image specific is to introduce a dependency between this hyperparameter and an average value of a given feature difference $\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle$ in the image, as in formula \ref{eq:potts_beta}.
+The described way of representing pairwise feature vectors requires also a parameter $\beta$. This is an image dependent coefficient that reflects the spatial correlation between adjacent image pixels \cite{potts_beta}. For small values of $\beta$ classification will remain noisy, while for too large $\beta$ the result will be over-smoothed. Proper selection of this parameter is crucial for denoising abilities of the pairwise term, however, it is difficult to fix this value a beforehand, as spatial organisation of images tend to differ. Therefore, a value of $\beta$ should be adjusted separately for each image. One of the ways to make $\beta$ image specific is to introduce a dependency between this parameter and an average value of a given feature difference $\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle$ in the image, as in formula \ref{eq:potts_beta}.
 \begin{equation}
     \label{eq:potts_beta}
     \beta(x) = {2 \cdot {\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle}} ^ {-1}
