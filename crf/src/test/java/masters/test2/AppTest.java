@@ -52,7 +52,7 @@ public class AppTest
     	Constants.NUMBER_OF_SUPERPIXELS = 300;
     	Constants.RIGIDNESS = 50;
     	
-    	ImageDTO imageDTO = DataHelper.getSingleImageSegmented(new File(path), null, State.TEST, parameterContainer);
+    	ImageDTO imageDTO = DataHelper.getSingleImageSegmented(new File(path), null, null, State.TEST, parameterContainer);
 		
 		DataHelper.saveImageSuperpixelBordersOnly(imageDTO, imageDTO.getSuperPixels(), savePath);
 		DataHelper.saveImageSuperpixelsMeanColour(imageDTO, imageDTO.getSuperPixels(), savePath3);
