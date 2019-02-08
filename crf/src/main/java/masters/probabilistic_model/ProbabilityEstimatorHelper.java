@@ -98,7 +98,7 @@ public class ProbabilityEstimatorHelper {
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
+			ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, null, State.TRAIN, parameterContainer);
 			
 			/*
 			 *  generate label probability

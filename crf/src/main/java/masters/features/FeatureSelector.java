@@ -1,5 +1,6 @@
 package masters.features;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -10,9 +11,12 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import masters.Constants;
+import masters.Constants.State;
 import masters.cache.CacheUtils;
 import masters.cache.FeatureSelectionCacheHelper;
 import masters.image.ImageDTO;
+import masters.utils.DataHelper;
 import masters.utils.ParametersContainer;
 import masters.utils.ResultAnalyser;
 
@@ -22,21 +26,29 @@ public class FeatureSelector {
 	private List<Feature> allFeatures;
 	
 	private ParametersContainer parametersContainer;
-	private List<ImageDTO> validationImageList;
+	private Map<String, File> validationFiles;
+	private Map<String, File> resultFiles;
+	private Map<String, File> initFiles;
 	private int testFeatureId;
 	private Map<FeatureContainer, Double> precisionHistoryMap;
 	
 	private double CORRECTNESS_TOLERANCE = 0.05;
 	
 	public FeatureSelector(int numberOfStepsForward, int numberOfStepsBackward, Feature testFeature,
-			ParametersContainer parametersContainer, List<ImageDTO> validationImageList) {
+			ParametersContainer parametersContainer) {
 
 		this.numberOfStepsForward = numberOfStepsForward;
 		this.numberOfStepsBackward = numberOfStepsBackward;
 		this.allFeatures = ((FeatureContainer)testFeature).getFeatures();
 		
 		this.parametersContainer = parametersContainer;
-		this.validationImageList = validationImageList;
+		this.validationFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_PATH);
+		this.resultFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
+		this.initFiles = null;
+		
+		if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+			this.initFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_INIT_PATH);
+		}
 	
 		this.testFeatureId = testFeature.getFeatureIndex();
 		this.precisionHistoryMap = new HashMap<>();
@@ -186,15 +198,26 @@ public class FeatureSelector {
 			List<Integer> featureIdList = new ArrayList<>();
 			featureContainer.getFeatures().forEach(feature -> featureIdList.add(feature.getFeatureIndex()));
 			
-			
-			for (ImageDTO validationImage : this.validationImageList) {
+			double finalCorrectness = 0.0;
+			int numberOfImagesProcessed = 0;
+			System.out.println("******" + featureIdList + "******");
+			for (String key : this.validationFiles.keySet()) {
+				File trainFile = this.validationFiles.get(key);
+				File segmentedFile = resultFiles.get(key + Constants.RESULT_IMAGE_SUFFIX);
+				File initFile = null;
+				
+				ImageDTO validationImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, initFile, State.VALIDATION, parametersContainer);
 				validationImage.updateSelectedFeatures(featureIdList);
 				
+				double correctness = ResultAnalyser.analyseProbabilityDistributionForSingleImage(parametersContainer, validationImage);
+				System.out.print(correctness + " ");
+				finalCorrectness += correctness;
+				numberOfImagesProcessed++;
 			}
-			Map<ImageDTO, List<List<Double>>> probabilityDistribution = ResultAnalyser.analyseProbabilityDistribution(parametersContainer, validationImageList, null);
-			double correctness = ResultAnalyser.assessLabelisationCorrectness(probabilityDistribution);
-			precisionHistoryMap.put(featureContainer, correctness);
-			return correctness;
+			finalCorrectness /= numberOfImagesProcessed;
+			System.out.println(" -> " + finalCorrectness);
+			precisionHistoryMap.put(featureContainer, finalCorrectness);
+			return finalCorrectness;
 		}
 	}
 		

@@ -42,6 +42,7 @@ public class GradientDescentTrainer {
 	
 	public WeightVector train(WeightVector weightVector) {
 		Map<String, File> trainingFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_PATH);
+		Map<String, File> initFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_INIT_PATH);
 		Map<String, File> resultFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
 		
 		//random initial weights
@@ -63,8 +64,12 @@ public class GradientDescentTrainer {
 				
 				File trainFile = trainingFiles.get(fileName);
 				File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
+				File initFile = null;
+				if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+					initFile = initFiles.get(fileName);
+				}
 				
-				ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, State.TRAIN, parameterContainer);
+				ImageDTO trainingImage = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, initFile, State.TRAIN, parameterContainer);
 				FactorGraphModel factorGraph = new FactorGraphModel(trainingImage, weightVector, parameterContainer);
 				iterator++;
 				// get samples
@@ -105,11 +110,9 @@ public class GradientDescentTrainer {
 				
 			}
 			//check if accuracy is better
-			List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
-			List<ImageDTO> trainImageList = new ArrayList<>();
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-			InferenceHelper.runInference(testImageList, trainImageList, baseImagePath, "training_01_02_" + (epoch), parameterContainer, weightVector);
+			InferenceHelper.runInference(baseImagePath, "training_04_02_" + (epoch), parameterContainer, weightVector);
 			
 			
 			System.out.println(weightVector);

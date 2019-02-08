@@ -55,50 +55,40 @@ public class ImageDTO implements Cloneable, Serializable {
 	private Map<Feature, Double> betaMap;
 	
 	
-	public ImageDTO(String path, int width, int height, PixelDTO[][] pixelData, BufferedImage img, BufferedImage segmentedImage, State state, ParametersContainer parameterContainer) {
+	public ImageDTO(String path, int width, int height, BufferedImage img, BufferedImage segmentedImage, BufferedImage initImage, State state, ParametersContainer parameterContainer) {
 		super();
 		this.path = path;
 		this.width = width;
 		this.height = height;
-		this.pixelData = pixelData;
 		this.img = DataHelper.cloneBufferedImage(img);
 		this.pixelData = getPixelDTOs(img, false);
+		PixelDTO[][] initPixelData = null;
+		if (initImage != null) {
+			initPixelData = getPixelDTOs(initImage, false);
+			
+		}
 		if (segmentedImage != null) {
 			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImage, true);
 			updateLabelFromSegmentedImage(segmentedPixelData);
 		}
-		prepareSuperPixels(state);
-		prepareFeatureMasks();
-		if (parameterContainer.getSelectedFeatureIds() != null) {
-			updateSelectedFeatures(parameterContainer.getSelectedFeatureIds());
-		}
-	}
-	public ImageDTO(String path, int width, int height, BufferedImage img, BufferedImage segmentedImage, State state, ParametersContainer parameterContainer) {
-		super();
-		this.path = path;
-		this.width = width;
-		this.height = height;
-		this.img = DataHelper.cloneBufferedImage(img);;
-		this.pixelData = getPixelDTOs(img, false);
-		if (segmentedImage != null) {
-			PixelDTO[][] segmentedPixelData = getPixelDTOs(segmentedImage, true);
-			updateLabelFromSegmentedImage(segmentedPixelData);
-		}
-		prepareSuperPixels(state);
+
+		prepareSuperPixels(state, initPixelData);
 		prepareFeatureMasks();
 		if (parameterContainer.getSelectedFeatureIds() != null) {
 			updateSelectedFeatures(parameterContainer.getSelectedFeatureIds());
 		}
 	}
 	
-	private void prepareSuperPixels(State state) {
+	private void prepareSuperPixels(State state, PixelDTO[][] initPixelData) {
+		String prefix = state.toString();
+		if (state == State.TEST_IOU) prefix = State.TEST.toString();
 		if (Constants.CLEAR_CACHE) {
-			this.superPixels = SuperPixelHelper.getNewSuperPixels(this, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, state.toString(), true);
+			this.superPixels = SuperPixelHelper.getNewSuperPixels(this, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, prefix, true, initPixelData);
 		} else {
 			try {
-				this.superPixels = SuperPixelHelper.getSuperPixelsCached(this, state.toString());
+				this.superPixels = SuperPixelHelper.getSuperPixelsCached(this, prefix, initPixelData);
 			} catch (Exception e) {
-				this.superPixels = SuperPixelHelper.getNewSuperPixels(this, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, state.toString(), true);
+				this.superPixels = SuperPixelHelper.getNewSuperPixels(this, Constants.NUMBER_OF_SUPERPIXELS, Constants.RIGIDNESS, prefix, true, initPixelData);
 			}
 		}
 		
@@ -109,7 +99,21 @@ public class ImageDTO implements Cloneable, Serializable {
 		if (state != State.TEST) {
 			SuperPixelHelper.updateSuperPixelLabels(this.superPixels);
 		}
+		
 	}
+	
+	public Map<Integer, BinaryMask> getResultingLabelMasks() {
+		int numberOfSuperPixels = this.superPixels.size();
+		Map<Integer, BinaryMask> resultingLabelMap = initLabelToBinaryMaskMap(numberOfSuperPixels);
+		
+		for (SuperPixelDTO superPixel : superPixels) {
+			// prepare label map
+			BinaryMask labelMask = resultingLabelMap.get(superPixel.getLabel());
+			labelMask.switchOnByte(superPixel.getSuperPixelIndex());
+		}
+		return resultingLabelMap;
+	}
+	
 	private void prepareFeatureMasks() {
 		int numberOfSuperPixels = this.superPixels.size();
 
@@ -343,6 +347,7 @@ public class ImageDTO implements Cloneable, Serializable {
 			}
 		}
 	}
+	
 	public void updateSelectedFeatures(List<Integer> selectedFeatureIds) {
 		Set<Integer> selectedFeatureIdsSet = new HashSet<>(selectedFeatureIds);
 		

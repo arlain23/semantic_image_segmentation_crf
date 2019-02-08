@@ -22,6 +22,7 @@ public class Constants {
 	public static boolean ADD_NEIGBOUR_FEATURES = true;
 	public static boolean ADD_COLOUR_LOCAL_FEATURE = false;
 	public static boolean ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION = false;
+	public static boolean USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL = true;
 	
 	public static enum ColorSpace {
 	    RGB, HSL, HSV, CIELAB, HISTOGRAM
@@ -32,9 +33,10 @@ public class Constants {
 //	public static ColorSpace colorSpace = ColorSpace.HSV; 
 //	public static ColorSpace colorSpace = ColorSpace.CIELAB; 
 //	public static ColorSpace colorSpace = ColorSpace.HISTOGRAM;
+	public static ColorSpace pairwiseColorSpace = ColorSpace.RGB; 
 	
 	public static enum State {
-	    TRAIN, TEST, VALIDATION
+	    TRAIN, TEST, VALIDATION, TEST_IOU
 	}
 	
 	public static enum ColorAverageMethod {
@@ -75,7 +77,7 @@ public class Constants {
 	    generated_03_01_noise_12, generated_03_01_noise_13, generated_03_01_noise_14, generated_03_01_noise_15,
 	    generated_03_01_noise_16, generated_03_01_noise_17, generated_03_01_noise_18, generated_03_01_noise_19,
 	    generated_03_01_noise_20,
-	    generated_linear, generated_linear_coloured
+	    generated_linear, generated_linear_coloured, generated_linear_coloured_noise_4
 	}
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_equal;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.horse;
@@ -88,25 +90,29 @@ public class Constants {
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_large_noise;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_version2;
 //	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01_noise_19;
-	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_linear;
+	public static ImageFolder IMAGE_FOLDER = ImageFolder.generated_03_01;
 	
 	
 	
-	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_linear;
+	public static ImageFolder SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_03_01;
 	
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + File.separator + "train" + File.separator ;
 	public static String TRAIN_RESULT_PATH = IMAGE_FOLDER + File.separator + "result" + File.separator ;
+	public static String TRAIN_INIT_PATH = IMAGE_FOLDER + File.separator + "train_init" + File.separator;
 	public static String VALIDATION_PATH = IMAGE_FOLDER + File.separator + "validation" + File.separator ;
 	public static String VALIDATION_RESULT_PATH = IMAGE_FOLDER + File.separator + "validation_result" + File.separator ;
-	
+	public static String VALIDATION_INIT_PATH = IMAGE_FOLDER + File.separator + "validation_init" + File.separator;
 	public static String TEST_PATH = IMAGE_FOLDER + File.separator + "test" + File.separator;
+	public static String TEST_RESULT_PATH = IMAGE_FOLDER + File.separator + "test_result" + File.separator;
+	public static String TEST_INIT_PATH = IMAGE_FOLDER + File.separator + "test_init" + File.separator;
+	
 	public static String WORK_PATH = System.getProperty("user.dir") + File.separator + "src" + File.separator + "work" + File.separator; 
 	public static String RESULT_IMAGE_SUFFIX = "_N";
 	public static String IMAGE_EXTENSION= "png";
 	
-	public static int TRAIN_IMAGE_LIMIT = 30;
-	public static int TEST_IMAGE_LIMIT = 10;
+	public static int TRAIN_IMAGE_LIMIT = 5;
+	public static int TEST_IMAGE_LIMIT = 50;
 	
 	// training
 	public static int NUMBER_OF_ITERATIONS = 100;
@@ -115,7 +121,7 @@ public class Constants {
 	
 	//factorisation
 	public static int NUMBER_OF_STATES = 4;
-	public static double CONVERGENCE_TOLERANCE = 0.3;
+	public static double CONVERGENCE_TOLERANCE = 0.1;
 	
 	// image input
 	

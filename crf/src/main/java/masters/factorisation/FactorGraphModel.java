@@ -171,6 +171,7 @@ public class FactorGraphModel implements Serializable {
 					msgToLeftNode = maxInnerSum + Math.log(msgToLeftNode);
 					
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, msgToLeftNode);
+//					System.out.println("pair " + label + "  " + msgToLeftNode);
 					
 					// Transferring message to right node 
 					double msgToRightNode = 0;
@@ -197,6 +198,7 @@ public class FactorGraphModel implements Serializable {
 					
 						
 					msgToRightNode = maxInnerSum + Math.log(msgToRightNode);
+//					System.out.println("pair " + label + "  " + msgToRightNode);
 					factorToRightNodeEdge.setFactorToVariableMsgValue(label, msgToRightNode);
 					
 				} else {		// local model
@@ -227,6 +229,7 @@ public class FactorGraphModel implements Serializable {
 					/*
 					 * ZDRADZIECKI MINUS
 					 */
+//					System.out.println("local " + label + "  " + (-featureEnergy));
 					factorToLeftNodeEdge.setFactorToVariableMsgValue(label, -featureEnergy);
 				}
 			}

@@ -35,7 +35,6 @@ public class SuperpixelCacheHelper {
 			name = name.replaceAll("." + Constants.IMAGE_EXTENSION, "");
 			String fileName = prefix + "_" + name;
 			String path = Constants.WORK_PATH + Constants.SUPERPIXEL_IMAGE_FOLDER + File.separator + fileName + ".txt";
-			
 			List<List<Integer>> superPixels = new ArrayList<List<Integer>>();
 			
 			BufferedReader br = new BufferedReader(new FileReader(path)); 

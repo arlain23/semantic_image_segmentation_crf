@@ -10,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Logger;
 
 import masters.Constants;
+import masters.Constants.ColorSpace;
 import masters.colors.ColorSpaceConverter;
 import masters.colors.ColorSpaceException;
 import masters.factorisation.FactorGraphModel;
@@ -47,6 +49,8 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	private List<Feature> availablePairwiseFeatures;
 	
 	private double[] meanRGB;	
+	private double[] originalRGB;	
+	
 	private int label;
 	
 	private int identifingColorRGB;
@@ -89,7 +93,11 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 			tmpLocalFeatures.addAll(initLocalFeatures(this.meanRGB,meanSuperPixelDistance, superPixels, image));
 			Feature featureContainer = new FeatureContainer(tmpLocalFeatures, 0);
 			localFeatures.add(featureContainer);
-			pairwiseFeatures.addAll(initPairwiseFeatures(this.meanRGB));
+			if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL){
+				pairwiseFeatures.addAll(initPairwiseFeatures(this.originalRGB, Constants.pairwiseColorSpace));
+			} else {
+				pairwiseFeatures.addAll(initPairwiseFeatures(this.meanRGB, Constants.colorSpace));
+			}
 			
 		} else {
 			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
@@ -128,14 +136,15 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		this.localFeatureVector =  new FeatureVector(localFeatures, true);
 				
 	}
-	public void initMeanRGB() {
+	public void initMeanRGB(PixelDTO[][] originalRGB) {
+		this.originalRGB = getMeanRGBFromPixelData(originalRGB);
 		try {
 			switch (Constants.COLOR_AVERAGE_METHOD) {
 			case MEAN:
-				this.meanRGB = getMeanRGBValue();
+				this.meanRGB = getMeanRGBValue(this.pixels);
 				break;
 			case POPULARITY:
-				this.meanRGB = getMostPopularRGBValue();
+				this.meanRGB = getMostPopularRGBValue(this.pixels);
 				break;
 			default:
 				throw new ColorSpaceException("Undefined averaging method");
@@ -144,7 +153,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 			throw new RuntimeException(e);
 		}
 	}
-	private double [] getMeanRGBValue () {
+	private double [] getMeanRGBValue (List<PixelDTO> pixels) {
 		double RSum = 0;
 		double GSum = 0;
 		double BSum = 0;
@@ -160,7 +169,21 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		
 		return new double [] {meanR, meanG, meanB};
 	}
-	private double [] getMostPopularRGBValue () {
+	private double [] getMeanRGBFromPixelData (PixelDTO[][] originalRGB) {
+		if (originalRGB == null) return getMeanRGBValue(pixels);
+		List<PixelDTO> pixels = getPixelsForThisSuperpixel(originalRGB);
+		return getMeanRGBValue(pixels);
+	}
+
+
+
+	
+	private double [] getMostPopularRGBFromPixelData (PixelDTO[][] originalRGB) {
+		if (originalRGB == null) return getMostPopularRGBValue(pixels);
+		List<PixelDTO> pixels = getPixelsForThisSuperpixel(originalRGB);
+		return getMostPopularRGBValue(pixels);
+	}
+	private double [] getMostPopularRGBValue (List<PixelDTO> pixels) {
 		
 		if (Constants.USE_GRID_MODEL) {
 			Map<Color, Integer> colourCounter = new HashMap<Color, Integer>();
@@ -298,10 +321,11 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		
 		return features;
 	}
-	private List<Feature> initPairwiseFeatures(double [] rgb) {
+	private List<Feature> initPairwiseFeatures(double [] rgb, ColorSpace colorSpace) {
 		List<Feature> features = new ArrayList<Feature> ();
-		features.add(new VectorFeature(getNeighbourColoursPercentage(rgb), features.size()));
-//		features.add(new VectorFeature(getColour(rgb, features.size()), features.size()));
+//		features.add(new VectorFeature(getNeighbourColoursPercentage(rgb), features.size()));
+		VectorFeature pairwiseFeature = new VectorFeature(getColour(rgb, features.size(), colorSpace), features.size());
+		features.add(pairwiseFeature);
 		return features;
 	}
 	
@@ -423,7 +447,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	
 	private List<Feature> getColourFeatures(double [] rgb, int startingIndex) {
 		List<Feature> features = new ArrayList<Feature> ();
-		List<Double> featureValues = getColour(rgb, startingIndex);
+		List<Double> featureValues = getColour(rgb, startingIndex, Constants.colorSpace);
 		for (int i = 0; i < featureValues.size(); i++) {
 			features.add(new ContinousFeature(featureValues.get(i), i + startingIndex));
 		}
@@ -500,9 +524,9 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		return colorMap;
 		
 	}
-	private List<Double> getColour(double [] rgb, int startingIndex) {
+	private List<Double> getColour(double [] rgb, int startingIndex, ColorSpace colorSpace) {
 		try {
-			switch (Constants.colorSpace) {
+			switch (colorSpace) {
 			case RGB:
 				return initRGBFeatures(rgb, startingIndex);
 			case CIELAB:
@@ -669,7 +693,7 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	}
 	
 	public FeatureVector getPairwiseImageFi(SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel, ImageDTO trainImage, ParametersContainer parametersContainer){
-		return CRFUtils.getPairwiseImageFi(this.superPixelIndex, superPixel, mask, label, variableLabel, trainImage, this.pairwiseFeatureVector.getFeatures(), parametersContainer);
+		return CRFUtils.getPairwiseImageFi(this.superPixelIndex, this, mask, label, variableLabel, trainImage, superPixel, parametersContainer);
 			
 	}
 	
@@ -765,6 +789,12 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 	public double[] getMeanRGB() {
 		return this.meanRGB;
 	}
+	
+	
+	public double[] getOriginalRGB() {
+		return originalRGB;
+	}
+
 
 	public FeatureVector getLocalFeatureVector() {
 		return localFeatureVector;
@@ -773,6 +803,14 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 		return pairwiseFeatureVector;
 	}
 
+	private List<PixelDTO> getPixelsForThisSuperpixel(PixelDTO[][] originalRGB) {
+		List<PixelDTO> pixels = new ArrayList<>();
+		for (PixelDTO pixel : this.pixels) {
+			pixels.add(originalRGB[pixel.getXIndex()][pixel.getYIndex()]);
+		}
+		return pixels;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

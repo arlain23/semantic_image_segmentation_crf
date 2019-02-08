@@ -13,6 +13,13 @@ public class BinaryMask implements Serializable {
 	private int listSize;
 	
 	
+	public BinaryMask (BinaryMask mask1, BinaryMask mask2, boolean union) {
+		this(mask1.listSize);
+		for (int bit = 0; bit < mask1.listSize; bit++) {
+			setValue(bit, (mask1.getValue(bit) | mask2.getValue(bit)));
+		}
+	}
+	
 	public BinaryMask (BinaryMask mask1, BinaryMask mask2) {
 		this(mask1.listSize);
 		for (int bit = 0; bit < mask1.listSize; bit++) {

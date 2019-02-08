@@ -12,6 +12,7 @@ public class PixelDTO implements Cloneable, Serializable {
 	private int R;
 	private int G;
 	private int B;
+	
 	private int alpha;
 	private Integer label;
 	
@@ -63,7 +64,7 @@ public class PixelDTO implements Cloneable, Serializable {
 	public int getYIndex() {
 		return yIndex;
 	}
-
+	
 	public int getR() {
 		return R;
 	}
@@ -101,6 +102,13 @@ public class PixelDTO implements Cloneable, Serializable {
     	PixelDTO newObject = new PixelDTO(xIndex, yIndex, R, G, B, alpha, label);
     	return newObject;
     }
+
+	@Override
+	public String toString() {
+		return "PixelDTO [xIndex=" + xIndex + ", yIndex=" + yIndex + ", RGB=" + R
+				+ "," + G + "," + B + "]";
+	}
+
 	
 	
 	

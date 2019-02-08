@@ -51,23 +51,64 @@ public class DataHelper {
 
 	/* getters */ 
 
-
+	
+	
+	public static boolean preapreValidationDataSegmented(ParametersContainer parameterContainer) {
+		Map<String, File> files = getFilesFromDirectory(Constants.VALIDATION_PATH);
+		Map<String, File> resultFiles = getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
+		
+		for (String key : files.keySet()) {
+			File trainFile = files.get(key);
+			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
+			
+			getSingleImageSegmented(trainFile, segmentedFile, null, State.VALIDATION, parameterContainer);
+		}
+		return true;
+	}
+	
 	public static List<ImageDTO> getValidationDataSegmented(ParametersContainer parameterContainer) {
 		Map<String, File> validationFiles = getFilesFromDirectory(Constants.VALIDATION_PATH);
 		Map<String, File> resultFiles = getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
-
-		return getDataSegmented(validationFiles, resultFiles, State.VALIDATION, parameterContainer);
+		Map<String, File> initFiles = null;
+		if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+			initFiles = getFilesFromDirectory(Constants.VALIDATION_INIT_PATH);
+		}
+		return getDataSegmented(validationFiles, resultFiles, initFiles, State.VALIDATION, parameterContainer);
+	}
+	
+	public static List<ImageDTO> getValidationSingleDataSegmented(ParametersContainer parameterContainer) {
+		Map<String, File> validationFiles = getFilesFromDirectory(Constants.VALIDATION_PATH);
+		Map<String, File> resultFiles = getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
+		Map<String, File> initFiles = null;
+		if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+			initFiles = getFilesFromDirectory(Constants.VALIDATION_INIT_PATH);
+		}
+		return getOneDataSegmented(validationFiles, resultFiles, initFiles, State.VALIDATION, parameterContainer);
 	}
 
 	public static List<ImageDTO> getTrainingDataSegmented(ParametersContainer parameterContainer) {
 		Map<String, File> trainingFiles = getFilesFromDirectory(Constants.TRAIN_PATH);
 		Map<String, File> resultFiles = getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
+		Map<String, File> initFiles = null;
+		if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+			initFiles = getFilesFromDirectory(Constants.TRAIN_INIT_PATH);
+		}
+		return getDataSegmented(trainingFiles, resultFiles, initFiles, State.TRAIN, parameterContainer);
+	}
+	
+	public static List<ImageDTO> getTestDataSegmented(ParametersContainer parameterContainer) {
+		Map<String, File> trainingFiles = getFilesFromDirectory(Constants.TEST_PATH);
+		Map<String, File> resultFiles = getFilesFromDirectory(Constants.TEST_RESULT_PATH);
+		Map<String, File> initFiles = null;
+		if (Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+			initFiles = getFilesFromDirectory(Constants.TEST_INIT_PATH);
+		}
 
-		return getDataSegmented(trainingFiles, resultFiles, State.TRAIN, parameterContainer);
+		return getDataSegmented(trainingFiles, resultFiles, initFiles, State.TEST_IOU, parameterContainer);
 	}
 
-	private static List<ImageDTO> getDataSegmented(
-			Map<String, File> files, Map<String, File> resultFiles, State state, ParametersContainer parameterContainer) {
+	private static List<ImageDTO> getOneDataSegmented(
+			Map<String, File> files, Map<String, File> resultFiles, Map<String, File> initFiles, State state, ParametersContainer parameterContainer) {
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
 		for (String key : files.keySet()) {
@@ -77,22 +118,64 @@ public class DataHelper {
 
 			File trainFile = files.get(key);
 			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
+			File initFile = null;
+			if (initFiles != null) {
+				initFile = initFiles.get(key);
+			}
+			
+			imageList.add(getSingleImageSegmented(trainFile, segmentedFile, initFile, state, parameterContainer));
+			return imageList;
+		}
+		return imageList;
+	}
+	private static List<ImageDTO> getDataSegmented(
+			Map<String, File> files, Map<String, File> resultFiles, Map<String, File> initFiles, State state, ParametersContainer parameterContainer) {
+		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
+		int i = 0;
+		for (String key : files.keySet()) {
+			if (++i >= Constants.TRAIN_IMAGE_LIMIT + 1) {
+				return imageList;
+			}
 
-			imageList.add(getSingleImageSegmented(trainFile, segmentedFile, state, parameterContainer));
+			File trainFile = files.get(key);
+			File segmentedFile = resultFiles.get(key + RESULT_IMAGE_SUFFIX);
+			File initFile = null;
+			if (initFiles != null) {
+				initFile = initFiles.get(key);
+			}
+			
+			imageList.add(getSingleImageSegmented(trainFile, segmentedFile, initFile, state, parameterContainer));
 		}
 		return imageList;
 	}
 
 	public static ImageDTO getSingleImageSegmented(
-			File trainFile, File segmentedFile, State state, ParametersContainer parameterContainer) {
+			File trainFile, File segmentedFile, File initFile, State state, ParametersContainer parameterContainer) {
 		BufferedImage trainImg = openImage(trainFile);
 		BufferedImage segmentedImg = null;
+		BufferedImage initImg = null;
 		if (segmentedFile != null) {
 			segmentedImg = openImage(segmentedFile);
 		}
+		if (initFile != null) {
+			initImg = openImage(initFile);
+		}
 
-		
-		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, state, parameterContainer);
+		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, segmentedImg, initImg, state, parameterContainer);
+		return imageObj;
+
+	}
+	
+	public static ImageDTO getSingleImage(
+			File trainFile, File initFile, State state, ParametersContainer parameterContainer) {
+		BufferedImage trainImg = openImage(trainFile);
+		BufferedImage initImg = null;
+		if (initFile != null) {
+			initImg = openImage(initFile);
+		}
+
+		ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, initImg, state, parameterContainer);
+
 		return imageObj;
 
 	}
@@ -102,6 +185,7 @@ public class DataHelper {
 
 	public static List<ImageDTO> getTestData(ParametersContainer parameterContainer) {
 		Map<String, File> testFiles = getFilesFromDirectory(Constants.TEST_PATH);
+		Map<String, File> initFiles = getFilesFromDirectory(Constants.TEST_INIT_PATH);
 
 		List <ImageDTO> imageList = new ArrayList<ImageDTO>();
 		int i = 0;
@@ -110,12 +194,11 @@ public class DataHelper {
 				break;
 			}
 			File trainFile = testFiles.get(key);
-
-			BufferedImage trainImg = openImage(trainFile);
-
-			ImageDTO imageObj = new ImageDTO(trainFile.getPath(), trainImg.getWidth(),trainImg.getHeight(), trainImg, null, State.TEST, parameterContainer);
-
-			imageList.add(imageObj);
+			File initFile = null;
+			if (initFiles != null) {
+				initFile = initFiles.get(key);
+			}
+			imageList.add(getSingleImage(trainFile, initFile, State.TEST, parameterContainer));
 		}
 		return imageList;
 	}
@@ -175,6 +258,27 @@ public class DataHelper {
 
 	/* viewers */
 
+	public static void viewImage(PixelDTO[][] pixelArray, ImageDTO image) {
+		/* change image pixel data */
+		BufferedImage img = image.getImage();
+
+		for (int x = 0; x < pixelArray[0].length; x++) {
+			for (int y = 0; y < pixelArray.length; y++) {
+				try {
+					PixelDTO pixelDTO = pixelArray[y][x];
+					int value = new Color(pixelDTO.getR(), pixelDTO.getG(), pixelDTO.getB()).getRGB();
+					img.setRGB(x, y, value);
+				} catch (NullPointerException e) {
+					_log.error("null", e);
+					System.out.println("image.pixelData[x][y].getLabel()" + image.getPixelData()[x][y].getLabel());
+					throw new RuntimeErrorException(null);
+				}
+			}
+		}
+		showImageInJframe("gowno", img);
+		
+	}
+	
 	public static void viewImageSegmented(ImageDTO image) {
 		viewImageSegmented(image, "");
 	}
@@ -256,7 +360,20 @@ public class DataHelper {
 
 		showImageInJframe(title, img);
 	}
+	public static void viewImageSuperpixelOriginalData(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
+		/* change image pixel data */
+		BufferedImage img = image.getImage();
+		for (SuperPixelDTO sp : superPixels) {
+			double[] rgbArray = sp.getOriginalRGB();
+			int rgb = new Color((int)rgbArray[0],(int)rgbArray[1], (int)rgbArray[2]).getRGB();
+			List<PixelDTO> pixels = sp.getPixels();
+			for (PixelDTO p : pixels) {
+				img.setRGB(p.getXIndex(), p.getYIndex(), rgb);
+			}
+		}
 
+		showImageInJframe(title, img);
+	}
 	public static void viewImageWithSuperPixelsIndex(ImageDTO image, List<SuperPixelDTO> superPixels, String title) {
 		BufferedImage img = cloneBufferedImage(image.getImage());
 
@@ -345,6 +462,33 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	public static void saveImageSuperpixelBordersOnlyOriginalData(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
+		BufferedImage img = cloneBufferedImage(image.getImage());
+		for (SuperPixelDTO superPixel : superPixels) {
+			List<PixelDTO> allPixels = superPixel.getPixels();
+			double[] rgbArray = superPixel.getOriginalRGB();
+			int pixelColor = new Color((int)rgbArray[0],(int)rgbArray[1], (int)rgbArray[2]).getRGB();
+			for (PixelDTO pixel : allPixels) {
+				img.setRGB(pixel.getXIndex(), pixel.getYIndex(), pixelColor);
+			}
+			
+			int rgbSuperPixel = superPixel.getIdentifingColorRGB();
+			List<PixelDTO> borderPixels = superPixel.getBorderPixels();
+			for (PixelDTO borderPixel : borderPixels) {
+				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
+			}
+		}
+		File outputFile = new File(path);
+		outputFile.getParentFile().mkdirs();
+		try {
+			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void saveImageSuperpixelBordersOnly(ImageDTO image, List<SuperPixelDTO> superPixels, String path) {
 		BufferedImage img = cloneBufferedImage(image.getImage());
 		for (SuperPixelDTO superPixel : superPixels) {
@@ -440,9 +584,18 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
-	public static void saveImageFi1ProbabilitiesWithMarkedSuperPixel(ImageDTO image, SuperPixelDTO superPixelToBeMarked,
+	
+	
+	public static void saveImageFi1Probabilities(ImageDTO image, SuperPixelDTO superPixelToBeMarked,
 			String basePath, int objectLabel,
 			List<Double> superPixelProbs) {
+		boolean saveWithSuperpixel = superPixelToBeMarked != null;
+		saveImageFi1Probabilities(image, superPixelToBeMarked, basePath, objectLabel, superPixelProbs, saveWithSuperpixel);
+	}
+	
+	private static void saveImageFi1Probabilities(ImageDTO image, SuperPixelDTO superPixelToBeMarked,
+			String basePath, int objectLabel,
+			List<Double> superPixelProbs, boolean markSuperpixel) {
 
 		String filePath = basePath + "label_" + objectLabel + "." + Constants.IMAGE_EXTENSION;
 		File outputfile = new File(filePath);
@@ -472,12 +625,13 @@ public class DataHelper {
 					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), rgbSuperPixel);
 				}
 			}
-			
-			// update chosen superPixel
-			List<PixelDTO> borderPixels = superPixelToBeMarked.getBorderPixels();
-			int red = Color.BLUE.getRGB();
-			for (PixelDTO borderPixel : borderPixels) {
-				img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), red);
+			if (markSuperpixel) {
+				// update chosen superPixel
+				List<PixelDTO> borderPixels = superPixelToBeMarked.getBorderPixels();
+				int red = Color.BLUE.getRGB();
+				for (PixelDTO borderPixel : borderPixels) {
+					img.setRGB(borderPixel.getXIndex(), borderPixel.getYIndex(), red);
+				}
 			}
 
 			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
@@ -656,6 +810,7 @@ public class DataHelper {
 			}
 
 			ImageIO.write(img, Constants.IMAGE_EXTENSION, outputfile);
+			System.out.println("saving " + outputfile.getAbsolutePath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1117,9 +1272,14 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
+	
 
 	/* others */
 
+	public static Color getColorFromRGB(double[] rgb) {
+		return new Color((int)rgb[0], (int)rgb[1], (int)rgb[2]);
+		
+	}
 
 	public static Set <String> getPixelColors(BufferedImage image){
 		Set <String> hashColours = new HashSet<String>();

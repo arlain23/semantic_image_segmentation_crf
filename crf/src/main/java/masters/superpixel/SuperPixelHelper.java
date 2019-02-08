@@ -27,7 +27,7 @@ import masters.utils.DataHelper;
 
 public class SuperPixelHelper {
 	
-	public static List<SuperPixelDTO> getSuperPixels(ImageDTO imageDTO, List<List<Integer>> superPixelDivision) {
+	public static List<SuperPixelDTO> getSuperPixels(ImageDTO imageDTO, List<List<Integer>> superPixelDivision, PixelDTO[][] initPixelData) {
 		List <SuperPixelDTO> superPixels = new ArrayList<SuperPixelDTO>();
 		
 		
@@ -57,18 +57,19 @@ public class SuperPixelHelper {
 		Collections.sort(superPixels);
 		initBorderData(imageDTO, superPixels);
 		for (SuperPixelDTO superPixel : superPixels) {
-			superPixel.initMeanRGB();
+			superPixel.initMeanRGB(initPixelData);
 			superPixel.initNeighbours(imageDTO.getPixelData(), superPixels);
 		}
 		return superPixels;
 	}
 	
-	public static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) {
+	public static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix, PixelDTO[][] initPixelData) {
 		List<List<Integer>> superPixelDivision = SuperpixelCacheHelper.getSuperPixelDivision(imageDTO, prefix);
-		return getSuperPixels(imageDTO, superPixelDivision);
+		return getSuperPixels(imageDTO, superPixelDivision, initPixelData);
 		
 	}
-	public static  List<SuperPixelDTO> getNewSuperPixels(ImageDTO imageDTO, int expectedNumberOfSuperpixels, double rigidness, String prefix, boolean savePath)  {
+	public static  List<SuperPixelDTO> getNewSuperPixels(ImageDTO imageDTO, int expectedNumberOfSuperpixels, double rigidness,
+			String prefix, boolean savePath, PixelDTO[][] initPixelData)  {
 		try {
 			Runtime runtime = Runtime.getRuntime();
 			String jarPath = System.getProperty("user.dir") + "\\src\\superpixel.jar";
@@ -87,8 +88,7 @@ public class SuperPixelHelper {
 				superPixelDivision.add(row);
 			}
 			
-			List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision);
-			DataHelper.viewImageSegmentedSuperPixels(imageDTO, superPixels, "foo");
+			List<SuperPixelDTO> superPixels = getSuperPixels(imageDTO, superPixelDivision, initPixelData);
 			SuperpixelCacheHelper.saveSuperPixelDivision(imageDTO, prefix);
 			
 			if (savePath) {
@@ -124,6 +124,15 @@ public class SuperPixelHelper {
         for (SuperPixelDTO superPixel : superPixels) {
         	superPixel.initBorderPixels();   
         }
+	}
+	
+	
+	public static void updateSuperPixelInitialData(
+			List<SuperPixelDTO> superPixels, PixelDTO[][] initPixelData) {
+
+		for (SuperPixelDTO superPixel : superPixels) {
+			
+		}
 	}
 	
 	public static void updateSuperPixelLabels(List<SuperPixelDTO> superPixels) {
@@ -167,4 +176,5 @@ public class SuperPixelHelper {
 	}
 	
 	private static Logger _log = Logger.getLogger(SuperPixelHelper.class);
+
 }

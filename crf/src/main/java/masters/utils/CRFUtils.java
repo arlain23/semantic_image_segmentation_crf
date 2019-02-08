@@ -190,22 +190,22 @@ public class CRFUtils {
    */
 
 	public static FeatureVector getPairwiseImageFi(int superPixelIndex, SuperPixelDTO superPixel, ImageMask mask, Integer label, Integer variableLabel,
-			ImageDTO image, List<Feature> pairwiseFeatures, ParametersContainer parameterContainer){
+			ImageDTO image, SuperPixelDTO neighbouringSuperPixel, ParametersContainer parameterContainer){
 		if (Constants.USE_NON_LINEAR_MODEL) {
-			return getPairwiseImageFiNonLinear(superPixel, label, variableLabel, image, pairwiseFeatures, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfPairwiseFeatures());
+			return getPairwiseImageFiNonLinear(superPixel, label, variableLabel, image, neighbouringSuperPixel, parameterContainer.getNumberOfLocalFeatures(), parameterContainer.getNumberOfPairwiseFeatures());
 		} else {
 			return getPairwiseImageFiLinear(superPixel, mask, label, variableLabel, superPixelIndex, parameterContainer.getNumberOfLocalFeatures());
 		}
 	}
 
-	public static FeatureVector getPairwiseImageFiNonLinear(SuperPixelDTO superPixel, Integer label, Integer variableLabel, ImageDTO image, List<Feature> pairwiseFeatures, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
+	public static FeatureVector getPairwiseImageFiNonLinear(SuperPixelDTO superPixel, Integer label, Integer variableLabel, ImageDTO image, SuperPixelDTO neighbouringSuperPixel, int numberOfLocalFeatures, int numberOfPairwiseFeatures) {
 		FeatureVector imageFi = new FeatureVector(numberOfLocalFeatures + (numberOfPairwiseFeatures + 1));
 		int featureIndex = numberOfLocalFeatures;
 		for (int i = 0; i < numberOfPairwiseFeatures; i++) {
-			double featureValue = 0; 
-			if (label != variableLabel) {
-				featureValue = getPairWiseFeatureTerm(pairwiseFeatures.get(i), 
-						superPixel.getPairwiseFeatureVector().getFeatures().get(i), image);
+			double featureValue = 0.0; 
+			if (label != variableLabel || Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL) {
+				featureValue = getPairWiseFeatureTerm(superPixel.getPairwiseFeatureVector().getFeatures().get(i), 
+						neighbouringSuperPixel.getPairwiseFeatureVector().getFeatures().get(i), image, label==variableLabel);
 			}
 			imageFi.setFeatureValue(featureIndex++, featureValue);
 		}
@@ -214,10 +214,15 @@ public class CRFUtils {
 		return imageFi;
 	}
 
-	private static double getPairWiseFeatureTerm(Feature thisFeature, Feature otherFeature, ImageDTO image) {
+	private static double getPairWiseFeatureTerm(Feature thisFeature, Feature otherFeature, ImageDTO image, boolean areLabelsTheSame) {
 		double beta = image.getBeta(thisFeature);
 		double featureDifference = thisFeature.getDifference(otherFeature);
-		double featureValue = Math.exp(-beta * Math.pow(Math.abs(featureDifference), 2));
+		double featureValue = 0.0;
+		if (areLabelsTheSame) {
+			featureValue = 1 - Math.exp(-beta * Math.pow(Math.abs(featureDifference), 2));
+		} else {
+			featureValue = Math.exp(-beta * Math.pow(Math.abs(featureDifference), 2));
+		}
 		return featureValue;
 	}
 
