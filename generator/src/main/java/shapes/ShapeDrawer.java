@@ -286,7 +286,7 @@ public class ShapeDrawer {
 		return color;
 	}
 	
-	private static Color getColorMarkup(Color color) {
+	public static Color getColorMarkup(Color color) {
 		return GeneratorConstants.LABEL_TO_MARKUP_MAP.get(
 				GeneratorConstants.COLOR_TO_LABEL_MAP.get(color));
 	}

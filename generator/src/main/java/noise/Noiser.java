@@ -27,17 +27,17 @@ public class Noiser {
 	
 	
 	private static List<SuperPixelDTO> getSuperPixelsCached(ImageDTO imageDTO, String prefix) throws IOException, ColorSpaceException {
-		return SuperPixelHelper.getSuperPixelsCached(imageDTO, prefix);
+		return SuperPixelHelper.getSuperPixelsCached(imageDTO, prefix,  null);
 	}
 	public static void addNoiseToData(String baseImagePath, int noiseNumber) {
-		Map<String, File> trainingFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_PATH);
-		Map<String, File> resultFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
-		addNoiseToData(baseImagePath, State.TRAIN, trainingFiles, resultFiles, noiseNumber);
-		
-		Map<String, File> validationFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_PATH);
-		Map<String, File> validationResultFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
-		
-		addNoiseToData(baseImagePath, State.VALIDATION, validationFiles, validationResultFiles, noiseNumber);
+//		Map<String, File> trainingFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_PATH);
+//		Map<String, File> resultFiles = DataHelper.getFilesFromDirectory(Constants.TRAIN_RESULT_PATH);
+//		addNoiseToData(baseImagePath, State.TRAIN, trainingFiles, resultFiles, noiseNumber);
+//		
+//		Map<String, File> validationFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_PATH);
+//		Map<String, File> validationResultFiles = DataHelper.getFilesFromDirectory(Constants.VALIDATION_RESULT_PATH);
+//		
+//		addNoiseToData(baseImagePath, State.VALIDATION, validationFiles, validationResultFiles, noiseNumber);
 		
 		Map<String, File> testFiles = DataHelper.getFilesFromDirectory(Constants.TEST_PATH);
 		addNoiseToData(baseImagePath, State.TEST, testFiles, new HashMap<String, File>(), noiseNumber);
@@ -49,15 +49,12 @@ public class Noiser {
 		ParametersContainer parameterContainer = ParametersContainer.getInstance();
 		Random rand = new Random();
 		int limit = 40;
-		if (phase.equals("test")) {
-			limit = 20;
-		}
 		for (String fileName : trainingFiles.keySet()) {
 			
 			File trainFile = trainingFiles.get(fileName);
 			File segmentedFile = resultFiles.get(fileName + Constants.RESULT_IMAGE_SUFFIX);
 			
-			ImageDTO image = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, phase, parameterContainer);
+			ImageDTO image = DataHelper.getSingleImageSegmented(trainFile, segmentedFile, null, phase, parameterContainer);
     		int r = rand.nextInt(100);
 			String imageName = DataHelper.getFileNameFromImageDTO(image);
 			try {

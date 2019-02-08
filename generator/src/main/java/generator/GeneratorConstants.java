@@ -18,7 +18,7 @@ public class GeneratorConstants {
 	
 	public static Color FOREGROUND_COLOR = Color.RED;
 	public static Color NEIGHBOUR_COLOR = Color.GREEN;
-	public static int BLOCK_SIZE = 30;
+	public static int BLOCK_SIZE = 40;
 	public static int NEIGHBOURHOOD_BLOCK_SIZE = 25;
 	
 	public static int NEIGHBOURHOOD_GRID = 2; 
@@ -47,10 +47,10 @@ public class GeneratorConstants {
 	}
 	
 	
-	public static int NUMBER_OF_GENERATED_TRAIN_IMAGES = 200;
+	public static int NUMBER_OF_GENERATED_TRAIN_IMAGES = 1000;
 	public static int NUMBER_OF_GENERATED_TEST_IMAGES = 30;
-	public static int NUMBER_OF_GENERATED_VALIDATION_IMAGES = 30;
-	public static String IMAGE_FOLDER = "generated_linear";
+	public static int NUMBER_OF_GENERATED_VALIDATION_IMAGES = 150;
+	public static String IMAGE_FOLDER = "generated_03_01";
 	
 	public static String TRAIN_PATH = IMAGE_FOLDER + "/train/";
 	public static String RESULT_PATH = IMAGE_FOLDER + "/result/";
@@ -70,9 +70,9 @@ public class GeneratorConstants {
 		SQUARE, CIRCLE, PENTAGON, HEXAGON
 	}
 	
-	public static final List<Shape> availableShapes = Arrays.asList(Shape.values());
+	public static final List<Shape> availableShapes = Arrays.asList(Shape.SQUARE, Shape.CIRCLE);
 	
 	
-	public static boolean ADD_NOISE = false;
+	public static boolean ADD_NOISE = true;
 	public static int GENERATOR_VERSION = 1;
 }
