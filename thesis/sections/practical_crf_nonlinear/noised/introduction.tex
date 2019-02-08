@@ -1,0 +1,23 @@
+The aim of the second experiment of this part of the system was exactly the same as in the first one, which was to perform semantic segmentation on images containing objects differing only by shape. However, this time some noise was introduced to colour quantisation of original images. A reason behind it is to simulate wrong assignment of pixels to textons during the process of texton map creation from the original work of Jamie Shotton \cite{article_main}. 
+
+The whole procedure of semantic image segmentation is the same as in case of noise-free images and table \ref{table:hyperparameters_nonlinear_noised} presents values of all hyperparameters that were used during this process.
+\begin{table}[ht]
+    \caption{Values of hyperparameters required for the experiment on noise free images.}
+    \centering
+    \begin{tabular}{|l|c|}
+        \hline
+        \rowcolor[HTML]{C0C0C0} 
+        \textbf{Parameter name} & \textbf{Parameter value} \\ \hline
+        Number of images (inputs) & 800 \\ \hline
+        Number of states (outputs) & 4 \\ \hline
+        Number of superpixels & 500 \\ \hline
+        Training step & ?? \\ \hline
+        Regularisation factor & ?? \\ \hline
+        Number of training epochs & 100 \\ \hline
+        Convergence tolerance & 0.1 \\ \hline
+        Number of histogram bins & 17 \\ \hline
+        Grid & $7 \times 7$ \\ \hline
+        Neighbourhood size & 3 \\ \hline
+    \end{tabular}
+    \label{table:hyperparameters_nonlinear_noised}
+\end{table}

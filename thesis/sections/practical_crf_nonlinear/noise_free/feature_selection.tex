@@ -21,6 +21,7 @@ For this experiment feature selection was performed by a stepwise regression alg
     \caption{Chosen grid neighbour colour percentage features for experiments on noise-free data.}
     \label{fig:nonlinear_noise_free_features_percentage}
 \end{figure}
+
 First figure depicts neighbour colour features for a sample superpixel, and the second shows neighbour colour percentage features. The way of feature presentation is the same as in \textit{section \ref{sec:nonlinear_unary_potential}: \nameref{sec:nonlinear_unary_potential}}. Features which were not chosen are covered by an extra semitransparent layer, while those which form the final feature set are left unchanged.
 
 Optimal features were selected based on a validation set, hence, to check whether the selection was indeed optimal an extra test was performed. For images from the testing set the conditional probability $p(y|x)$ was computed for every label and for the selected set of features. The resulting probabilities are presented in figure \ref{fig:noise_free_fi1}.
