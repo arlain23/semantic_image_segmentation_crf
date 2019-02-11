@@ -1,4 +1,4 @@
-In this part of the system the feature function for unary potential is expressed as a conditional probability of assigning a label to the current pixel given its features. With such setting, there can be many types of different features, which may also include contextual data. In the already mentioned article by Jamie Shotton \cite{article_main}, the key component of the unary potential is a texture-layout potential, which operated on a texton map, and not on the original image. Therefore, before the segmentation process can take place a classification into textons needs to be conducted. Then, each pixel is assigned to exactly one texton, which makes it possible to model the relations between textures of neighbouring pixels. However, the dataset generated for the experiments described in this chapter do not contain any texture information and the only difference between objects is their colours and shapes. Hence, instead of performing a process of textonisation, colour quantisation was introduced. Then, each assignment of the pixel to a given colour from the reduced colour palette simulates the assignment to a single texton. As images from the generated dataset contain three main colours, after the quantisation process tricoloured images are obtained, as presented in figure \ref{fig:nonlinear_quantisation}.
+In this part of the system a feature set used for unary potential is more diverse than previously, as it contains contextual data about image superpixels. In the already mentioned article by Jamie Shotton \cite{article_main}, the key component of the unary potential is a texture-layout potential, which operated on a texton map, and not on the original image. Therefore, before the segmentation process can take place a classification into textons needs to be conducted. Then, each pixel is assigned to exactly one texton, which makes it possible to model the relations between textures of neighbouring pixels. However, the dataset generated for the experiments described in this chapter do not contain any texture information and the only difference between objects is their colours and shapes. Hence, instead of performing a process of textonisation, colour quantisation was introduced. Then, each assignment of the pixel to a given colour from the reduced colour palette simulates the assignment to a single texton. As images from the generated dataset contain three main colours, after the quantisation process tricoloured images are obtained, as presented in figure \ref{fig:nonlinear_quantisation}.
 \begin{figure}[ht]
     \centering
     \begin{tabular}{ccc}
@@ -9,7 +9,7 @@ In this part of the system the feature function for unary potential is expressed
     \caption{Sample images after the process of colour quantisation.}
     \label{fig:nonlinear_quantisation}
 \end{figure}
-Having the dataset transformed into colour maps there is a need to extract features that are going to be used to compute the aimed conditional probability. For the task of shape differentiation two types of features were introduced and both of them include contextual data. 
+Having the dataset transformed into colour maps there is a need to extract features that are going to be used to compute the aimed unary potential. For the task of shape differentiation two types of features were introduced and both of them include contextual data. 
 
 The very first step that is needed obtain such features is to define a boundary of influence for a given superpixel. It was achieved by creating a regular grid of points around the centre of mass of the chosen superpixel. The distance between grid points is defined as the mean distance between neighbouring superpixel centres and the size of a created grid is a hyperparameter that should be fixed before feature extraction takes place. Then, each point in a grid represent a neighbour, which have an influence on a given superpixel.
 \begin{figure}[ht]
@@ -54,9 +54,44 @@ For each superpixel, three boxes are shown, one per each of the available colour
 
 Presented example was based on the grid $7 \times 7$ in which the percentage of neighbours of the given colour was computed on the adjacent superpixels only. However, sometimes it might be beneficial to include a larger neighbourhood. Then, instead of taking only adjacent superpixels, also neighbours of those superpixels could be taken into account. The size of this neighbourhood may have a large influence on the results, especially on the borders between two regions. With larger neighbourhood, even if a superpixel has only one neighbour of a different class, this neighbour may be mostly surrounded by superpixels with the same class, and therefore the total percentage of this class may rise. The neighbourhood size is yet another hyperparameter that should be fixed before feature extraction takes place.
 
-With such definition of features, each superpixel can be defined in terms of a feature vector containing 196 elements. However, not all features but only a set of meaningful ones was used to compute a probability of a label conditioned on image features. A detailed description how this set was obtained will be presented in sections \textit{ \ref{sec:feature_selection_noise_free}} and \textit{\ref{sec:feature_selection_noise}: \nameref{sec:feature_selection_noise_free}}. Having a optimal feature vector constructed it is possible to express unary potential as a negative log-likelihood of a superpixel label given its features as in equation \ref{eq:nonlinear_unary_potential}. 
+With such definition of features, each superpixel can be defined in terms of a feature vector containing 196 elements. Out of these features only such a a set should be chosen which carry meaningful information that will allow differentiation of objects by shape. Performing segmentation with too many features is not only more time-consuming, but also less accurate. One of the most popular and simplest algorithms for for finding an optimal set of features is a stepwise regression, which was implemented in the thesis. This is a greedy algorithm that creates a resulting set of features step by step. This method can involve only forward steps, only backward steps, or a combination of those two. Forward selection starts by an empty set of features. The first step is to choose such a feature from the whole feature set, that will give the highest precision of segmentation for a validation set. Then, in each iteration a new best feature is added to the set of already chosen features. 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.60\textwidth]{images/nonlinear_intro/greedy_forward.png}
+    \caption{Greedy forward feature selection}
+    \label{fig:greedy_selection}
+\end{figure}
+Figure \ref{fig:greedy_selection} presents an example of how this method is applied for feature selection from a set of five available features each depicted as a separate coloured block. Numbers in those blocks represent the accuracy of segmentation for a set of features under consideration. As the process of feature selection is applied only to choose features for unary component of energy, there is no need to perform a full inference process to check the accuracy of segmentation. Instead, it is enough to choose the most probable label for each superpixel basing on the computation of unary potential and compare the final labelling to the ground truth. This is the measure that was used to choose the best feature in the current step. Hence, in the first iteration for all sets containing only one element this procedure is performed and the feature with highest precision is added to the final set. Then, to this feature every other feature is added forming sets of two elements and again, accuracy of segmentation for each set is measured. This procedure continues iteratively until no more features are left, or until a situation in which adding of any other feature results in worsening of the model performance. 
+Backward feature selection is a very similar process, however, instead of adding new features to the set under consideration, feature elimination is performed. The procedure starts with a full set of available features. Then iteratively the worst feature is removed from this set until further elimination results in poorer accuracy of segmentation. Another possibility is to join those two methods, and make some steps forward and then some steps backward. 
+
+Next step after feature selection concerns a feature function definition. Initially, the same feature function was used as in \textit{chapter: \ref{chapter:linear}: \nameref{chapter:linear}}, however, the results were poor. Not only did the method fail to distinguish between red objects of different shapes, but it was also not capable of assigning the proper class to all blue regions. Figure \ref{fig:linear_as_nonlinear} presents the results of semantic segmentation on four sample test images. 
+\begin{figure}[ht]
+    \begin{minipage}{.5\linewidth}
+        \begin{tabular}{cc}
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{nonlinear_noise_free/experiments/init/17.png}} &
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{linear_as_nonlinear/17.png}} \\ 
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{nonlinear_noise_free/experiments/init/19.png}} &
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{linear_as_nonlinear/19.png}}
+        \end{tabular}
+    \end{minipage}%
+    \begin{minipage}{.5\linewidth}
+        \begin{tabular}{cc}
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{nonlinear_noise_free/experiments/init/20.png}} &
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{linear_as_nonlinear/20.png}} \\ 
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{nonlinear_noise_free/experiments/init/23.png}} &
+            \fcolorbox{black}{white}{\includegraphics[width = 0.41\textwidth]{linear_as_nonlinear/23.png}}
+        \end{tabular}
+    \end{minipage} 
+    \caption{Results of shape-based semantic image segmentation using a standard feature function.}
+    \label{fig:linear_as_nonlinear}
+\end{figure}
+
+As the already implemented feature function did not perform well on the task assigned for this part of the system, a different way of representing features had to be chosen. For the experiments described in this chapter the feature function for unary potential was expressed as a conditional probability of assigning a label to the current pixel given its features. Then, having a optimal feature vector constructed it is possible to express unary potential as a negative log-likelihood of a superpixel label given its features as in equation \ref{eq:nonlinear_unary_potential}. 
 \begin{equation}
     \label{eq:nonlinear_unary_potential}
     \varphi(x_i,y_i) = -\log p(y_i|f_i)
 \end{equation}
-In order to compute a probability of a label conditioned on superpixel features it is necessary to know what is the probability distribution of all labels, and all available features. Estimation of this distribution is made only once, just after the stage of preprocessing, which divides images into superpixels. 
+In order to compute a probability of a label conditioned on superpixel features it is necessary to know what is the probability distribution of all labels, and all features that were chosen during the process of stepwise regression. Estimation of this distribution is made only once, just after the stage of preprocessing, which divides images into superpixels and is then used during the training and inference phases to compute the system energy. 
+
+
+

@@ -1,16 +1,56 @@
-The next component that is needed to compute an energy of the whole system is a pairwise potential. While unary potential was responsible for detecting shapes, the role of the pairwise potential is to remove noises from images. For this part of the system, feature function based on Potts model was used. The general definition of this method was already presented in \textit{section \ref{sec:pariwise_potential}: \nameref{sec:pariwise_potential}}. Computation of the pairwise potential is based on differences between features of neighbouring superpixels from the original image, and not from the image after the process of colour quantisation as it was in case of the unary potential. A chosen feature function returns a vector of two elements, as in equation \ref{eq:nonlinear_potts_model}.
+The next component that is needed to compute an energy of the whole system is a pairwise potential and its definition also needed to be changed in order to perform well on shape-based semantic segmentation. While the unary potential was responsible for detecting shapes, the role of the pairwise potential is to remove noises from images. For this part of the system, feature function based on Potts model was used. The general definition of this method was already presented in \textit{section \ref{sec:pariwise_potential}: \nameref{sec:pariwise_potential}}. Computation of the pairwise potential is based on differences between features of neighbouring superpixels from the original image, and not from the image after the process of colour quantisation as it was in case of the unary potential. There are four possible configurations of relations between a pair of superpixels. Two superpixels can be similar in terms of features and have the same label, which should be promoted, or a different label, which should be penalised. Similarly, two not similar superpixels can be assigned to the same class, which is a segmentation mistake, or to different classes, which is an expected behaviour. Hence, such a feature function had to be proposed to model those relations between superpixel similarity and their labels at the same time. A chosen feature function returns a vector of two elements, as in equation \ref{eq:nonlinear_potts_model}.
 \begin{equation}
     \label{eq:nonlinear_potts_model}
-    \varphi(y_i,y_j) = \begin{bmatrix}
-        \exp{(-\beta \left \| \phi(x_i) - \phi(x_j)\right \|^2)} \\
-        1
-    \end{bmatrix}
+       \varphi(y_i,x_i,y_j,x_j) = 
+       \begin{bmatrix}
+            \begin{aligned}
+           \left | (y_i - y_j) \right | - \left | (y_i - y_j) \right | &\exp{\big(-\beta \left \| \phi(x_i) - \phi(x_j)\right \|^2\big)} \\ + 
+            \big( 1 - \left | (y_i - y_j) \right | \big) &\exp{\big(-\beta \left \| \phi(x_i) - \phi(x_j)\right \|^2\big)} 
+        \end{aligned}
+        \\ 1
+        \end{bmatrix}
 \end{equation}
-The second element of this vector is a unit term needed for bias, and the first one defines similarity between neighbouring superpixels in terms of a feature difference $ \left \| \phi(x_i) - \phi(x_j)\right \|$. This feature is modelled as a three-dimensional vector of colours in CIELAB colour space. The difference between two colours is computed in terms of Euclidean distance as in equation \ref{eq:colour_distance}. 
+The second element of this vector is a unit term needed for bias, and the first one defines similarity between neighbouring superpixels that is dependent on their assigned labels. Label difference denoted as $\left | (y_i - y_j) \right |$ can be either $0$ if labels are the same, or $1$ if they are different. Then, the formula for the pairwise potential can be divided into two cases, for equal labels, and for different labels, as presented in equations \ref{eq:nonlinear_potts_model_extended} and \ref{eq:nonlinear_potts_model_extended_2}.
+\begin{align}
+    \label{eq:nonlinear_potts_model_extended}
+        \varphi(x_i,x_j)_{y_i = y_j} &= \begin{bmatrix}
+           \exp{\big(-\beta \left \| \phi(x_i) - \phi(x_j)\right \|^2\big)} \\
+            1
+        \end{bmatrix} \\
+    \varphi(x_i,x_j)_{y_i \neq y_j} &= \begin{bmatrix}
+           1 -\exp{\big(-\beta \left \| \phi(x_i) - \phi(x_j)\right \|^2\big)} \\
+            1
+        \end{bmatrix}
+    \label{eq:nonlinear_potts_model_extended_2}
+\end{align}
+
+The similarity between two superpixels is dependent on the difference between their features $ \left \| \phi(x_i) - \phi(x_j)\right \|$. For experiments in this part of the system only one feature was chosen to compute the pairwise potential, and this feature is modelled as a three-dimensional vector of colours in CIELAB colour space. The difference between two colours is computed in terms of Euclidean distance as in equation \ref{eq:colour_distance}. 
 \begin{equation}
     \label{eq:colour_distance}
     \left \| \phi(x_i) - \phi(x_j)\right \|=\sqrt {(L_i-L_j)^2+(a_i-a_j)^2+(b_i-b_j)^2}
 \end{equation}
-Value of the parameter $\beta$ is calculated basing on the mean colour differences between pixels for a given image.
+To compute the pairwise potential also an image dependent parameter $\beta$ had to be established. It is calculated basing on on the average value of colour differences between superpixels for a given image.
 
 Hence, knowing the definitions of the feature function for unary and pairwise potentials it is possible to perform the process of the process of parameter learning. As the unary potential is defined by just one number, representing the probability of occurrence of a given label conditioned on superpixels features, and the pairwise potential is in a form of a two-dimensional vector, there are three weights to be learned by Stochastic Gradient Descent method. Those weights model the importance of both types of potentials for a given problem. Then, with a trained system it is possible to perform the experiments by means of inference.
+
+The values of all hyperparameters that were required to perform segmentation in experiments presented in this chapter are shown in Table \ref{table:hyperparameters_nonlinear}
+\begin{table}[ht]
+    \caption{Values of hyperparameters required for the experiment on noise free images.}
+    \centering
+    \begin{tabular}{|l|c|}
+        \hline
+        \rowcolor[HTML]{C0C0C0} 
+        \textbf{Parameter name} & \textbf{Parameter value} \\ \hline
+        Number of images (inputs) & 800 \\ \hline
+        Number of states (outputs) & 4 \\ \hline
+        Number of superpixels & 500 \\ \hline
+        Training step &  0.0000001 \\ \hline
+        Regularisation factor & 5000 \\ \hline
+        Number of training epochs & 10 \\ \hline
+        Convergence tolerance & 0.000005 \\ \hline
+        Number of histogram bins & 17 \\ \hline
+        Grid & $7 \times 7$ \\ \hline
+        Neighbourhood size & 3 \\ \hline
+    \end{tabular}
+    \label{table:hyperparameters_nonlinear}
+\end{table}

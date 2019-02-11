@@ -32,10 +32,13 @@
 \usepackage{siunitx}
 \usepackage{booktabs} 
 \usepackage{numprint}
+\usepackage{makecell}
 \usepackage{array}
 \usepackage{graphbox}
 \usepackage[section]{placeins}
 \usepackage[super]{nth}
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage{tocloft}
 \hypersetup{
     colorlinks,
     citecolor=black,
@@ -52,10 +55,10 @@
     \thispagestyle{empty}%
     \addtocounter{page}{-1}%
     \newpage}
-\newcommand*{\captionsource}[2]{%
+\newcommand*{\captionsource}[3]{%
   \caption[{#1}]{%
-    #1%
-    \\\textbf{Source:} #2
+    #2%
+    \\\textbf{Source:} #3
   }%
 }
 
@@ -73,7 +76,15 @@
 \setlength{\textwidth}{14cm}
 \setlength{\textheight}{20cm}
 \setlength{\parskip}{1em}
+\renewcommand\theadfont{\itshape}
+\renewcommand\theadgape{\Gape[4pt]}
 \renewcommand{\baselinestretch}{1.5}
+\renewcommand*\cftfigpresnum{\bfseries Figure ~}
+\settowidth{\cftfignumwidth}{\cftfigpresnum}
+\renewcommand{\cftfigaftersnumb}{\quad:~}
+\renewcommand*\cfttabpresnum{\bfseries Table~}
+\settowidth{\cfttabnumwidth}{\cftfigpresnum}
+\renewcommand{\cfttabaftersnumb}{\quad:~}
 \graphicspath{ {./images/} }
 
 \PassOptionsToPackage{export}{adjustbox}
@@ -81,156 +92,170 @@
 \fboxsep=0mm%padding thickness
 \fboxrule=1pt%border thickness
 
-
 \title{Semantic image segmentation with use of conditional random fields}
 \author{Aneta Andrzejewska}
-\date{March 2019}
+\date{24 February 2019}
 
 \begin{document}
 
 \thispagestyle{empty}%
 \addtocounter{page}{-1}%
 \begin{titlepage}
-\afterpage{\blankpage}
+%\afterpage{\blankpage}
 \includepdf[pages=-]{title_page_mgr.pdf}
 \end{titlepage}
 
 
-
+\thispagestyle{empty}
+%\afterpage{\blankpage}
 \import{sections/}{abstract}
-
+%\thispagestyle{empty}
+%\afterpage{\blankpage}
+%\import{sections/}{acknowledgements}
+%\newpage
 
 \tableofcontents
 \newpage
 
 \chapter{Introduction}
-\import{sections/introduction/}{introduction}
-
-\section{Purpose and scope of the thesis}
-\import{sections/introduction/}{purpose}
-
-\section{Goals of the thesis}
-\import{sections/introduction/}{goal}
-
-\section{Thesis contents}
-\import{sections/introduction/}{contents}
+    \import{sections/introduction/}{introduction}
+    
+    \section{Purpose and scope of the thesis}
+    \import{sections/introduction/}{purpose}
+    
+    \section{Goals of the thesis}
+    \import{sections/introduction/}{goal}
+    
+    \section{Thesis contents}
+    \import{sections/introduction/}{contents}
 
 \chapter{Image Segmentation}
-\import{sections/image_segmentation/}{introduction}
-
-\section{Semantic Image Segmentation}
-\import{sections/image_segmentation/}{semantic_segmentation}
-
-\section{Semantic Image Segmentation methods}
-\import{sections/image_segmentation/}{semantic_segmentation_methods}
+    \label{chapter:segmentation}
+    \import{sections/image_segmentation/}{introduction}
+    
+    \section{Semantic Image Segmentation}
+    \import{sections/image_segmentation/}{semantic_segmentation}
+    
+    \section{Semantic Image Segmentation methods}
+    \import{sections/image_segmentation/}{semantic_segmentation_methods}
 
 \chapter{Structured Prediction}
-\label{chapter:structured_prediction}
-\import{sections/structured_prediction/}{introduction}
-
-\section{Probabilistic Graphical Model}
-\import{sections/structured_prediction/}{pgm}
-
-\section{Factorisation}
-\import{sections/structured_prediction/}{factorisation}
-
-\section{Conditional Random Fields }
-\import{sections/structured_prediction/}{crf}
-	
-\section{Inference in factor graphs}
-\label{sec:inference}
-\import{sections/structured_prediction/}{inference}
-
-\section{Parameter training }
-\import{sections/structured_prediction/}{parameter_training}
-
-\section{Energy formulation}	
-\label{sec:energy}
-\import{sections/structured_prediction/}{energy}
-
+    \label{chapter:structured_prediction}
+    \import{sections/structured_prediction/}{introduction}
+    
+    \section{Probabilistic Graphical Model}
+    \import{sections/structured_prediction/}{pgm}
+    
+    \section{Factorisation}
+    \import{sections/structured_prediction/}{factorisation}
+    
+    \section{Conditional Random Fields }
+    \import{sections/structured_prediction/}{crf}
+    	
+    \section{Inference in factor graphs}
+    \label{sec:inference}
+    \import{sections/structured_prediction/}{inference}
+    
+    \section{Parameter training }
+    \import{sections/structured_prediction/}{parameter_training}
+    
+    \section{Energy formulation}	
+    \label{sec:energy}
+    \import{sections/structured_prediction/}{energy}
+    
 
 \chapter{Semantic image segmentation system}
-\import{sections/practical_crf_linear/}{introduction}
+    \label{chapter:system}
+    \import{sections/practical_crf_linear/}{introduction}
+    
+    \section{Technological stack}	
+    \import{sections/system/}{stack}
+    
+    \section{System components}	
+    \import{sections/system/}{components}
 
-\section{Technological stack}	
-\import{sections/system/}{stack}
-
-\section{System components}	
-\import{sections/system/}{components}
-
-
-\chapter{Linear CRF - tmp title}
-\label{chapter:linear}
-\import{sections/practical_crf_linear/}{introduction}
-
-\section{Preprocessing}
-\label{sec:linear_preprocessing}
-\import{sections/practical_crf_linear/}{preprocessing}
-
-\section{Feature function definition}	
-\import{sections/practical_crf_linear/}{feature_function}
-
-\section{Dataset}	
-\label{sec:linear_dataset}
-\import{sections/practical_crf_linear/}{dataset}
-
-\section{Evaluation method}	
-\import{sections/practical_crf_linear/}{evaluation_method}
-
-\section{Experimental results}	
-\import{sections/practical_crf_linear/}{experiments}
-
+\chapter{Colour-based semantic image segmentation}
+    \label{chapter:linear}
+    \import{sections/practical_crf_linear/}{introduction}
+    
+    \section{Preprocessing}
+    \label{sec:linear_preprocessing}
+    \import{sections/practical_crf_linear/}{preprocessing}
+    
+    \section{Feature function definition}	
+    \import{sections/practical_crf_linear/}{feature_function}
+    
+    \section{Dataset}	
+    \label{sec:linear_dataset}
+    \import{sections/practical_crf_linear/}{dataset}
+    
+    \section{Evaluation method}	
+    \import{sections/practical_crf_linear/}{evaluation_method}
+    
+    \section{Experimental results}	
+    \import{sections/practical_crf_linear/}{experiments}
+    
 
 
 
 \chapter{Shape-based semantic image segmentation}
-\label{chapter:nonlinear}
-\import{sections/practical_crf_nonlinear/}{introduction}
-
-\section{Feature function definition}
-\import{sections/practical_crf_nonlinear/}{feature_function}
-
-\subsection{Feature function for the unary potential}
-\label{sec:nonlinear_unary_potential}
-\import{sections/practical_crf_nonlinear/}{unary_potential}
-
-\subsection{Probability distribution estimation}
-\import{sections/practical_crf_nonlinear/}{pdm_estimation}
-
-\subsection{Feature function for the pairwise potential}
-\import{sections/practical_crf_nonlinear/}{pairwise_potential}
-
-\section{Semantic segmentation on noise free images}
-\import{sections/practical_crf_nonlinear/noise_free/}{introduction} 
+    \label{chapter:nonlinear}
+    \import{sections/practical_crf_nonlinear/}{introduction}
     
-    \subsection{Dataset}
-    \import{sections/practical_crf_nonlinear/noise_free/}{dataset}
- 
-    \subsection{Feature selection}
-    \label{sec:feature_selection_noise_free}
-    \import{sections/practical_crf_nonlinear/noise_free/}{feature_selection}
+    \section{Feature function definition}
+    \import{sections/practical_crf_nonlinear/}{feature_function}
     
-    \subsection{Experimental results}	
-        \import{sections/practical_crf_nonlinear/noise_free/}{experiments}
-
-\section{Semantic segmentation on noised images}
-\import{sections/practical_crf_nonlinear/noised/}{introduction} 
-     \subsection{Dataset}
-    \import{sections/practical_crf_nonlinear/noised/}{dataset}
- 
-    \subsection{Feature selection}
-    \label{sec:feature_selection_noise}
-    \import{sections/practical_crf_nonlinear/noised/}{feature_selection}
+        \subsection{Feature function for the unary potential}
+        \label{sec:nonlinear_unary_potential}
+        \import{sections/practical_crf_nonlinear/}{unary_potential}
+        
+        \subsection{Probability distribution estimation}
+        \import{sections/practical_crf_nonlinear/}{pdm_estimation}
+        
+        \subsection{Feature function for the pairwise potential}
+        \import{sections/practical_crf_nonlinear/}{pairwise_potential}
+        
+    \section{Semantic segmentation on noise free images}
+    \import{sections/practical_crf_nonlinear/noise_free/}{introduction} 
+        
+        \subsection{Dataset}
+        \import{sections/practical_crf_nonlinear/noise_free/}{dataset}
+     
+        \subsection{Feature selection results}
+        \label{sec:feature_selection_noise_free}
+        \import{sections/practical_crf_nonlinear/noise_free/}{feature_selection}
+        
+        \subsection{Experimental results}	
+            \import{sections/practical_crf_nonlinear/noise_free/}{experiments}
     
-    \subsection{Experimental results}	
+    \section{Semantic segmentation on noised images}
+    \import{sections/practical_crf_nonlinear/noised/}{introduction} 
+         \subsection{Dataset}
+        \import{sections/practical_crf_nonlinear/noised/}{dataset}
+     
+        \subsection{Feature selection results}
+        \label{sec:feature_selection_noise}
+        \import{sections/practical_crf_nonlinear/noised/}{feature_selection}
+        
+        \subsection{Experimental results}	
         \import{sections/practical_crf_nonlinear/noised/}{experiments}
-    
 
+\chapter{Discussion and conclusions}        
+    \label{chapter:conclusions}
+    \import{sections/conclusions/}{introduction}
+    
+    \section{Improvement perspective}
+    \import{sections/conclusions/}{improvements}
+   
 
 
 
 \newpage
 \emergencystretch=2em
 \Urlmuskip=0mu plus 1mu\relax
-\printbibliography 
+
+\printbibliography[heading=bibintoc]
+\listoffigures
+\listoftables
+
 \end{document}

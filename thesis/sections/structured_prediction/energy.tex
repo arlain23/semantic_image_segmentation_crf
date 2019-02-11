@@ -175,7 +175,7 @@ Assuming that the difference between labels $\left | (y_i - y_j) \right |$ is ei
 Penalising a situation in which adjacent pixels have different labels is well suited for regions in which there are some noised pixels inside. However, not every time when two neighbouring pixels have a different label assigned necessarily means that there is some noise in one of those pixels. On object boundaries assignment of different labels should be promoted and not penalised. One of the most popular methods used to represent pairwise potential in Markov Random Fields is named Potts model \cite{potts_model}. This model represents spatial relations between neighbouring pixels taking into account their similarity. Neighbouring pixels affect each other just like in the previously described definition of a pairwise potential, however, in this model, only when pixels are alike the assignment of the same label is promoted. Potts model is applicable to problems in which labelling is locally constant and regions are separated by clear boundaries. Analogously to unary potential, a similarity between pixels is defined by their features. A pairwise feature function $\varphi(y_i,y_j)$ of a factor between output nodes $i$ and $j$ that is constructed with the use of Potts model is defined as in formula \ref{eq:potts_model}. Depending on the number of pairwise features chosen the size of this vector will be different. For one feature it will have two elements only - a term defining pixel similarity, and a unit element that allows incorporation of bias to the system.
 \begin{equation}
     \label{eq:potts_model}
-    \varphi(y_i,y_j) = \begin{bmatrix}
+    \varphi(y_i,x_i,y_j,x_j) = \begin{bmatrix}
         \exp{(-\beta_0 \left \| \phi_0(x_i) - \phi_0(x_j)\right \|^2)} \\
         \exp{(-\beta_1 \left \| \phi_1(x_i) - \phi_1(x_j)\right \|^2)} \\
         ...             \\
@@ -189,7 +189,7 @@ Potts model requires a measure of similarity between pixels in order to check if
 The described way of representing pairwise feature vectors requires also a parameter $\beta$. This is an image dependent coefficient that reflects the spatial correlation between adjacent image pixels \cite{potts_beta}. For small values of $\beta$ classification will remain noisy, while for too large $\beta$ the result will be over-smoothed. Proper selection of this parameter is crucial for denoising abilities of the pairwise term, however, it is difficult to fix this value a beforehand, as spatial organisation of images tend to differ. Therefore, a value of $\beta$ should be adjusted separately for each image. One of the ways to make $\beta$ image specific is to introduce a dependency between this parameter and an average value of a given feature difference $\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle$ in the image, as in formula \ref{eq:potts_beta}.
 \begin{equation}
     \label{eq:potts_beta}
-    \beta(x) = {2 \cdot {\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle}} ^ {-1}
+    \beta(x_i,x_j) = {2 \cdot {\left \langle \left \| \phi(x_i) - \phi(x_j)\right \| \right \rangle}} ^ {-1}
 \end{equation}
 
 Knowing how to compute feature difference for each of the chosen pairwise features, and how to obtain the value of the parameter $\beta$ it is possible to construct a feature vector that is needed to compute the pairwise potential. 
