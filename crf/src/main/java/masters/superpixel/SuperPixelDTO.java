@@ -100,7 +100,11 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 			}
 			
 		} else {
-			localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
+			if (Constants.LINEAR_MODEL_NONLINEAR_FEATURES) {
+				localFeatures.addAll(initLocalFeatures(this.meanRGB,meanSuperPixelDistance, superPixels, image));
+			} else {
+				localFeatures.addAll(getColourFeatures(this.meanRGB, 0));
+			}
 			
 		}
 		this.availableLocalFeatures = localFeatures;
@@ -128,10 +132,14 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 				selectedFeatures.add(feature);
 			}
 		}
-		
 		List<Feature> localFeatures = new ArrayList<>();
-		Feature featureContainer = new FeatureContainer(selectedFeatures, 0);
-		localFeatures.add(featureContainer);
+		
+		if (Constants.USE_NON_LINEAR_MODEL) {
+			Feature featureContainer = new FeatureContainer(selectedFeatures, 0);
+			localFeatures.add(featureContainer);
+		} else {
+			localFeatures.addAll(selectedFeatures);
+		}
 		
 		this.localFeatureVector =  new FeatureVector(localFeatures, true);
 				
@@ -318,7 +326,6 @@ public class SuperPixelDTO implements Comparable<SuperPixelDTO>, Serializable {
 			features.add(getNeighbourBayesColourFeature(features.size()));
 		}
 
-		
 		return features;
 	}
 	private List<Feature> initPairwiseFeatures(double [] rgb, ColorSpace colorSpace) {

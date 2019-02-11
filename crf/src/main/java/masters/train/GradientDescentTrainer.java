@@ -85,7 +85,11 @@ public class GradientDescentTrainer {
 				FeatureVector sampleFi = CRFUtils.calculateImageFi(weightVector, factorGraph, currentMask, parameterContainer);
 				
 				for (int weightIndex = 0; weightIndex < numberOfWeights; weightIndex++) {
-					double regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
+					double regularizationTerm = 0;
+					if (weightIndex == 0) {
+						regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
+					}
+//					double regularizationTerm = 2 * REGULARIZATION_FACTOR * weightVector.getWeights().get(weightIndex);
 					double imageFiTerm = (Double)imageFi.getFeatures().get(weightIndex).getValue();
 					double sampleFiTerm = (Double)sampleFi.getFeatures().get(weightIndex).getValue();
 					double gradientValue = regularizationTerm + imageFiTerm - sampleFiTerm;
@@ -98,6 +102,7 @@ public class GradientDescentTrainer {
 				List<Double> newWeights = new ArrayList<Double>();
 				for (int i = 0; i < previousWeights.size(); i++) {
 					double newWeight = previousWeights.get(i) - TRAINING_STEP * gradients.get(i);
+//					System.out.println(previousWeights + " " + gradients.get(i) + " -> " + newWeight);
 					newWeights.add(newWeight);
 				}
 				WeightVector newWeightVetor = new WeightVector(newWeights);
@@ -112,7 +117,7 @@ public class GradientDescentTrainer {
 			//check if accuracy is better
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\inference_data\\";
-			InferenceHelper.runInference(baseImagePath, "training_04_02_" + (epoch), parameterContainer, weightVector);
+			//InferenceHelper.runInference(baseImagePath, "training_04_02_" + (epoch), parameterContainer, weightVector);
 			
 			
 			System.out.println(weightVector);

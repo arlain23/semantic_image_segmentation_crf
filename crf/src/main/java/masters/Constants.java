@@ -18,6 +18,7 @@ public class Constants {
 	public static Logger _log = Logger.getLogger(App.class);
 
 	public static boolean USE_NON_LINEAR_MODEL = false;
+	public static boolean LINEAR_MODEL_NONLINEAR_FEATURES = true;
 	public static boolean USE_GRID_MODEL = true;
 	public static boolean ADD_NEIGBOUR_FEATURES = true;
 	public static boolean ADD_COLOUR_LOCAL_FEATURE = false;

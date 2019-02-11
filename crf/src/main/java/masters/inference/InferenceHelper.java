@@ -53,7 +53,7 @@ public class InferenceHelper {
 			  FactorGraphModel factorGraph = new FactorGraphModel(currentImage, new ArrayList<>(), weights, parameterContainer);
 			  
 			  
-			  
+			  DataHelper.saveImageSuperpixelBordersOnly(currentImage, currentImage.getSuperPixels(), baseImagePath + "images\\"+imageCounter + "_q.png");
 			  DataHelper.saveImageSuperpixelBordersOnlyOriginalData(currentImage, currentImage.getSuperPixels(), baseImagePath + "images\\"+imageCounter + ".png");
 			  List<SuperPixelDTO> superPixels = currentImage.getSuperPixels();
 			  
@@ -62,7 +62,7 @@ public class InferenceHelper {
 			  
 			  
 			  // inference 
-			  for (int t = 0; t < 20; t++) {
+			  for (int t = 0; t < 200; t++) {
 				  System.out.println("iteration " + t);
 				  factorGraph.computeFactorToVariableMessages();
 				  factorGraph.computeVariableToFactorMessages();
@@ -75,7 +75,7 @@ public class InferenceHelper {
 				  shown = true;
 				  DataHelper.saveImageSegmentedSuperPixels(currentImage, superPixels, saveProgressPath + t + ".png");
 						
-		
+				  if (t == 1) break;
 //				  }
 				  if (factorGraph.checkIfConverged()) {
 					  System.out.println("converged");

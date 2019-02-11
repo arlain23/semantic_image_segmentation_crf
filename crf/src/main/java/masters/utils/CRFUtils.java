@@ -1,5 +1,6 @@
 package masters.utils;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -169,7 +170,23 @@ public class CRFUtils {
 			for (int label = 0; label < Constants.NUMBER_OF_STATES; label++) {
 				if (label == objectLabel) {
 					for (Feature feature : localFeatures) {
-						imageFi.setFeatureValue(featureIndex++, (Double)feature.getValue());
+						if (feature.getValue() == null) {
+							imageFi.setFeatureValue(featureIndex++, 0.0);
+						} else {
+							if (feature instanceof DiscretePositionFeature) {
+								String baseHex = (String) feature.getValue();
+								for (Color color : Constants.AVAILABLE_COLOURS_SET){
+									String colorHex = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+									if (baseHex.equals(colorHex)) {
+										String colorString = color.getRed() + "" + color.getGreen() + "" + color.getBlue();
+										imageFi.setFeatureValue(featureIndex++, Double.valueOf(colorString));
+										break;
+									}
+								}
+							} else {
+								imageFi.setFeatureValue(featureIndex++, (Double)feature.getValue());
+							}
+						}
 					}
 				} else {
 					for (@SuppressWarnings("unused") Feature feature : localFeatures) {

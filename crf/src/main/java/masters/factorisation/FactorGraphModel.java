@@ -266,7 +266,6 @@ public class FactorGraphModel implements Serializable {
 					}
 					normalisationFactor = Math.log(normalisationFactor);
 					double normalisedMsgValue = msgSums.get(label) - normalisationFactor;
-					
 					factorToNodeEdge.setVariableToFactorMsgValue(label, normalisedMsgValue);
 				}
 			}
@@ -404,6 +403,7 @@ public class FactorGraphModel implements Serializable {
 					double newFactorBelief = variableToFactorMsg - energy;
 					if (newFactorBelief > maxFactorBelief) maxFactorBelief = newFactorBelief;
 					newFactorBeliefs.add(newFactorBelief);
+					
 				}
 			}
 			
@@ -422,6 +422,7 @@ public class FactorGraphModel implements Serializable {
 			for (int i = 0; i < newFactorBeliefs.size(); i++) {
 				double normalisedBelief = Math.exp(newFactorBeliefs.get(i) - normalisationFactor);
 				newFactorBeliefs.set(i, normalisedBelief);
+				
 			}
 			return newFactorBeliefs;
 		}

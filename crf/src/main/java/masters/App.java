@@ -71,7 +71,7 @@ public class App {
 	
 	
 	
-	public static boolean IS_LINEAR = false;
+	public static boolean IS_LINEAR = true;
 	public static boolean SAVE_IMAGE_FI_1 = false;
 	
 	private static Logger _log = Logger.getLogger(App.class);
@@ -81,12 +81,15 @@ public class App {
 		if (IS_LINEAR) {
 			Constants.USE_NON_LINEAR_MODEL = false;
 			Constants.USE_INIT_IMAGE_FOR_PARIWISE_POTENTIAL = false;
-			Constants.IMAGE_FOLDER = ImageFolder.generated_linear_coloured;
-			Constants.SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_linear;
-			Constants.COLOR_AVERAGE_METHOD = ColorAverageMethod.MEAN;
-			Constants.colorSpace = ColorSpace.RGB;
-			Constants.NUMBER_OF_STATES = 3;
-			Constants.TRAINING_STEP = 0.0001;
+			Constants.ADD_COLOUR_LOCAL_FEATURE = true;
+			Constants.ADD_NEIGBOUR_FEATURES = true;
+			Constants.ADD_COLOUR_LOCAL_FEATURE_WITH_POSITION = true;
+			Constants.IMAGE_FOLDER = ImageFolder.generated_03_01;
+			Constants.SUPERPIXEL_IMAGE_FOLDER = ImageFolder.generated_03_01;
+			Constants.COLOR_AVERAGE_METHOD = ColorAverageMethod.POPULARITY;
+			Constants.colorSpace = ColorSpace.CIELAB;
+			Constants.NUMBER_OF_STATES = 4;
+			Constants.TRAINING_STEP = 0.00001;
 			Constants.REGULARIZATION_FACTOR = 1000;
 			
 			Constants.TRAIN_PATH = Constants.IMAGE_FOLDER + File.separator + "train" + File.separator ;
@@ -100,7 +103,11 @@ public class App {
 			Constants.TEST_INIT_PATH = Constants.SUPERPIXEL_IMAGE_FOLDER + File.separator + "test_init" + File.separator;
 			
 			ParametersContainer parameterContainer = ParametersContainer.getInstance();
-			parameterContainer.setNumberOfLocalFeatures(3);
+			parameterContainer.setNumberOfLocalFeatures(16);
+			
+			List<Integer> selectedFeatureIds = Arrays.asList(new Integer[] {171,73,145,43,13,74,39,1,109,150,151,191,192,157,0,62});
+			//parameterContainer.setSelectedFeatureIds(selectedFeatureIds);
+			
 			
 			// testing 
 			// linear basic colour
@@ -121,19 +128,23 @@ public class App {
 			
 		
 //			 linear coloured RGB
+//			List<Double> initWeightList = Arrays.asList(new Double[] {
+//					-0.01929696880558088, 0.00967165632403644, 0.014061761254553109,
+//					0.013121748946249215, -0.013694388602578954, 0.01513050683624383,
+//					0.00617521985933168, 0.0040227322785425495, -0.02919226809079693,
+//					-0.23531971785110614, 0.23531971785110614
+//			});
+			
 			List<Double> initWeightList = Arrays.asList(new Double[] {
-					-0.01929696880558088, 0.00967165632403644, 0.014061761254553109,
-					0.013121748946249215, -0.013694388602578954, 0.01513050683624383,
-					0.00617521985933168, 0.0040227322785425495, -0.02919226809079693,
-					-0.23531971785110614, 0.23531971785110614
-			});
+				0.004763170080054838, 0.6653720502085279, 0.905720487783591, 0.14336563540496058, 0.8054707330860882, 0.7670006699933279, 1.5620832039525174, 0.5890881331538258, 1.0376359252481828, 0.8591400679372568, 1.5310269636730567, -6.052760802056445, -15.925491090973225, -133.89792028809148, -0.22679618336237795, 10.377161539770245, -0.007236339667956123, -0.24316088545723863, 0.03199926121739319, 0.4290430848765903, -0.653099067380556, 0.6039833151389996, -0.4287950388426859, 0.8528544496924483, -0.648283178240458, -0.26598215393755564, -9.754784100493893, -28.980410753060127, -17.72035370088832, 0.15890040752922552, -31.3579473445415, -16.90808850660074, 0.506815986180591, 0.37846665429726317, 0.72121590612201, 0.57035687534776, 0.2809404225559872, 0.30078678674302, 0.8957955011183258, -0.16826727332606, 0.35602230845008154, 0.5420137995268459, -5.421550233566396, -11.299856247596296, -5.021265596771693, 204.88909358494828, -14.256806132370206, -11.900437121630533, 0.3823213582691176, 0.5551994494090697, 0.38031733551933966, 0.37340947500445887, 0.45721715689188, 0.23383736641066388, 0.3490889364155017, 0.6782180788198738, 0.572870181532276, 0.49057122507461015, 15.3770465416839, 47.987612557261755, 40.662847152966926, -69.26107052911887, 47.21001213820308, 19.894888954245523, -6.900131978759683, 8.214725499775811
+});
 //						
 			
 			WeightVector weights = new WeightVector(initWeightList);
-//			WeightVector weights = TrainHelper.train(null, parameterContainer);
+//			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
 			
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\thesis_inference_data\\";
-			InferenceHelper.runInference(baseImagePath, "linear_coloured_cielab", parameterContainer, weights);
+			InferenceHelper.runInference(baseImagePath, "linear_noise_free_linear", parameterContainer, weights);
 			
 			
 			return;
@@ -155,7 +166,8 @@ public class App {
 			Constants.pairwiseColorSpace = ColorSpace.CIELAB; 
 			Constants.NUMBER_OF_STATES = 4;
 			Constants.TRAINING_STEP = 0.0000001;
-			Constants.REGULARIZATION_FACTOR = 1000;
+			Constants.REGULARIZATION_FACTOR = 5000;//0.0000000000001;
+			Constants.CONVERGENCE_TOLERANCE = 0.000005;
 			
 			
 			Constants.TRAIN_PATH = Constants.IMAGE_FOLDER + File.separator + "train" + File.separator ;
@@ -200,7 +212,7 @@ public class App {
 			}
 			
 			if (SAVE_IMAGE_FI_1) {
-				String basePath2 = "C:\\Users\\anean\\Desktop\\CRF\\FI_1_all_features\\";
+				String basePath2 = "C:\\Users\\anean\\Desktop\\CRF\\FI_1\\";
 				List<ImageDTO> testImageList = DataHelper.getTestData(parameterContainer);
 				Map<ImageDTO, List<List<Double>>> probabilityDistribution  = ResultAnalyser.analyseProbabilityDistribution(parameterContainer, testImageList, basePath2);
 				System.out.println("distribution generated");
@@ -211,16 +223,16 @@ public class App {
 			
 //			// testing 
 			List<Double> initWeightList = Arrays.asList(new Double[] {
-					0.17432221416579768, 0.6826533524551023, 0.26255535036554206
-//					0.000028121904426169814, 1.1707983450014365, 0.45030082775352052
+					0.11972583354578056, 1.0064917207245159, 0.3871068462850951		// GOOD NOISE FREE
+//					0.14057875516605717, 0.4400165075487023, 0.16923477763726302	// GOOD NOISED
 //					1.0, 0.0, 0.0
 			});
-//			WeightVector weights = new WeightVector(initWeightList);
-			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
+			WeightVector weights = new WeightVector(initWeightList);
+//			WeightVector weights = TrainHelper.train(initWeightList, parameterContainer);
 			
 			_log.info("Starting inference");
 			String baseImagePath = "C:\\Users\\anean\\Desktop\\CRF\\thesis_inference_data\\";
-			//InferenceHelper.runInference(baseImagePath, "nonlinear_noise_free", parameterContainer, weights);
+			InferenceHelper.runInference(baseImagePath, "nonlinear_noise_free", parameterContainer, weights);
 			
 			return;
 		}
