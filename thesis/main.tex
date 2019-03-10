@@ -94,24 +94,25 @@
 
 \title{Semantic image segmentation with use of conditional random fields}
 \author{Aneta Andrzejewska}
-\date{24 February 2019}
+\date{18 February 2019}
 
 \begin{document}
 
 \thispagestyle{empty}%
 \addtocounter{page}{-1}%
 \begin{titlepage}
-%\afterpage{\blankpage}
+\afterpage{\blankpage}
 \includepdf[pages=-]{title_page_mgr.pdf}
 \end{titlepage}
 
 
 \thispagestyle{empty}
-%\afterpage{\blankpage}
+\afterpage{\blankpage}
 \import{sections/}{abstract}
-%\thispagestyle{empty}
-%\afterpage{\blankpage}
-%\import{sections/}{acknowledgements}
+\thispagestyle{empty}
+\afterpage{\blankpage}
+\addtocounter{page}{-1}%
+\includepdf[pages=-]{acknowledgements.pdf}
 %\newpage
 
 \tableofcontents
@@ -166,13 +167,16 @@
 
 \chapter{Semantic image segmentation system}
     \label{chapter:system}
-    \import{sections/practical_crf_linear/}{introduction}
+    \import{sections/system/}{introduction}
     
-    \section{Technological stack}	
-    \import{sections/system/}{stack}
+    \section{System goals}	
+    \import{sections/system/}{goals}
     
     \section{System components}	
     \import{sections/system/}{components}
+    
+    \section{Technological stack}	
+    \import{sections/system/}{stack}
 
 \chapter{Colour-based semantic image segmentation}
     \label{chapter:linear}
@@ -244,7 +248,10 @@
     \label{chapter:conclusions}
     \import{sections/conclusions/}{introduction}
     
-    \section{Improvement perspective}
+    \section{Thesis summary}
+    \import{sections/conclusions/}{summary}
+    
+    \section{Improvements perspective}
     \import{sections/conclusions/}{improvements}
    
 
