@@ -1,1 +1,1 @@
-# Semantic image segmentation with use of Conditional Random Fields
+# Master Thesis - Semantic image segmentation with use of Conditional Random Fields
